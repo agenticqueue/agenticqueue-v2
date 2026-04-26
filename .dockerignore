@@ -1,8 +1,13 @@
 .git
 .mypy_cache
-.next
 .pytest_cache
 .ruff_cache
 .venv
 __pycache__
+coverage
+dist
 node_modules
+apps/web/.next
+apps/web/node_modules
+apps/web/test-results
+plans/**/artifacts

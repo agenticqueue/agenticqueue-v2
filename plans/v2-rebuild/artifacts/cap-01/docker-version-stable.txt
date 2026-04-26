@@ -1,0 +1,5 @@
+VERSION_STABLE
+first:
+{"version":"0.0.0-dev","commit":"0d698f6","built_at":"2026-04-26T19:09:04Z"}
+second:
+{"version":"0.0.0-dev","commit":"0d698f6","built_at":"2026-04-26T19:09:04Z"}

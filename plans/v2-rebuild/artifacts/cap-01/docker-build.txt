@@ -1,0 +1,421 @@
+ Image mmmmm-aq20-web Building 
+ Image mmmmm-aq20-api Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.06kB done
+#1 DONE 0.0s
+
+#2 [web internal] load build definition from Dockerfile
+#2 transferring dockerfile: 655B 0.0s done
+#2 DONE 0.0s
+
+#3 [api internal] load build definition from Dockerfile
+#3 transferring dockerfile: 789B done
+#3 DONE 0.0s
+
+#4 [api internal] load metadata for docker.io/library/python:3.12-slim
+#4 DONE 0.0s
+
+#5 [auth] library/node:pull token for registry-1.docker.io
+#5 DONE 0.0s
+
+#6 [api internal] load metadata for ghcr.io/astral-sh/uv:0.7.21
+#6 DONE 0.6s
+
+#7 [web internal] load metadata for docker.io/library/node:20-alpine
+#7 DONE 0.6s
+
+#8 [web internal] load .dockerignore
+#8 transferring context: 208B 0.0s done
+#8 DONE 0.0s
+
+#9 [api internal] load build context
+#9 DONE 0.0s
+
+#10 [web internal] load build context
+#10 DONE 0.0s
+
+#11 [api uv 1/1] FROM ghcr.io/astral-sh/uv:0.7.21@sha256:a64333b61f96312df88eafce95121b017cbff72033ab2dbc6398edb4f24a75dd
+#11 resolve ghcr.io/astral-sh/uv:0.7.21@sha256:a64333b61f96312df88eafce95121b017cbff72033ab2dbc6398edb4f24a75dd 0.1s done
+#11 DONE 0.1s
+
+#12 [web deps 1/6] FROM docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
+#12 resolve docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
+#12 resolve docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 0.1s done
+#12 DONE 0.1s
+
+#13 [api runtime 1/8] FROM docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
+#13 resolve docker.io/library/python:3.12-slim@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3 0.1s done
+#13 DONE 0.1s
+
+#14 [api runtime 2/8] WORKDIR /app
+#14 CACHED
+
+#15 [api runtime 3/8] COPY --from=uv /uv /uvx /usr/local/bin/
+#15 CACHED
+
+#9 [api internal] load build context
+#9 transferring context: 203.53kB 0.1s done
+#9 DONE 0.1s
+
+#10 [web internal] load build context
+#10 transferring context: 159.51kB 0.0s done
+#10 DONE 0.1s
+
+#16 [web builder 1/3] COPY tests/parity/openapi.snapshot.json ./tests/parity/openapi.snapshot.json
+#16 CACHED
+
+#17 [web runtime 3/4] RUN corepack enable
+#17 CACHED
+
+#18 [web deps 3/6] RUN corepack enable
+#18 CACHED
+
+#19 [web deps 5/6] COPY apps/web/package.json ./apps/web/package.json
+#19 CACHED
+
+#20 [web deps 4/6] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+#20 CACHED
+
+#21 [web deps 2/6] WORKDIR /app
+#21 CACHED
+
+#22 [web builder 2/3] COPY apps/web ./apps/web
+#22 CACHED
+
+#23 [web deps 6/6] RUN pnpm install --frozen-lockfile
+#23 CACHED
+
+#24 [web builder 3/3] RUN pnpm --filter @agenticqueue/web gen:types     && pnpm --filter @agenticqueue/web build
+#24 CACHED
+
+#25 [web runtime 4/4] COPY --from=builder /app ./
+#25 CACHED
+
+#26 [web] exporting to image
+#26 exporting layers done
+#26 exporting manifest sha256:12f527d70e566183b762c25c6d2872bb5f9ec121da9ce38ade2036a843cedf85 done
+#26 exporting config sha256:addede7586fe259cf901467b6ad901cac242ced29ded29287e9ef47100b1a3d2 done
+#26 exporting attestation manifest sha256:4db339908d97a81c3a940403e5cf975f24ded816a3071db06851c9c449c24ff4 0.1s done
+#26 exporting manifest list sha256:e2631f01e0cf75f2ecca94da43f7542609c66d4546451807e2286fcda4e14620 0.0s done
+#26 naming to docker.io/library/mmmmm-aq20-web:latest
+#26 naming to docker.io/library/mmmmm-aq20-web:latest done
+#26 unpacking to docker.io/library/mmmmm-aq20-web:latest 0.0s done
+#26 DONE 0.2s
+
+#27 [api runtime 4/8] RUN apt-get update     && apt-get install -y --no-install-recommends curl     && rm -rf /var/lib/apt/lists/*
+#27 ...
+
+#28 [web] resolving provenance for metadata file
+#28 DONE 0.0s
+
+#27 [api runtime 4/8] RUN apt-get update     && apt-get install -y --no-install-recommends curl     && rm -rf /var/lib/apt/lists/*
+#27 0.582 Hit:1 http://deb.debian.org/debian trixie InRelease
+#27 0.591 Get:2 http://deb.debian.org/debian trixie-updates InRelease [47.3 kB]
+#27 0.636 Get:3 http://deb.debian.org/debian-security trixie-security InRelease [43.4 kB]
+#27 0.670 Get:4 http://deb.debian.org/debian trixie/main amd64 Packages [9671 kB]
+#27 1.462 Get:5 http://deb.debian.org/debian trixie-updates/main amd64 Packages [5412 B]
+#27 1.485 Get:6 http://deb.debian.org/debian-security trixie-security/main amd64 Packages [127 kB]
+#27 2.040 Fetched 9894 kB in 2s (6154 kB/s)
+#27 2.040 Reading package lists...
+#27 2.663 Reading package lists...
+#27 3.241 Building dependency tree...
+#27 3.396 Reading state information...
+#27 3.537 The following additional packages will be installed:
+#27 3.537   libbrotli1 libcom-err2 libcurl4t64 libgnutls30t64 libgssapi-krb5-2 libidn2-0
+#27 3.537   libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0 libldap2 libnghttp2-14
+#27 3.537   libnghttp3-9 libp11-kit0 libpsl5t64 librtmp1 libsasl2-2 libsasl2-modules-db
+#27 3.537   libssh2-1t64 libtasn1-6 libunistring5
+#27 3.537 Suggested packages:
+#27 3.537   gnutls-bin krb5-doc krb5-user
+#27 3.537 Recommended packages:
+#27 3.537   bash-completion krb5-locales libldap-common publicsuffix libsasl2-modules
+#27 3.751 The following NEW packages will be installed:
+#27 3.751   curl libbrotli1 libcom-err2 libcurl4t64 libgnutls30t64 libgssapi-krb5-2
+#27 3.751   libidn2-0 libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0 libldap2
+#27 3.751   libnghttp2-14 libnghttp3-9 libp11-kit0 libpsl5t64 librtmp1 libsasl2-2
+#27 3.751   libsasl2-modules-db libssh2-1t64 libtasn1-6 libunistring5
+#27 3.834 0 upgraded, 22 newly installed, 0 to remove and 0 not upgraded.
+#27 3.834 Need to get 4885 kB of archives.
+#27 3.834 After this operation, 14.7 MB of additional disk space will be used.
+#27 3.834 Get:1 http://deb.debian.org/debian trixie/main amd64 libbrotli1 amd64 1.1.0-2+b7 [307 kB]
+#27 3.937 Get:2 http://deb.debian.org/debian trixie/main amd64 libkrb5support0 amd64 1.21.3-5 [33.0 kB]
+#27 3.937 Get:3 http://deb.debian.org/debian trixie/main amd64 libcom-err2 amd64 1.47.2-3+b10 [25.0 kB]
+#27 3.941 Get:4 http://deb.debian.org/debian trixie/main amd64 libk5crypto3 amd64 1.21.3-5 [81.5 kB]
+#27 3.950 Get:5 http://deb.debian.org/debian trixie/main amd64 libkeyutils1 amd64 1.6.3-6 [9456 B]
+#27 3.951 Get:6 http://deb.debian.org/debian trixie/main amd64 libkrb5-3 amd64 1.21.3-5 [326 kB]
+#27 3.972 Get:7 http://deb.debian.org/debian trixie/main amd64 libgssapi-krb5-2 amd64 1.21.3-5 [138 kB]
+#27 3.982 Get:8 http://deb.debian.org/debian trixie/main amd64 libunistring5 amd64 1.3-2 [477 kB]
+#27 4.010 Get:9 http://deb.debian.org/debian trixie/main amd64 libidn2-0 amd64 2.3.8-2 [109 kB]
+#27 4.018 Get:10 http://deb.debian.org/debian trixie/main amd64 libsasl2-modules-db amd64 2.1.28+dfsg1-9 [19.8 kB]
+#27 4.019 Get:11 http://deb.debian.org/debian trixie/main amd64 libsasl2-2 amd64 2.1.28+dfsg1-9 [57.5 kB]
+#27 4.025 Get:12 http://deb.debian.org/debian trixie/main amd64 libldap2 amd64 2.6.10+dfsg-1 [194 kB]
+#27 4.042 Get:13 http://deb.debian.org/debian trixie/main amd64 libnghttp2-14 amd64 1.64.0-1.1 [76.0 kB]
+#27 4.052 Get:14 http://deb.debian.org/debian trixie/main amd64 libnghttp3-9 amd64 1.8.0-1 [67.7 kB]
+#27 4.055 Get:15 http://deb.debian.org/debian trixie/main amd64 libpsl5t64 amd64 0.21.2-1.1+b1 [57.2 kB]
+#27 4.058 Get:16 http://deb.debian.org/debian trixie/main amd64 libp11-kit0 amd64 0.25.5-3 [425 kB]
+#27 4.108 Get:17 http://deb.debian.org/debian trixie/main amd64 libtasn1-6 amd64 4.20.0-2 [49.9 kB]
+#27 4.111 Get:18 http://deb.debian.org/debian trixie/main amd64 libgnutls30t64 amd64 3.8.9-3+deb13u2 [1468 kB]
+#27 4.211 Get:19 http://deb.debian.org/debian trixie/main amd64 librtmp1 amd64 2.4+20151223.gitfa8646d.1-2+b5 [58.8 kB]
+#27 4.212 Get:20 http://deb.debian.org/debian trixie/main amd64 libssh2-1t64 amd64 1.11.1-1 [245 kB]
+#27 4.258 Get:21 http://deb.debian.org/debian trixie/main amd64 libcurl4t64 amd64 8.14.1-2+deb13u2 [391 kB]
+#27 4.288 Get:22 http://deb.debian.org/debian trixie/main amd64 curl amd64 8.14.1-2+deb13u2 [270 kB]
+#27 4.442 debconf: unable to initialize frontend: Dialog
+#27 4.442 debconf: (TERM is not set, so the dialog frontend is not usable.)
+#27 4.442 debconf: falling back to frontend: Readline
+#27 4.442 debconf: unable to initialize frontend: Readline
+#27 4.442 debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.40.1 /usr/local/share/perl/5.40.1 /usr/lib/x86_64-linux-gnu/perl5/5.40 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.40 /usr/share/perl/5.40 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 8, <STDIN> line 22.)
+#27 4.442 debconf: falling back to frontend: Teletype
+#27 4.448 debconf: unable to initialize frontend: Teletype
+#27 4.448 debconf: (This frontend requires a controlling tty.)
+#27 4.448 debconf: falling back to frontend: Noninteractive
+#27 4.955 Fetched 4885 kB in 1s (9074 kB/s)
+#27 5.008 Selecting previously unselected package libbrotli1:amd64.
+#27 5.008 (Reading database ... 
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 5645 files and directories currently installed.)
+#27 5.014 Preparing to unpack .../00-libbrotli1_1.1.0-2+b7_amd64.deb ...
+#27 5.021 Unpacking libbrotli1:amd64 (1.1.0-2+b7) ...
+#27 5.075 Selecting previously unselected package libkrb5support0:amd64.
+#27 5.076 Preparing to unpack .../01-libkrb5support0_1.21.3-5_amd64.deb ...
+#27 5.087 Unpacking libkrb5support0:amd64 (1.21.3-5) ...
+#27 5.131 Selecting previously unselected package libcom-err2:amd64.
+#27 5.133 Preparing to unpack .../02-libcom-err2_1.47.2-3+b10_amd64.deb ...
+#27 5.139 Unpacking libcom-err2:amd64 (1.47.2-3+b10) ...
+#27 5.172 Selecting previously unselected package libk5crypto3:amd64.
+#27 5.173 Preparing to unpack .../03-libk5crypto3_1.21.3-5_amd64.deb ...
+#27 5.178 Unpacking libk5crypto3:amd64 (1.21.3-5) ...
+#27 5.216 Selecting previously unselected package libkeyutils1:amd64.
+#27 5.216 Preparing to unpack .../04-libkeyutils1_1.6.3-6_amd64.deb ...
+#27 5.223 Unpacking libkeyutils1:amd64 (1.6.3-6) ...
+#27 5.317 Selecting previously unselected package libkrb5-3:amd64.
+#27 5.321 Preparing to unpack .../05-libkrb5-3_1.21.3-5_amd64.deb ...
+#27 5.326 Unpacking libkrb5-3:amd64 (1.21.3-5) ...
+#27 5.386 Selecting previously unselected package libgssapi-krb5-2:amd64.
+#27 5.387 Preparing to unpack .../06-libgssapi-krb5-2_1.21.3-5_amd64.deb ...
+#27 5.392 Unpacking libgssapi-krb5-2:amd64 (1.21.3-5) ...
+#27 5.442 Selecting previously unselected package libunistring5:amd64.
+#27 5.442 Preparing to unpack .../07-libunistring5_1.3-2_amd64.deb ...
+#27 5.448 Unpacking libunistring5:amd64 (1.3-2) ...
+#27 5.508 Selecting previously unselected package libidn2-0:amd64.
+#27 5.509 Preparing to unpack .../08-libidn2-0_2.3.8-2_amd64.deb ...
+#27 5.515 Unpacking libidn2-0:amd64 (2.3.8-2) ...
+#27 5.550 Selecting previously unselected package libsasl2-modules-db:amd64.
+#27 5.551 Preparing to unpack .../09-libsasl2-modules-db_2.1.28+dfsg1-9_amd64.deb ...
+#27 5.556 Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg1-9) ...
+#27 5.588 Selecting previously unselected package libsasl2-2:amd64.
+#27 5.589 Preparing to unpack .../10-libsasl2-2_2.1.28+dfsg1-9_amd64.deb ...
+#27 5.593 Unpacking libsasl2-2:amd64 (2.1.28+dfsg1-9) ...
+#27 5.620 Selecting previously unselected package libldap2:amd64.
+#27 5.621 Preparing to unpack .../11-libldap2_2.6.10+dfsg-1_amd64.deb ...
+#27 5.625 Unpacking libldap2:amd64 (2.6.10+dfsg-1) ...
+#27 5.664 Selecting previously unselected package libnghttp2-14:amd64.
+#27 5.665 Preparing to unpack .../12-libnghttp2-14_1.64.0-1.1_amd64.deb ...
+#27 5.670 Unpacking libnghttp2-14:amd64 (1.64.0-1.1) ...
+#27 5.705 Selecting previously unselected package libnghttp3-9:amd64.
+#27 5.706 Preparing to unpack .../13-libnghttp3-9_1.8.0-1_amd64.deb ...
+#27 5.709 Unpacking libnghttp3-9:amd64 (1.8.0-1) ...
+#27 5.739 Selecting previously unselected package libpsl5t64:amd64.
+#27 5.739 Preparing to unpack .../14-libpsl5t64_0.21.2-1.1+b1_amd64.deb ...
+#27 5.742 Unpacking libpsl5t64:amd64 (0.21.2-1.1+b1) ...
+#27 5.771 Selecting previously unselected package libp11-kit0:amd64.
+#27 5.772 Preparing to unpack .../15-libp11-kit0_0.25.5-3_amd64.deb ...
+#27 5.775 Unpacking libp11-kit0:amd64 (0.25.5-3) ...
+#27 5.812 Selecting previously unselected package libtasn1-6:amd64.
+#27 5.813 Preparing to unpack .../16-libtasn1-6_4.20.0-2_amd64.deb ...
+#27 5.816 Unpacking libtasn1-6:amd64 (4.20.0-2) ...
+#27 5.843 Selecting previously unselected package libgnutls30t64:amd64.
+#27 5.843 Preparing to unpack .../17-libgnutls30t64_3.8.9-3+deb13u2_amd64.deb ...
+#27 5.847 Unpacking libgnutls30t64:amd64 (3.8.9-3+deb13u2) ...
+#27 5.903 Selecting previously unselected package librtmp1:amd64.
+#27 5.904 Preparing to unpack .../18-librtmp1_2.4+20151223.gitfa8646d.1-2+b5_amd64.deb ...
+#27 5.908 Unpacking librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b5) ...
+#27 5.941 Selecting previously unselected package libssh2-1t64:amd64.
+#27 5.941 Preparing to unpack .../19-libssh2-1t64_1.11.1-1_amd64.deb ...
+#27 5.946 Unpacking libssh2-1t64:amd64 (1.11.1-1) ...
+#27 5.981 Selecting previously unselected package libcurl4t64:amd64.
+#27 5.982 Preparing to unpack .../20-libcurl4t64_8.14.1-2+deb13u2_amd64.deb ...
+#27 5.987 Unpacking libcurl4t64:amd64 (8.14.1-2+deb13u2) ...
+#27 6.024 Selecting previously unselected package curl.
+#27 6.024 Preparing to unpack .../21-curl_8.14.1-2+deb13u2_amd64.deb ...
+#27 6.028 Unpacking curl (8.14.1-2+deb13u2) ...
+#27 6.064 Setting up libkeyutils1:amd64 (1.6.3-6) ...
+#27 6.073 Setting up libbrotli1:amd64 (1.1.0-2+b7) ...
+#27 6.082 Setting up libnghttp2-14:amd64 (1.64.0-1.1) ...
+#27 6.092 Setting up libcom-err2:amd64 (1.47.2-3+b10) ...
+#27 6.101 Setting up libkrb5support0:amd64 (1.21.3-5) ...
+#27 6.110 Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg1-9) ...
+#27 6.119 Setting up libp11-kit0:amd64 (0.25.5-3) ...
+#27 6.131 Setting up libunistring5:amd64 (1.3-2) ...
+#27 6.139 Setting up libk5crypto3:amd64 (1.21.3-5) ...
+#27 6.149 Setting up libsasl2-2:amd64 (2.1.28+dfsg1-9) ...
+#27 6.157 Setting up libnghttp3-9:amd64 (1.8.0-1) ...
+#27 6.167 Setting up libtasn1-6:amd64 (4.20.0-2) ...
+#27 6.175 Setting up libkrb5-3:amd64 (1.21.3-5) ...
+#27 6.186 Setting up libssh2-1t64:amd64 (1.11.1-1) ...
+#27 6.193 Setting up libldap2:amd64 (2.6.10+dfsg-1) ...
+#27 6.202 Setting up libidn2-0:amd64 (2.3.8-2) ...
+#27 6.210 Setting up libgssapi-krb5-2:amd64 (1.21.3-5) ...
+#27 6.219 Setting up libgnutls30t64:amd64 (3.8.9-3+deb13u2) ...
+#27 6.228 Setting up libpsl5t64:amd64 (0.21.2-1.1+b1) ...
+#27 6.236 Setting up librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b5) ...
+#27 6.245 Setting up libcurl4t64:amd64 (8.14.1-2+deb13u2) ...
+#27 6.255 Setting up curl (8.14.1-2+deb13u2) ...
+#27 6.264 Processing triggers for libc-bin (2.41-12+deb13u2) ...
+#27 DONE 6.3s
+
+#29 [api runtime 5/8] COPY pyproject.toml uv.lock ./
+#29 DONE 0.0s
+
+#30 [api runtime 6/8] COPY apps/api ./apps/api
+#30 DONE 0.0s
+
+#31 [api runtime 7/8] COPY apps/cli ./apps/cli
+#31 DONE 0.0s
+
+#32 [api runtime 8/8] RUN uv sync --frozen --no-dev
+#32 0.206 warning: Skipping installation of entry points (`project.scripts`) because this project is not packaged; to install entry points, set `tool.uv.package = true` or define a `build-system`
+#32 0.313 Using CPython 3.12.13 interpreter at: /usr/local/bin/python3
+#32 0.313 Creating virtual environment at: .venv
+#32 0.378    Building aq-cli @ file:///app/apps/cli
+#32 0.379    Building aq-api @ file:///app/apps/api
+#32 0.519 Downloading beartype (1.3MiB)
+#32 0.519 Downloading pygments (1.2MiB)
+#32 0.522 Downloading pydantic-core (2.0MiB)
+#32 0.523 Downloading uvloop (4.2MiB)
+#32 0.527 Downloading cryptography (4.5MiB)
+#32 0.530 Downloading lupa (2.3MiB)
+#32 1.705  Downloading pygments
+#32 1.731  Downloading beartype
+#32 1.912  Downloading pydantic-core
+#32 2.093  Downloading lupa
+#32 2.339  Downloading uvloop
+#32 2.353  Downloading cryptography
+#32 2.523       Built aq-api @ file:///app/apps/api
+#32 2.524       Built aq-cli @ file:///app/apps/cli
+#32 2.527 Prepared 87 packages in 2.20s
+#32 2.638 Installed 87 packages in 111ms
+#32 3.829 Bytecode compiled 3190 files in 1.19s
+#32 3.829  + annotated-doc==0.0.4
+#32 3.829  + annotated-types==0.7.0
+#32 3.829  + anyio==4.13.0
+#32 3.829  + aq-api==0.1.0 (from file:///app/apps/api)
+#32 3.829  + aq-cli==0.1.0 (from file:///app/apps/cli)
+#32 3.829  + attrs==26.1.0
+#32 3.829  + authlib==1.7.0
+#32 3.829  + beartype==0.22.9
+#32 3.829  + cachetools==7.0.6
+#32 3.829  + certifi==2026.4.22
+#32 3.829  + cffi==2.0.0
+#32 3.829  + click==8.3.3
+#32 3.829  + cloudpickle==3.1.2
+#32 3.829  + cronsim==2.7
+#32 3.829  + cryptography==47.0.0
+#32 3.829  + cyclopts==4.11.0
+#32 3.829  + diskcache==5.6.3
+#32 3.829  + dnspython==2.8.0
+#32 3.829  + docstring-parser==0.18.0
+#32 3.829  + docutils==0.22.4
+#32 3.829  + email-validator==2.3.0
+#32 3.829  + exceptiongroup==1.3.1
+#32 3.829  + fakeredis==2.34.1
+#32 3.829  + fastapi==0.136.1
+#32 3.829  + fastmcp==2.14.7
+#32 3.829  + h11==0.16.0
+#32 3.829  + httpcore==1.0.9
+#32 3.829  + httptools==0.7.1
+#32 3.829  + httpx==0.28.1
+#32 3.829  + httpx-sse==0.4.3
+#32 3.829  + idna==3.13
+#32 3.829  + importlib-metadata==8.7.1
+#32 3.829  + jaraco-classes==3.4.0
+#32 3.829  + jaraco-context==6.1.2
+#32 3.829  + jaraco-functools==4.4.0
+#32 3.829  + jeepney==0.9.0
+#32 3.829  + joserfc==1.6.4
+#32 3.829  + jsonref==1.1.0
+#32 3.829  + jsonschema==4.26.0
+#32 3.829  + jsonschema-path==0.4.5
+#32 3.829  + jsonschema-specifications==2025.9.1
+#32 3.829  + keyring==25.7.0
+#32 3.829  + lupa==2.8
+#32 3.829  + markdown-it-py==4.0.0
+#32 3.829  + mcp==1.27.0
+#32 3.829  + mdurl==0.1.2
+#32 3.829  + more-itertools==11.0.2
+#32 3.829  + openapi-pydantic==0.5.1
+#32 3.829  + opentelemetry-api==1.41.1
+#32 3.829  + packaging==26.2
+#32 3.829  + pathable==0.5.0
+#32 3.830  + pathvalidate==3.3.1
+#32 3.830  + platformdirs==4.9.6
+#32 3.830  + prometheus-client==0.25.0
+#32 3.830  + py-key-value-aio==0.3.0
+#32 3.830  + py-key-value-shared==0.3.0
+#32 3.830  + pycparser==3.0
+#32 3.830  + pydantic==2.13.3
+#32 3.830  + pydantic-core==2.46.3
+#32 3.830  + pydantic-settings==2.14.0
+#32 3.830  + pydocket==0.18.2
+#32 3.830  + pygments==2.20.0
+#32 3.830  + pyjwt==2.12.1
+#32 3.830  + pyperclip==1.11.0
+#32 3.830  + python-dotenv==1.2.2
+#32 3.830  + python-json-logger==4.1.0
+#32 3.830  + python-multipart==0.0.26
+#32 3.830  + pyyaml==6.0.3
+#32 3.830  + redis==7.4.0
+#32 3.830  + referencing==0.37.0
+#32 3.830  + rich==15.0.0
+#32 3.830  + rich-rst==1.3.2
+#32 3.830  + rpds-py==0.30.0
+#32 3.830  + secretstorage==3.5.0
+#32 3.830  + shellingham==1.5.4
+#32 3.830  + sortedcontainers==2.4.0
+#32 3.830  + sse-starlette==3.4.1
+#32 3.830  + starlette==1.0.0
+#32 3.830  + typer==0.25.0
+#32 3.830  + typing-extensions==4.15.0
+#32 3.830  + typing-inspection==0.4.2
+#32 3.830  + uncalled-for==0.3.1
+#32 3.830  + uvicorn==0.46.0
+#32 3.830  + uvloop==0.22.1
+#32 3.830  + watchfiles==1.1.1
+#32 3.830  + websockets==16.0
+#32 3.830  + zipp==3.23.1
+#32 DONE 4.1s
+
+#33 [api] exporting to image
+#33 exporting layers
+#33 exporting layers 6.1s done
+#33 exporting manifest sha256:4959f8e71eed64963f1da592e45f88115b715893014f54e17617715c6079302b 0.0s done
+#33 exporting config sha256:d189f3d26564dfecffb109648318c3abbba43e3c66a2977a8467bd923939df8b 0.0s done
+#33 exporting attestation manifest sha256:59c9079cc485bfcf5efc47dc9a766283ab3f017511da3e10afc5a433b4c3d759 0.0s done
+#33 exporting manifest list sha256:2ac51c1ae63007ae3130d73c0eb40f49900ddc08266e55cf11fd9e1f7b379143 0.0s done
+#33 naming to docker.io/library/mmmmm-aq20-api:latest done
+#33 unpacking to docker.io/library/mmmmm-aq20-api:latest
+#33 unpacking to docker.io/library/mmmmm-aq20-api:latest 3.5s done
+#33 DONE 9.7s
+
+#34 [api] resolving provenance for metadata file
+#34 DONE 0.0s
+ Image mmmmm-aq20-api Built 
+ Image mmmmm-aq20-web Built 

@@ -3,16 +3,18 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
-    environment:
-      AQ_BUILT_AT: ${AQ_BUILT_AT:-1970-01-01T00:00:00Z}
-      AQ_COMMIT: ${AQ_COMMIT:-dev}
-      AQ_VERSION: ${AQ_VERSION:-0.1.0}
+      args:
+        AQ_VERSION: ${AQ_VERSION:-0.0.0-dev}
+        AQ_GIT_COMMIT: ${AQ_GIT_COMMIT:-0000000}
+        AQ_BUILT_AT: ${AQ_BUILT_AT:-1970-01-01T00:00:00+00:00}
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/healthz || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/healthz || exit 1"]
       interval: 5s
       timeout: 3s
       retries: 6
       start_period: 10s
+    networks:
+      - aq2
     ports:
       - "8001:8000"
 
@@ -26,10 +28,16 @@ services:
     environment:
       AQ_API_URL: ${AQ_API_URL:-http://api:8000}
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O- http://localhost:3000/api/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:3000/api/health || exit 1"]
       interval: 5s
       timeout: 3s
       retries: 6
-      start_period: 10s
+      start_period: 15s
+    networks:
+      - aq2
     ports:
       - "3002:3000"
+
+networks:
+  aq2:
+    driver: bridge

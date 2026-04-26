@@ -1,0 +1,5 @@
+docker compose healthcheck started 2026-04-26T19:09:49Z
+api=healthy web=starting
+api=healthy web=starting
+api=healthy web=healthy
+BOTH_HEALTHY

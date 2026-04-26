@@ -1,0 +1,17 @@
+GET /healthz
+HTTP/1.1 200 OK
+date: Sun, 26 Apr 2026 19:10:58 GMT
+server: uvicorn
+content-length: 57
+content-type: application/json
+
+{"status":"ok","timestamp":"2026-04-26T19:10:58.717313Z"}
+
+GET /version
+HTTP/1.1 200 OK
+date: Sun, 26 Apr 2026 19:10:58 GMT
+server: uvicorn
+content-length: 76
+content-type: application/json
+
+{"version":"0.0.0-dev","commit":"0d698f6","built_at":"2026-04-26T19:09:04Z"}
