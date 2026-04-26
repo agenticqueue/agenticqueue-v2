@@ -70,12 +70,15 @@ uv run python -m tests.parity.mcp_harness get_version \
 
 PLAYWRIGHT_USE_DOCKER=1 pnpm --filter @agenticqueue/web exec playwright test e2e/health.spec.ts
 
-python - <<'PY' > "$ARTIFACT_DIR/openapi.json"
+python - "$ARTIFACT_DIR/openapi.json" <<'PY'
 import json
+import sys
 import urllib.request
 
 payload = json.loads(urllib.request.urlopen("http://localhost:8001/openapi.json").read())
-print(json.dumps(payload, indent=2))
+with open(sys.argv[1], "w", encoding="utf-8", newline="\n") as handle:
+    json.dump(payload, handle, indent=2)
+    handle.write("\n")
 PY
 if diff "$ARTIFACT_DIR/openapi.json" tests/parity/openapi.snapshot.json > "$ARTIFACT_DIR/openapi-diff.txt"; then
   echo "OPENAPI_DIFF_EMPTY" > "$ARTIFACT_DIR/openapi-diff.txt"
