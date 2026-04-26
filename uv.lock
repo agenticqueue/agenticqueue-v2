@@ -35,7 +35,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aq-api", virtual = "apps/api" },
+    { name = "aq-api", editable = "apps/api" },
     { name = "aq-cli", virtual = "apps/cli" },
     { name = "fastapi", specifier = ">=0.115,<1" },
     { name = "fastmcp", specifier = ">=2.3,<3" },
@@ -88,7 +88,7 @@ wheels = [
 [[package]]
 name = "aq-api"
 version = "0.1.0"
-source = { virtual = "apps/api" }
+source = { editable = "apps/api" }
 dependencies = [
     { name = "fastapi" },
     { name = "fastmcp" },
