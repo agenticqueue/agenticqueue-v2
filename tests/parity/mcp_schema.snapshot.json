@@ -1,19 +1,15 @@
 {
-  "id": 1,
   "jsonrpc": "2.0",
+  "id": 1,
   "result": {
     "tools": [
       {
-        "_meta": {
-          "_fastmcp": {
-            "tags": []
-          }
-        },
+        "name": "health_check",
+        "description": "Return current health status with a per-call UTC timestamp. Read-only; safe to call repeatedly.",
         "inputSchema": {
           "properties": {},
           "type": "object"
         },
-        "name": "health_check",
         "outputSchema": {
           "properties": {
             "status": {
@@ -30,31 +26,35 @@
             "timestamp"
           ],
           "type": "object"
-        }
-      },
-      {
+        },
+        "annotations": {
+          "readOnlyHint": true
+        },
         "_meta": {
           "_fastmcp": {
             "tags": []
           }
-        },
+        }
+      },
+      {
+        "name": "get_version",
+        "description": "Return the process-stable VersionInfo (version, commit, built_at). Read-only; result is byte-stable per process.",
         "inputSchema": {
           "properties": {},
           "type": "object"
         },
-        "name": "get_version",
         "outputSchema": {
           "properties": {
-            "built_at": {
-              "format": "date-time",
+            "version": {
+              "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$",
               "type": "string"
             },
             "commit": {
               "pattern": "^[0-9a-f]{7,12}$",
               "type": "string"
             },
-            "version": {
-              "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$",
+            "built_at": {
+              "format": "date-time",
               "type": "string"
             }
           },
@@ -64,6 +64,14 @@
             "built_at"
           ],
           "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": true
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
         }
       }
     ]

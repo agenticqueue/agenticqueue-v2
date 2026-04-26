@@ -1,0 +1,19 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.11, pytest-8.4.2, pluggy-1.6.0
+rootdir: D:\mmmmm\mmmmm-aq2.0
+configfile: pyproject.toml
+plugins: anyio-4.13.0, asyncio-0.26.0
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 5 items
+
+<Dir mmmmm-aq2.0>
+  <Package tests>
+    <Package parity>
+      <Module test_four_surface_parity.py>
+        <Function test_openapi_snapshot_matches_live_api>
+        <Function test_mcp_schema_snapshot_matches_live_tools>
+        <Function test_rest_and_cli_payloads_match>
+        <Function test_rest_and_mcp_payloads_match>
+        <Function test_web_and_rest_payloads_match_via_playwright>
+
+========================= 5 tests collected in 0.18s ==========================
