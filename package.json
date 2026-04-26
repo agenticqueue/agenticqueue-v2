@@ -9,7 +9,8 @@
   "scripts": {
     "web:dev": "pnpm --filter @agenticqueue/web dev",
     "web:build": "pnpm --filter @agenticqueue/web build",
+    "web:gen-types": "pnpm --filter @agenticqueue/web gen:types",
     "web:lint": "pnpm --filter @agenticqueue/web lint",
-    "web:test": "pnpm --filter @agenticqueue/web test"
+    "web:test": "pnpm --filter @agenticqueue/web test:e2e"
   }
 }
