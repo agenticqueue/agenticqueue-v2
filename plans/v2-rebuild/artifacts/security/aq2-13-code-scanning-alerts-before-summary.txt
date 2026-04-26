@@ -1,0 +1,4 @@
+COMMAND: gh api repos/agenticqueue/agenticqueue-v2/code-scanning/alerts --paginate --jq "[.[].most_recent_instance.category] | unique"
+["/language:actions"]
+
+NOTE: Captured before AQ2-13 workflow merge. Existing default setup currently reports only /language:actions; python and javascript-typescript must be verified after the explicit workflow runs.

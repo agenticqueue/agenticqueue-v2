@@ -1,0 +1,5 @@
+COMMAND: gh api repos/agenticqueue/agenticqueue-v2/code-scanning/default-setup
+{"state":"not-configured","languages":["actions","javascript","javascript-typescript","python","typescript"],"query_suite":"default","threat_model":"remote","updated_at":null,"schedule":null,"runner_type":"standard","runner_label":null}
+
+COMMAND: gh api -X PATCH repos/agenticqueue/agenticqueue-v2/code-scanning/default-setup -f state=not-configured --include
+Result from this session: HTTP/2.0 200 OK, body {}

@@ -1,0 +1,24 @@
+COMMAND: Test-Path .github/workflows/codeql.yml
+True
+
+COMMAND: Select-String CodeQL workflow fields
+pull_request trigger
+  pull_request:
+push trigger
+  push:
+main branch
+      - main
+weekly Monday 06:00 UTC cron
+    - cron: "0 6 * * 1"
+python language
+          - python
+javascript-typescript language
+          - javascript-typescript
+CodeQL init v3
+      - uses: github/codeql-action/init@v3
+CodeQL autobuild v3
+      - uses: github/codeql-action/autobuild@v3
+CodeQL analyze v3
+      - uses: github/codeql-action/analyze@v3
+security-events permission
+  security-events: write
