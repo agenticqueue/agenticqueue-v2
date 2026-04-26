@@ -1,0 +1,4 @@
+COMMAND: gh api repos/agenticqueue/agenticqueue-v2/dependabot/alerts --paginate --jq length
+6
+
+NOTE: Captured before AQ2-12 merge; post-merge Dependabot PR/zero-vuln verification must be checked against default branch after config lands.
