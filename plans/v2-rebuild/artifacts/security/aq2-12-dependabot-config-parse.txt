@@ -1,0 +1,21 @@
+{
+  "path": ".github\\dependabot.yml",
+  "updates": [
+    [
+      "pip",
+      "/",
+      "python-dependencies"
+    ],
+    [
+      "npm",
+      "/apps/web",
+      "web-dependencies"
+    ],
+    [
+      "github-actions",
+      "/",
+      "github-actions"
+    ]
+  ],
+  "status": "parsed"
+}
