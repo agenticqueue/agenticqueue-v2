@@ -207,7 +207,30 @@ Plus: a database migration that seeds the v1 Contract Profiles (`coding-task`, `
 - `release_job` — `POST /jobs/{id}/release`, `aq release`, MCP `release_job`. Claimant only. Job returns to `ready`.
 - `reset_claim` — `POST /jobs/{id}/reset-claim` with required `reason`, `aq job reset-claim`, MCP `reset_claim`. Any key. Job returns to `ready`.
 
-**Validation summary:** Create a Project, Pipeline, two `ready` Jobs. Two CLI clients (different keys) call `aq claim` simultaneously on the same Project; assert one gets a Job ID and the other gets the second Job (or null if there's only one). Re-run with one Job — exactly one client gets it, the other gets `None`. From the winner, call `aq release` — Job returns to `ready`. Re-claim, then from a different key call `aq job reset-claim --reason "claimant crashed"` — Job returns to `ready` and the audit log shows the reason. Run the race 50× to confirm no double-claim.
+**MCP richness (required from this capability forward — sets the pattern for every later cap):**
+
+Cap #1 ships only `health_check` + `get_version`, which are trivially safe and self-explanatory. Starting at this capability, every MCP op MUST layer in MCP-spec features beyond the basic input/output schema:
+
+1. **Server-level instructions** (one-time, on the AQ MCP server itself, not per-tool). Add a `mcp.set_instructions(...)` block that surfaces to the agent the moment the server connects:
+   - "Pass `agent_identity` (the API key alias) on every call. AQ does not infer it."
+   - "Errors come back as structured objects: `{error_code, rule_violated, details}`. Do NOT retry on `rule_violated` — it indicates a fixable client mistake (wrong claimant, wrong state, missing field), not a transient failure."
+   - "After a successful `claim_next_job`, the next call should be `get_packet` if you didn't cache the response — the claim already returns a Packet inline (cap #8) but `get_packet` is idempotent and safe to re-call."
+2. **Tool annotations** per [MCP spec](https://modelcontextprotocol.io/specification/) — set explicitly on every tool, not defaulted:
+   - `claim_next_job`, `release_job`, `reset_claim` → `destructiveHint: true`, `idempotentHint: false` (state-changing).
+   - `get_job`, `list_jobs`, `whoami` (and every read-only op) → `readOnlyHint: true`.
+   - These let hosts like Claude Code skip the approval prompt for read-only ops and gate destructive ops behind explicit consent.
+3. **Tool descriptions** — auto-derived from the Pydantic model docstrings + a per-op "why-to-use / when-to-use" line authored in the MCP tool definition (NOT in the model). Description must answer: *what the tool does, what state it requires, what it returns, what to call next*.
+4. **Output content bundling** — `claim_next_job` returns a multi-part MCP content list:
+   - The Job itself (structured Pydantic dump as JSON content).
+   - The Context Packet object (cap #8 link-only nav) inline so the agent doesn't need a second round-trip.
+   - A natural-language `text` block: "You claimed AQ-123. Required next: read the Contract Profile (`describe_contract_profile`) and the previous 2 Jobs in the Sequence."
+5. **Tool input-schema field descriptions** — every Pydantic field used as an MCP tool argument carries a docstring; FastMCP auto-derives JSON Schema `description`s from those docstrings. No second source of truth.
+
+**Resources and Prompts** layer in at later caps where they actually have content to serve:
+- **Resources** (URI-addressable on-demand content): land in cap #5 (`aq://policies/contract-profile/{name}`) and cap #11 (Workflow / Pipeline / ADR / Learning resources by URI).
+- **Prompts** (server-defined slash-command templates): land in cap #6 dogfood — one prompt template `/aq-claim-and-work` wrapping the standard claim → read-packet → submit pattern.
+
+**Validation summary:** Create a Project, Pipeline, two `ready` Jobs. Two CLI clients (different keys) call `aq claim` simultaneously on the same Project; assert one gets a Job ID and the other gets the second Job (or null if there's only one). Re-run with one Job — exactly one client gets it, the other gets `None`. From the winner, call `aq release` — Job returns to `ready`. Re-claim, then from a different key call `aq job reset-claim --reason "claimant crashed"` — Job returns to `ready` and the audit log shows the reason. Run the race 50× to confirm no double-claim. **Plus MCP richness checks:** call MCP `tools/list`, assert `claim_next_job` has `destructiveHint=true` and `readOnlyHint=false`; call `get_job` and assert `readOnlyHint=true`; call MCP server `instructions` endpoint, assert it returns the agent_identity + error-shape rules; call `claim_next_job` from a real MCP client and assert the response is a multi-part content list including a Packet block and a next-step text hint.
 
 **Status:** `[ ]`
 
@@ -237,6 +260,20 @@ Plus: a database migration that seeds the v1 Contract Profiles (`coding-task`, `
 - `review_complete` — `POST /jobs/{id}/review-complete` with `final_outcome ∈ {done, failed}`, `aq review-complete`, MCP `review_complete`. Any key. Only valid when Job is in `pending_review`.
 - `register_contract_profile` — `POST /profiles`, `aq profile register`, MCP `register_contract_profile`. Validates against ADR-AQ-030 minimum_claimable_invariants before activation.
 - `version_contract_profile` — `POST /profiles/{name}/versions`, `aq profile bump`, MCP `version_contract_profile`. Existing claimed Jobs frozen on their version.
+
+**MCP richness (extends the cap #4 pattern):**
+
+Continue the MCP-richness pattern established in cap #4. Specifically for this capability:
+
+1. **`submit_job` annotations** — `destructiveHint: true`, `idempotentHint: false` (terminal state transition). Description must spell out the four outcomes and the per-outcome required fields, and link to the Contract Profile schema the payload validates against.
+2. **`submit_job` output bundling** — on success returns multi-part content: the updated Job dump + the new Run Ledger row reference (cap #7 has the actual op; here we emit the row and return its ID inline) + a `text` block with the next-step hint ("Job is now `done`. If any downstream Jobs were `gated_on` this one, they may have been auto-promoted to `ready` (cap #10's resolver) — call `list_jobs?state=ready` to see what's claimable.").
+3. **MCP `Resources` start here** — register URI-addressable resources for Contract Profiles:
+   - `aq://policies/contract-profile/{name}` returns the full ADR-AQ-030-shaped profile JSON for `{name}`.
+   - `aq://policies/contract-profile/{name}@v{version}` returns a specific frozen version (since profiles are versioned; existing claimed Jobs reference their snapshotted version).
+   - These let an agent fetch the schema it needs to validate its submission *before* calling `submit_job`, instead of getting back a 422 and retrying.
+   - Resource metadata MUST include a stable `mimeType: "application/schema+json"` so MCP hosts can render appropriately.
+4. **`register_contract_profile` annotations** — `destructiveHint: false, idempotentHint: false` (creates a new profile; not destructive in the data-loss sense, but state-changing).
+5. **`register_contract_profile` description** — must instruct the agent to first call the existing Resources (`aq://policies/...`) to see what profiles already exist, and only register a new one if no existing profile fits. Reduces accidental profile sprawl.
 
 **Validation summary:** Register a custom Contract Profile (or use seeded `coding-task`). Create a Job, claim it, submit with `outcome=done` and a complete payload — Job transitions to `done`, Run Ledger has an entry, audit row written. Submit a different Job with an invalid payload (missing required field) — submit returns 422 with the schema error, Job stays in `in_progress`. Submit one with `outcome=pending_review` — Job lands in `pending_review`. From a different key, call `review_complete --final-outcome done` — Job is `done`. Submit one with `outcome=failed` — Job is `failed`. Submit one with `outcome=blocked` and `gated_on_job_id=<other_id>` — Job is `blocked` and the gated-on field is recorded (the auto-resolution wiring lands in #10). Try to submit a `done` Job again — rejected as terminal. Try to submit as a non-claimant — 403.
 
