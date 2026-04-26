@@ -1,0 +1,6 @@
+{
+  "path": ".github\\dependabot.yml",
+  "npm_directory": "/",
+  "group": "web-dependencies",
+  "status": "workspace-root-configured"
+}
