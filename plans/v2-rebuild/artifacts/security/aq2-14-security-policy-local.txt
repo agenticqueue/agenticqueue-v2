@@ -1,0 +1,22 @@
+COMMAND: Test-Path SECURITY.md
+True
+
+COMMAND: Select-String required policy fields
+## Supported Versions
+## Supported Versions
+## Reporting a Vulnerability
+## Reporting a Vulnerability
+GitHub private vulnerability reporting URL
+https://github.com/agenticqueue/agenticqueue-v2/security/advisories/new
+Fallback email
+If GitHub private reporting is unavailable, email Mario Watson at mariomillions414@gmail.com with a concise description, reproduction steps, affected commit or version, and any relevant logs.
+7 day acknowledgement
+We aim to acknowledge valid reports within 7 days. Critical vulnerabilities are prioritized for remediation within 30 days when a fix is under project control. Other reports are handled on a best-effort basis according to severity and project capacity.
+30 day critical remediation
+We aim to acknowledge valid reports within 7 days. Critical vulnerabilities are prioritized for remediation within 30 days when a fix is under project control. Other reports are handled on a best-effort basis according to severity and project capacity.
+## In Scope
+## In Scope
+## Out of Scope
+## Out of Scope
+## Coordinated Disclosure
+## Coordinated Disclosure
