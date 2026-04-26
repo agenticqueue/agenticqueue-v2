@@ -1,1 +1,71 @@
-{}
+{
+  "id": 1,
+  "jsonrpc": "2.0",
+  "result": {
+    "tools": [
+      {
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        },
+        "inputSchema": {
+          "properties": {},
+          "type": "object"
+        },
+        "name": "health_check",
+        "outputSchema": {
+          "properties": {
+            "status": {
+              "const": "ok",
+              "type": "string"
+            },
+            "timestamp": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          "required": [
+            "status",
+            "timestamp"
+          ],
+          "type": "object"
+        }
+      },
+      {
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        },
+        "inputSchema": {
+          "properties": {},
+          "type": "object"
+        },
+        "name": "get_version",
+        "outputSchema": {
+          "properties": {
+            "built_at": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "commit": {
+              "pattern": "^[0-9a-f]{7,12}$",
+              "type": "string"
+            },
+            "version": {
+              "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "version",
+            "commit",
+            "built_at"
+          ],
+          "type": "object"
+        }
+      }
+    ]
+  }
+}
