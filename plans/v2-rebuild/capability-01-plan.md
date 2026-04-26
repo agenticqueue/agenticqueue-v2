@@ -3,6 +3,7 @@
 Plan for: [capabilities.md](capabilities.md)
 Brief: [brief.md](brief.md)
 Plane parent: **AQ2-1** ([Plane link](http://localhost:8502/mmmmm/projects/bcdf1ac3-fc45-4186-8ad0-f3b6c21ceec8/issues/29d87829-2af1-49fc-9693-f5170a36b626/))
+GitHub remote: **`agenticqueue/agenticqueue-v2`** (public; created 2026-04-26 by `mario-watson`; `https://github.com/agenticqueue/agenticqueue-v2`)
 ADR-AQ-019 lexicon · ADR-AQ-030 contract structure
 
 ---
@@ -86,7 +87,7 @@ Root files:
 - `.dockerignore` (root) — exclude `.git`, `node_modules`, `.venv`, `__pycache__`, `plans/v2-rebuild/artifacts/`
 - `.gitignore` — Python + Node + Next.js standards; ignores `app/types/api.ts` (codegen output) and ad-hoc `.tmp/` per AGENTS.md Rule 4
 - `.editorconfig` — LF, 2-space JSON/YAML, 4-space Python
-- `.gitattributes` — LF for shell + YAML
+- `.gitattributes` — LF for shell + YAML; `plans/**/artifacts/**/*.png binary` and `plans/**/artifacts/**/*.xml binary` so committed evidence artifacts don't pollute textual diffs
 - `LICENSE` — Apache-2.0 with `Copyright 2026 Mario Watson` header
 - `README.md` — first line: `Created by **[Mario Watson](https://github.com/mario-watson)** · Apache-2.0`
 - `AUTHORS.md` — Mario Watson as creator
@@ -308,7 +309,9 @@ uv run python tests/parity/four_surface_diff.py \
 - Port choice (8001/3002) — if either is later occupied by another service, document actual ports used.
 - Mypy may need narrow `# type: ignore` for FastMCP integration if the library lacks types — document each occurrence.
 - **MCP SSE transport deferred to v1.1** per ADR-AQ-021. Cap #1 ships stdio (via `aq-mcp` binary) + streamable HTTP at `/mcp` only. SSE is recorded as a deviation, not a missing-and-forgotten gap.
-- **Artifact files committed.** Per AGENTS.md Rule 8 (no fabricated evidence), artifacts under `plans/v2-rebuild/artifacts/cap-01/` are **committed to git** as the durable evidence trail. The `parity-test-report.xml` and screenshots are reviewable in the PR diff; later capabilities can reference them by commit SHA.
+- **Artifact files committed (locked policy).** Per AGENTS.md Rule 8 (no fabricated evidence), artifacts under `plans/v2-rebuild/artifacts/cap-01/` are **committed to git** as the durable evidence trail. The `parity-test-report.xml` and screenshots are reviewable in the PR diff; later capabilities can reference them by commit SHA. Story 1.1's `.gitattributes` declares `plans/**/artifacts/**/*.png binary` + `plans/**/artifacts/**/*.xml binary` so git does not attempt textual diffs on them and PR review focuses on the report contents rather than binary noise.
+- **FastMCP version pin (locked at Story 1.1 start).** Pin `fastmcp>=2.3,<3` and `mcp>=1.2,<2` in `pyproject.toml`; the executor reads PyPI for the latest 2.x patch on the day Story 1.1 begins and freezes it via `uv.lock`. Documented as a deviation only if the FastMCP 2.x API changes mid-effort.
+- **Plane MCP gap surfaced (audit pass 2).** `plane_add_relation` does not persist `blocks`/`blocked_by` in this Plane instance; dependency order is enforced by the "Depends on" line in every ticket body and by the implementation-order section of this plan, not by Plane edges.
 
 ## Out of scope
 
