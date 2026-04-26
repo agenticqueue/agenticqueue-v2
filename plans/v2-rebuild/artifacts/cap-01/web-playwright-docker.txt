@@ -1,0 +1,6 @@
+
+Running 1 test using 1 worker
+
+  ok 1 [chromium] › e2e\health.spec.ts:21:5 › renders health and version payloads (341ms)
+
+  1 passed (1.2s)

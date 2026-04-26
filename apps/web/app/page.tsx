@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import type { components } from "@/app/types/api";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -14,8 +13,10 @@ type VersionInfo = components["schemas"]["VersionInfo"];
 
 export const dynamic = "force-dynamic";
 
-async function fetchSurface<T>(origin: string, path: string): Promise<T> {
-  const response = await fetch(`${origin}${path}`, { cache: "no-store" });
+async function fetchSurface<T>(apiBase: string, path: string): Promise<T> {
+  const response = await fetch(`${apiBase.replace(/\/$/, "")}${path}`, {
+    cache: "no-store",
+  });
   if (!response.ok) {
     throw new Error(`Failed to load ${path}: ${response.status}`);
   }
@@ -44,14 +45,11 @@ function Field({
 }
 
 export default async function Home() {
-  const headerStore = await headers();
-  const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host");
-  const protocol = headerStore.get("x-forwarded-proto") ?? "http";
-  const origin = `${protocol}://${host ?? "localhost:3000"}`;
+  const apiBase = process.env.AQ_API_URL ?? "http://localhost:8001";
 
   const [health, version] = await Promise.all([
-    fetchSurface<HealthStatus>(origin, "/api/health"),
-    fetchSurface<VersionInfo>(origin, "/api/version"),
+    fetchSurface<HealthStatus>(apiBase, "/healthz"),
+    fetchSurface<VersionInfo>(apiBase, "/version"),
   ]);
 
   return (

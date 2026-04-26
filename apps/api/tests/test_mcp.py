@@ -15,8 +15,12 @@ async def test_mcp_tools_return_shared_contract_payloads() -> None:
 
     async with Client(create_mcp_server()) as client:
         tools = await client.list_tools()
-        names = {tool.name for tool in tools}
-        assert names == {"health_check", "get_version"}
+        tool_by_name = {tool.name: tool for tool in tools}
+        assert set(tool_by_name) == {"health_check", "get_version"}
+        assert tool_by_name["health_check"].annotations is not None
+        assert tool_by_name["health_check"].annotations.readOnlyHint is True
+        assert tool_by_name["get_version"].annotations is not None
+        assert tool_by_name["get_version"].annotations.readOnlyHint is True
 
         health = await client.call_tool("health_check", {})
         version = await client.call_tool("get_version", {})

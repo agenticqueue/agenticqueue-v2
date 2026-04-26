@@ -10,6 +10,7 @@
     "start:local": "next start --hostname 0.0.0.0 --port 3002",
     "lint": "pnpm gen:types && eslint .",
     "test:e2e": "playwright test",
+    "test:e2e:docker": "cross-env PLAYWRIGHT_USE_DOCKER=1 playwright test e2e/health.spec.ts",
     "gen:types": "openapi-typescript ../../tests/parity/openapi.snapshot.json -o app/types/api.ts"
   },
   "dependencies": {
@@ -30,6 +31,7 @@
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "autoprefixer": "^10.4.21",
+    "cross-env": "^7.0.3",
     "eslint": "^9.25.0",
     "eslint-config-next": "^15.5.6",
     "openapi-typescript": "^7.6.1",
