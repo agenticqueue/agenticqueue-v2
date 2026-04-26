@@ -492,6 +492,32 @@ Capabilities #6 and #12 deliberately implement no new ops — they are use / pac
 
 ---
 
+## Backlog (post-v1 deferred items)
+
+Items that are out of scope for v1 (caps #1–#12) but are explicit deferrals — not silent drops. Each item names the capability/story that deferred it, the source ADR or rationale, and the proposed v1.1+ landing point. When v1 ships, this section is the seed for the v1.1 Brief.
+
+| Item | Source | Reason for deferral | Proposed landing |
+|---|---|---|---|
+| **MCP SSE transport** | Cap #1 / Story 1.4 (AQ2-6) | ADR-AQ-021 lists three MCP transports (stdio, streamable HTTP, SSE). v1 ships stdio (`aq-mcp` binary) + streamable HTTP at `/mcp`. SSE is older spec, mostly redundant with streamable HTTP for our use cases, and adding it now would inflate Story 1.8's parity test surface for marginal gain. Declared as a deviation in cap #1 submission per ADR-AQ-030. | v1.1 — add `aq-mcp-sse` mount + parity test 2b (SSE schema snapshot). One story. |
+| **Docker image publishing** | Cap #12 | Cap #12 ships `pip install` / `uv pip install` only. No Docker image push to a registry (Docker Hub / GHCR). The `docker-compose.yml` from cap #1 builds locally; no published artifact. | v1.1 — GHCR push from `build.yml`, tag = git SHA + `latest`. |
+| **Multi-tenant deployment** | Cap #2 (auth disclaimer) | v1 is "trusted single-instance coordination tool." API keys identify Actors for audit, not authorization. Multi-tenant changes the threat model: per-tenant key scoping, row-level security in Postgres, isolation tests. | v1.1+ — capability of its own. Likely 2–3 capabilities (key scoping → RLS → isolation tests). |
+| **Automated upgrade migrations between versions** | Cap #12 | First-run Alembic migration only; no v0→v1 upgrade UX. Not a problem until there's a real install base. | v1.1 — `aq upgrade` CLI command + Alembic upgrade path. |
+| **Custom field add/extend on Contract Profiles** | Cap #5 | v1 profiles are immutable once registered except for whole-version bumps. No incremental field add. | v1.1 — `version_contract_profile` already exists; add a `patch_contract_profile` op for additive-only changes. |
+| **Multi-hop dependency analysis** | Cap #10 | v1 only does single-hop `gated_on` resolution at submit time. No "show me everything that depends on X transitively" tools. | v1.1 — graph traversal ops (`list_descendants`, `list_ancestors`, `find_cycles`). |
+| **Graph visualization UI view** | Cap #11 | The four read-only views (Pipelines, Workflows, ADRs, Learnings) ship; no graph viz of edges. | v1.1+ — usually a separate workstream; needs a layout engine decision (Cytoscape vs D3 vs hand-rolled SVG). |
+| **Audit-log browser UI** | Cap #11 | Audit log is queryable via CLI/MCP/REST only in v1. | v1.1 — read-only audit view. |
+| **3-tier Learning promotion (job → project → global)** | Cap #9 | v1 ships single-scope Learnings (manual capture + supersede). No promotion ladder. | v1.1+ — would need similarity ranking + dedup (also deferred). |
+| **Learning similarity ranking + dedup + auto-merge** | Cap #9 | v1 ships manual capture only. No FTS, no pgvector, no trgm search on Learnings. | v1.1+ — own workstream; depends on which retrieval stack we standardize. |
+| **Learning auto-draft from run trace** | Cap #9 | v1 Learnings are hand-written. No "AQ proposes a Learning from this run." | v1.1+. |
+| **Bulk operations in UI** | Cap #11 | No bulk Project archive, bulk Job cancel, etc. | v1.1+ if real demand. |
+| **Mobile / tablet UI polish** | Cap #11 | Laptop browser only. | v1.1+. |
+| **Matrix CI (multi Python / Node version)** | Cap #1 / Story 1.9 | Single-config CI: Python 3.12 + Node 20. | v1.1 — add `strategy: matrix` once we have a real reason. |
+| **SBOM / Sigstore / SLSA / OIDC** | Cap #12 | AQ1 Phase 9 items, deliberately dropped from v1 scope. | v1.2+ — only if customer asks. |
+
+When something else gets deferred during execution, add a row here with the same shape (Source / Reason / Proposed landing).
+
+---
+
 ## Log
 
 - 2026-04-26 — Pre-plan approved by Ghost. Capability #1 marked `[ACTIVE]`. Plane epic AQ2-1 + stories AQ2-3..AQ2-11 created. capability-01-plan.md drafted with ADR-AQ-030-shaped DoDs.
