@@ -16,14 +16,4 @@ ok tests/parity/openapi.snapshot.json
 ok tests/parity/mcp_schema.snapshot.json
 ok scripts/validate-cap01.sh
 ok scripts/validate-cap01.ps1
-ok apps/api/pyproject.toml
-ok apps/cli/pyproject.toml
-ok apps/api/.gitkeep
-ok apps/cli/.gitkeep
-ok apps/web/.gitkeep
-ok tests/parity/.gitkeep
-ok plans/v2-rebuild/artifacts/cap-01/.gitkeep
-ok LICENSE attribution
-ok README attribution
-ok CODEOWNERS attribution
 SCAFFOLD_OK

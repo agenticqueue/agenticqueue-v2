@@ -1,10 +1,7 @@
 HTTP/1.1 200 OK
-date: Sun, 26 Apr 2026 15:54:08 GMT
+date: Sun, 26 Apr 2026 20:09:02 GMT
 server: uvicorn
-content-length: 72
+content-length: 76
 content-type: application/json
 
-{"version":"0.1.0","commit":"00a2964","built_at":"2026-04-26T15:54:06Z"}
-
-VERSION_STABLE
-{"version":"0.1.0","commit":"00a2964","built_at":"2026-04-26T15:54:06Z"}
+{"version":"0.0.0-dev","commit":"1ff27c1","built_at":"2026-04-26T20:07:22Z"}

@@ -4,6 +4,10 @@ set -euo pipefail
 ARTIFACT_DIR="plans/v2-rebuild/artifacts/cap-01"
 mkdir -p "$ARTIFACT_DIR"
 
+export AQ_VERSION="${AQ_VERSION:-0.0.0-dev}"
+export AQ_GIT_COMMIT="${AQ_GIT_COMMIT:-$(git rev-parse --short HEAD)}"
+export AQ_BUILT_AT="${AQ_BUILT_AT:-$(date -u +%Y-%m-%dT%H:%M:%S+00:00)}"
+
 {
   test -f pyproject.toml && echo "ok pyproject.toml"
   test -f uv.lock && echo "ok uv.lock"
@@ -31,11 +35,23 @@ git log --oneline -10 > "$ARTIFACT_DIR/git-shas.txt"
 uv run mypy apps/api/src/aq_api/models/ \
   | tee "$ARTIFACT_DIR/typecheck.txt"
 
-docker compose build 2>&1 | tee "$ARTIFACT_DIR/docker-build.txt"
-docker compose up -d 2>&1 | tee "$ARTIFACT_DIR/docker-up.txt"
+docker compose down --remove-orphans
+docker compose build --no-cache 2>&1 | tee "$ARTIFACT_DIR/docker-build.txt"
+docker compose up -d --wait 2>&1 | tee "$ARTIFACT_DIR/docker-up.txt"
 until curl -sf http://localhost:8001/healthz; do sleep 1; done
 echo "API healthy at $(date -u +%FT%TZ)" \
   | tee "$ARTIFACT_DIR/docker-healthcheck.txt"
+
+python - <<'PY'
+import json
+import subprocess
+import urllib.request
+
+sha = subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
+version = json.loads(urllib.request.urlopen("http://localhost:8001/version").read())
+assert version["commit"] == sha, f"commit mismatch: {version['commit']} vs {sha}"
+print(f"COMMIT_MATCHES_HEAD {sha}")
+PY
 
 curl -i http://localhost:8001/healthz \
   | tee "$ARTIFACT_DIR/rest-healthz.txt"
@@ -52,11 +68,20 @@ uv run python -m tests.parity.mcp_harness health_check \
 uv run python -m tests.parity.mcp_harness get_version \
   | tee "$ARTIFACT_DIR/mcp-version.txt"
 
-(cd apps/web && pnpm playwright test e2e/health.spec.ts)
+PLAYWRIGHT_USE_DOCKER=1 pnpm --filter @agenticqueue/web exec playwright test e2e/health.spec.ts
 
-curl -s http://localhost:8001/openapi.json | jq . \
-  > "$ARTIFACT_DIR/openapi.json"
-diff "$ARTIFACT_DIR/openapi.json" tests/parity/openapi.snapshot.json
+python - <<'PY' > "$ARTIFACT_DIR/openapi.json"
+import json
+import urllib.request
+
+payload = json.loads(urllib.request.urlopen("http://localhost:8001/openapi.json").read())
+print(json.dumps(payload, indent=2))
+PY
+if diff "$ARTIFACT_DIR/openapi.json" tests/parity/openapi.snapshot.json > "$ARTIFACT_DIR/openapi-diff.txt"; then
+  echo "OPENAPI_DIFF_EMPTY" > "$ARTIFACT_DIR/openapi-diff.txt"
+else
+  exit $?
+fi
 
 uv run pytest tests/parity/ \
   --junit-xml="$ARTIFACT_DIR/parity-test-report.xml"

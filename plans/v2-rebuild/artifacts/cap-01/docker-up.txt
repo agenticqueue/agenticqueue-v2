@@ -10,7 +10,7 @@
  Container mmmmm-aq20-api-1 Healthy
  Container mmmmm-aq20-web-1 Starting
  Container mmmmm-aq20-web-1 Started
- Container mmmmm-aq20-web-1 Waiting
  Container mmmmm-aq20-api-1 Waiting
+ Container mmmmm-aq20-web-1 Waiting
  Container mmmmm-aq20-api-1 Healthy
  Container mmmmm-aq20-web-1 Healthy
