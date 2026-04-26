@@ -1,6 +1,6 @@
 # Capabilities — AgenticQueue 2.0 (v2-rebuild)
 
-Status: Drafting (awaiting Ghost approval at the Pre-plan gate)
+Status: Approved — Capability #1 plan ratified (Plane epic AQ2-1, stories AQ2-3..AQ2-11 in `backlog`). Flips to in-progress when AQ2-3 transitions to `todo` and the executor claims it.
 Effort: v2-rebuild
 Brief: [brief.md](brief.md)
 Lexicon: [ADR-AQ-019](../../../mmmmm-agenticqueue/adrs/ADR-AQ-019-lexicon.md)
@@ -55,7 +55,7 @@ v1 seeded profiles: `coding-task`, `bug-fix`, `docs-task`, `research-decision`.
 
 ## Capability list (ordered, dogfood at #6)
 
-1. `[ ]` Four-surface ping — one canonical operation contract round-trips through REST + CLI + MCP + UI
+1. `[ ]` Four-surface ping — one canonical operation contract round-trips through REST + CLI + MCP + UI (plan ratified; awaiting execution start)
 2. `[ ]` Actor identity, Bearer auth, and same-transaction audit log
 3. `[ ]` Project, Workflow, Pipeline, and Job entities exist with full CRUD; one seeded static Workflow template ships
 4. `[ ]` A Job can be claimed atomically — two Actors race, exactly one wins
@@ -494,4 +494,6 @@ Capabilities #6 and #12 deliberately implement no new ops — they are use / pac
 
 ## Log
 
-(empty until capabilities start being marked `[ACTIVE]` or `[DONE]`)
+- 2026-04-26 — Pre-plan approved by Ghost. Capability #1 marked `[ACTIVE]`. Plane epic AQ2-1 + stories AQ2-3..AQ2-11 created. capability-01-plan.md drafted with ADR-AQ-030-shaped DoDs.
+- 2026-04-26 — Codex review pass: timestamp parity loosened to "valid + recent" (not byte-equal); MCP transports clarified per ADR-AQ-021 (stdio via `aq-mcp` + streamable HTTP at `/mcp`; SSE deferred); `gen:types` reads committed OpenAPI snapshot (not live HTTP); validation script split into `.sh` + `.ps1`; Stories 1.8/1.9 swapped (Parity tests before CI workflows so CI references real test files); Web UI proxies to API via `app/api/health` + `app/api/version` route handlers (no CORS); scaffold expanded with lockfiles + workspace + framework configs.
+- 2026-04-26 — Codex audit pass 2: (P1) folded ticket-body corrections into canonical bodies for AQ2-2..AQ2-11; (P1) added Plane `blocked_by` edges so dependency order is enforced by tooling not prose; (P1) fixed Story 1.7 Docker build context to repo root with `dockerfile:` paths and specified concrete healthcheck commands; (P2) reconciled `capabilities.md` cap-#1 status from `[ACTIVE]` back to `[ ]` until AQ2-3 transitions to `todo` (matches Plane truth).
