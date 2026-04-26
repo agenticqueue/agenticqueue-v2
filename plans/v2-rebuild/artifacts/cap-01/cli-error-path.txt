@@ -1,0 +1,5 @@
+exit_code=1
+stdout:
+stderr:
+{"error":"request_error","message":"[WinError 10061] No connection could be made because the target machine actively refused it","type":"ConnectError","url":"http://localhost:9/healthz"}
+CLI_ERROR_OK
