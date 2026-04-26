@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 
+from aq_api._datetime import parse_utc
 from aq_api.app import app
 from aq_api.models import HealthStatus, VersionInfo
 from fastapi.testclient import TestClient
@@ -7,10 +8,17 @@ from fastapi.testclient import TestClient
 client = TestClient(app)
 
 
-def _parse_utc(value: str) -> datetime:
-    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    assert parsed.tzinfo is not None
-    return parsed.astimezone(UTC)
+def test_parse_utc_accepts_z_suffix() -> None:
+    assert parse_utc("2026-04-26T15:55:14.282174Z") == datetime(
+        2026,
+        4,
+        26,
+        15,
+        55,
+        14,
+        282174,
+        tzinfo=UTC,
+    )
 
 
 def test_healthz_returns_valid_health_status() -> None:
@@ -22,7 +30,7 @@ def test_healthz_returns_valid_health_status() -> None:
     payload = response.json()
     status = HealthStatus.model_validate(payload)
     assert status.status == "ok"
-    assert before <= _parse_utc(payload["timestamp"]) <= after
+    assert before <= parse_utc(payload["timestamp"]) <= after
 
 
 def test_version_returns_process_stable_version_info() -> None:
@@ -37,10 +45,12 @@ def test_version_returns_process_stable_version_info() -> None:
 
 def test_openapi_documents_health_and_version() -> None:
     response = client.get("/openapi.json")
+    version_response = client.get("/version")
 
     assert response.status_code == 200
+    assert version_response.status_code == 200
     payload = response.json()
-    assert payload["info"]["version"] == "0.1.0"
+    assert payload["info"]["version"] == version_response.json()["version"]
     paths = payload["paths"]
     assert paths["/healthz"]["get"]["responses"]["200"]
     assert paths["/version"]["get"]["responses"]["200"]

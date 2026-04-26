@@ -7,13 +7,6 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
     "aq-api",
     "aq-cli",
-    "fastapi>=0.115,<1",
-    "fastmcp>=2.3,<3",
-    "httpx>=0.28,<1",
-    "mcp>=1.2,<2",
-    "pydantic>=2,<3",
-    "typer>=0.15,<1",
-    "uvicorn[standard]>=0.34,<1",
 ]
 
 [project.scripts]

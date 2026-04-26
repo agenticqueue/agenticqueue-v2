@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 
 from fastapi import FastAPI
 
+from aq_api._datetime import parse_utc
 from aq_api.models import HealthStatus, VersionInfo
 
 AQ_VERSION_ENV = "AQ_VERSION"
@@ -11,7 +12,7 @@ AQ_GIT_COMMIT_ENV = "AQ_GIT_COMMIT"
 AQ_BUILT_AT_ENV = "AQ_BUILT_AT"
 DEFAULT_VERSION = "0.0.0-dev"
 FALLBACK_COMMIT = "0000000"
-OPENAPI_VERSION = "0.1.0"
+OPENAPI_VERSION = os.getenv(AQ_VERSION_ENV, DEFAULT_VERSION)
 
 
 def _git_short_sha() -> str:
@@ -27,21 +28,18 @@ def _git_short_sha() -> str:
     return result.stdout.strip() or FALLBACK_COMMIT
 
 
-def _parse_utc_datetime(value: str) -> datetime:
-    return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(UTC)
-
-
 def _load_version_info() -> VersionInfo:
     built_at = os.getenv(AQ_BUILT_AT_ENV)
     return VersionInfo(
         version=os.getenv(AQ_VERSION_ENV, DEFAULT_VERSION),
         commit=os.getenv(AQ_GIT_COMMIT_ENV, _git_short_sha()),
-        built_at=_parse_utc_datetime(built_at) if built_at else datetime.now(UTC),
+        built_at=parse_utc(built_at) if built_at else datetime.now(UTC),
     )
 
 
 VERSION_INFO = _load_version_info()
 
+# OpenAPI uses the same env-driven version path as the runtime `/version` surface.
 app = FastAPI(title="AgenticQueue 2.0 API", version=OPENAPI_VERSION)
 
 
