@@ -1,0 +1,6 @@
+ok pyproject.toml parses
+workspace=['apps/api', 'apps/cli']
+aq=aq_cli.main:app
+aq-mcp=aq_api.mcp:stdio_main
+ok fastmcp>=2.3,<3
+ok mcp>=1.2,<2
