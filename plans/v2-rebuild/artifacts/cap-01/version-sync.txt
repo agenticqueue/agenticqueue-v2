@@ -1,0 +1,7 @@
+healthz_status:
+ok
+version_endpoint:
+0.0.0-dev
+openapi_info_version:
+0.0.0-dev
+VERSION_SYNC_OK

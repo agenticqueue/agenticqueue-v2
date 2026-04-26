@@ -207,7 +207,30 @@ Plus: a database migration that seeds the v1 Contract Profiles (`coding-task`, `
 - `release_job` — `POST /jobs/{id}/release`, `aq release`, MCP `release_job`. Claimant only. Job returns to `ready`.
 - `reset_claim` — `POST /jobs/{id}/reset-claim` with required `reason`, `aq job reset-claim`, MCP `reset_claim`. Any key. Job returns to `ready`.
 
-**Validation summary:** Create a Project, Pipeline, two `ready` Jobs. Two CLI clients (different keys) call `aq claim` simultaneously on the same Project; assert one gets a Job ID and the other gets the second Job (or null if there's only one). Re-run with one Job — exactly one client gets it, the other gets `None`. From the winner, call `aq release` — Job returns to `ready`. Re-claim, then from a different key call `aq job reset-claim --reason "claimant crashed"` — Job returns to `ready` and the audit log shows the reason. Run the race 50× to confirm no double-claim.
+**MCP richness (required from this capability forward — sets the pattern for every later cap):**
+
+Cap #1 ships only `health_check` + `get_version`, which are trivially safe and self-explanatory. Starting at this capability, every MCP op MUST layer in MCP-spec features beyond the basic input/output schema:
+
+1. **Server-level instructions** (one-time, on the AQ MCP server itself, not per-tool). Add a `mcp.set_instructions(...)` block that surfaces to the agent the moment the server connects:
+   - "Pass `agent_identity` (the API key alias) on every call. AQ does not infer it."
+   - "Errors come back as structured objects: `{error_code, rule_violated, details}`. Do NOT retry on `rule_violated` — it indicates a fixable client mistake (wrong claimant, wrong state, missing field), not a transient failure."
+   - "After a successful `claim_next_job`, the next call should be `get_packet` if you didn't cache the response — the claim already returns a Packet inline (cap #8) but `get_packet` is idempotent and safe to re-call."
+2. **Tool annotations** per [MCP spec](https://modelcontextprotocol.io/specification/) — set explicitly on every tool, not defaulted:
+   - `claim_next_job`, `release_job`, `reset_claim` → `destructiveHint: true`, `idempotentHint: false` (state-changing).
+   - `get_job`, `list_jobs`, `whoami` (and every read-only op) → `readOnlyHint: true`.
+   - These let hosts like Claude Code skip the approval prompt for read-only ops and gate destructive ops behind explicit consent.
+3. **Tool descriptions** — auto-derived from the Pydantic model docstrings + a per-op "why-to-use / when-to-use" line authored in the MCP tool definition (NOT in the model). Description must answer: *what the tool does, what state it requires, what it returns, what to call next*.
+4. **Output content bundling** — `claim_next_job` returns a multi-part MCP content list:
+   - The Job itself (structured Pydantic dump as JSON content).
+   - The Context Packet object (cap #8 link-only nav) inline so the agent doesn't need a second round-trip.
+   - A natural-language `text` block: "You claimed AQ-123. Required next: read the Contract Profile (`describe_contract_profile`) and the previous 2 Jobs in the Sequence."
+5. **Tool input-schema field descriptions** — every Pydantic field used as an MCP tool argument carries a docstring; FastMCP auto-derives JSON Schema `description`s from those docstrings. No second source of truth.
+
+**Resources and Prompts** layer in at later caps where they actually have content to serve:
+- **Resources** (URI-addressable on-demand content): land in cap #5 (`aq://policies/contract-profile/{name}`) and cap #11 (Workflow / Pipeline / ADR / Learning resources by URI).
+- **Prompts** (server-defined slash-command templates): land in cap #6 dogfood — one prompt template `/aq-claim-and-work` wrapping the standard claim → read-packet → submit pattern.
+
+**Validation summary:** Create a Project, Pipeline, two `ready` Jobs. Two CLI clients (different keys) call `aq claim` simultaneously on the same Project; assert one gets a Job ID and the other gets the second Job (or null if there's only one). Re-run with one Job — exactly one client gets it, the other gets `None`. From the winner, call `aq release` — Job returns to `ready`. Re-claim, then from a different key call `aq job reset-claim --reason "claimant crashed"` — Job returns to `ready` and the audit log shows the reason. Run the race 50× to confirm no double-claim. **Plus MCP richness checks:** call MCP `tools/list`, assert `claim_next_job` has `destructiveHint=true` and `readOnlyHint=false`; call `get_job` and assert `readOnlyHint=true`; call MCP server `instructions` endpoint, assert it returns the agent_identity + error-shape rules; call `claim_next_job` from a real MCP client and assert the response is a multi-part content list including a Packet block and a next-step text hint.
 
 **Status:** `[ ]`
 
@@ -237,6 +260,20 @@ Plus: a database migration that seeds the v1 Contract Profiles (`coding-task`, `
 - `review_complete` — `POST /jobs/{id}/review-complete` with `final_outcome ∈ {done, failed}`, `aq review-complete`, MCP `review_complete`. Any key. Only valid when Job is in `pending_review`.
 - `register_contract_profile` — `POST /profiles`, `aq profile register`, MCP `register_contract_profile`. Validates against ADR-AQ-030 minimum_claimable_invariants before activation.
 - `version_contract_profile` — `POST /profiles/{name}/versions`, `aq profile bump`, MCP `version_contract_profile`. Existing claimed Jobs frozen on their version.
+
+**MCP richness (extends the cap #4 pattern):**
+
+Continue the MCP-richness pattern established in cap #4. Specifically for this capability:
+
+1. **`submit_job` annotations** — `destructiveHint: true`, `idempotentHint: false` (terminal state transition). Description must spell out the four outcomes and the per-outcome required fields, and link to the Contract Profile schema the payload validates against.
+2. **`submit_job` output bundling** — on success returns multi-part content: the updated Job dump + the new Run Ledger row reference (cap #7 has the actual op; here we emit the row and return its ID inline) + a `text` block with the next-step hint ("Job is now `done`. If any downstream Jobs were `gated_on` this one, they may have been auto-promoted to `ready` (cap #10's resolver) — call `list_jobs?state=ready` to see what's claimable.").
+3. **MCP `Resources` start here** — register URI-addressable resources for Contract Profiles:
+   - `aq://policies/contract-profile/{name}` returns the full ADR-AQ-030-shaped profile JSON for `{name}`.
+   - `aq://policies/contract-profile/{name}@v{version}` returns a specific frozen version (since profiles are versioned; existing claimed Jobs reference their snapshotted version).
+   - These let an agent fetch the schema it needs to validate its submission *before* calling `submit_job`, instead of getting back a 422 and retrying.
+   - Resource metadata MUST include a stable `mimeType: "application/schema+json"` so MCP hosts can render appropriately.
+4. **`register_contract_profile` annotations** — `destructiveHint: false, idempotentHint: false` (creates a new profile; not destructive in the data-loss sense, but state-changing).
+5. **`register_contract_profile` description** — must instruct the agent to first call the existing Resources (`aq://policies/...`) to see what profiles already exist, and only register a new one if no existing profile fits. Reduces accidental profile sprawl.
 
 **Validation summary:** Register a custom Contract Profile (or use seeded `coding-task`). Create a Job, claim it, submit with `outcome=done` and a complete payload — Job transitions to `done`, Run Ledger has an entry, audit row written. Submit a different Job with an invalid payload (missing required field) — submit returns 422 with the schema error, Job stays in `in_progress`. Submit one with `outcome=pending_review` — Job lands in `pending_review`. From a different key, call `review_complete --final-outcome done` — Job is `done`. Submit one with `outcome=failed` — Job is `failed`. Submit one with `outcome=blocked` and `gated_on_job_id=<other_id>` — Job is `blocked` and the gated-on field is recorded (the auto-resolution wiring lands in #10). Try to submit a `done` Job again — rejected as terminal. Try to submit as a non-claimant — 403.
 
@@ -489,6 +526,32 @@ Plus: the UI itself — Next.js app with four read-only views that call existing
 **Op count: 56.** (3 system + 5 identity/keys + 5 project + 3 labels + 5 workflow + 5 pipeline + 9 job lifecycle + 1 reset_claim + 1 review_complete + 3 edges + 4 contract profile + 4 decision + 4 learning + 2 run ledger + 1 packet + 1 audit. Capability #1 covers 2 ops; #2 covers 6; #3 covers 26; #4 covers 3; #5 covers 4; #6 covers 0 new (dogfood-only); #7 covers 2; #8 covers 1; #9 covers 8; #10 covers 3; #11 covers 1; #12 covers 0 new. Sum: 2+6+26+3+4+0+2+1+8+3+1+0 = 56. ✓)
 
 Capabilities #6 and #12 deliberately implement no new ops — they are use / packaging capabilities that compose existing ops. Every other op appears under exactly one capability.
+
+---
+
+## Backlog (post-v1 deferred items)
+
+Items that are out of scope for v1 (caps #1–#12) but are explicit deferrals — not silent drops. Each item names the capability/story that deferred it, the source ADR or rationale, and the proposed v1.1+ landing point. When v1 ships, this section is the seed for the v1.1 Brief.
+
+| Item | Source | Reason for deferral | Proposed landing |
+|---|---|---|---|
+| **MCP SSE transport** | Cap #1 / Story 1.4 (AQ2-6) | ADR-AQ-021 lists three MCP transports (stdio, streamable HTTP, SSE). v1 ships stdio (`aq-mcp` binary) + streamable HTTP at `/mcp`. SSE is older spec, mostly redundant with streamable HTTP for our use cases, and adding it now would inflate Story 1.8's parity test surface for marginal gain. Declared as a deviation in cap #1 submission per ADR-AQ-030. | v1.1 — add `aq-mcp-sse` mount + parity test 2b (SSE schema snapshot). One story. |
+| **Docker image publishing** | Cap #12 | Cap #12 ships `pip install` / `uv pip install` only. No Docker image push to a registry (Docker Hub / GHCR). The `docker-compose.yml` from cap #1 builds locally; no published artifact. | v1.1 — GHCR push from `build.yml`, tag = git SHA + `latest`. |
+| **Multi-tenant deployment** | Cap #2 (auth disclaimer) | v1 is "trusted single-instance coordination tool." API keys identify Actors for audit, not authorization. Multi-tenant changes the threat model: per-tenant key scoping, row-level security in Postgres, isolation tests. | v1.1+ — capability of its own. Likely 2–3 capabilities (key scoping → RLS → isolation tests). |
+| **Automated upgrade migrations between versions** | Cap #12 | First-run Alembic migration only; no v0→v1 upgrade UX. Not a problem until there's a real install base. | v1.1 — `aq upgrade` CLI command + Alembic upgrade path. |
+| **Custom field add/extend on Contract Profiles** | Cap #5 | v1 profiles are immutable once registered except for whole-version bumps. No incremental field add. | v1.1 — `version_contract_profile` already exists; add a `patch_contract_profile` op for additive-only changes. |
+| **Multi-hop dependency analysis** | Cap #10 | v1 only does single-hop `gated_on` resolution at submit time. No "show me everything that depends on X transitively" tools. | v1.1 — graph traversal ops (`list_descendants`, `list_ancestors`, `find_cycles`). |
+| **Graph visualization UI view** | Cap #11 | The four read-only views (Pipelines, Workflows, ADRs, Learnings) ship; no graph viz of edges. | v1.1+ — usually a separate workstream; needs a layout engine decision (Cytoscape vs D3 vs hand-rolled SVG). |
+| **Audit-log browser UI** | Cap #11 | Audit log is queryable via CLI/MCP/REST only in v1. | v1.1 — read-only audit view. |
+| **3-tier Learning promotion (job → project → global)** | Cap #9 | v1 ships single-scope Learnings (manual capture + supersede). No promotion ladder. | v1.1+ — would need similarity ranking + dedup (also deferred). |
+| **Learning similarity ranking + dedup + auto-merge** | Cap #9 | v1 ships manual capture only. No FTS, no pgvector, no trgm search on Learnings. | v1.1+ — own workstream; depends on which retrieval stack we standardize. |
+| **Learning auto-draft from run trace** | Cap #9 | v1 Learnings are hand-written. No "AQ proposes a Learning from this run." | v1.1+. |
+| **Bulk operations in UI** | Cap #11 | No bulk Project archive, bulk Job cancel, etc. | v1.1+ if real demand. |
+| **Mobile / tablet UI polish** | Cap #11 | Laptop browser only. | v1.1+. |
+| **Matrix CI (multi Python / Node version)** | Cap #1 / Story 1.9 | Single-config CI: Python 3.12 + Node 20. | v1.1 — add `strategy: matrix` once we have a real reason. |
+| **SBOM / Sigstore / SLSA / OIDC** | Cap #12 | AQ1 Phase 9 items, deliberately dropped from v1 scope. | v1.2+ — only if customer asks. |
+
+When something else gets deferred during execution, add a row here with the same shape (Source / Reason / Proposed landing).
 
 ---
 

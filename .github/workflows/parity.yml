@@ -1,0 +1,81 @@
+name: parity
+
+on:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 10.33.2
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+
+      - run: uv sync --frozen
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm --filter @agenticqueue/web exec playwright install --with-deps chromium
+
+      - name: Set compose build stamps
+        run: |
+          echo "AQ_VERSION=0.0.0-ci" >> "$GITHUB_ENV"
+          echo "AQ_GIT_COMMIT=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+          echo "AQ_BUILT_AT=$(date -u +%Y-%m-%dT%H:%M:%S+00:00)" >> "$GITHUB_ENV"
+
+      - run: docker compose build
+
+      - run: docker compose up -d --wait
+
+      - name: Assert image commit matches HEAD
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+          import urllib.request
+
+          sha = subprocess.run(
+              ["git", "rev-parse", "--short", "HEAD"],
+              capture_output=True,
+              check=True,
+              text=True,
+          ).stdout.strip()
+          version = json.loads(urllib.request.urlopen("http://localhost:8001/version").read())
+          assert version["commit"] == sha, f"commit mismatch: {version['commit']} vs {sha}"
+          print("COMMIT_MATCHES_HEAD")
+          PY
+
+      - run: uv run pytest tests/parity/ --junit-xml=cap-01-parity.xml
+        env:
+          AQ_API_URL: http://localhost:8001
+          PLAYWRIGHT_USE_DOCKER: "1"
+
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cap-01-parity-junit
+          path: cap-01-parity.xml
+
+      - if: always()
+        run: docker compose down

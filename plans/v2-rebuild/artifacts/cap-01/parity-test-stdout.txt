@@ -1,0 +1,17 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.11, pytest-8.4.2, pluggy-1.6.0 -- D:\mmmmm\mmmmm-aq2.0\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: D:\mmmmm\mmmmm-aq2.0
+configfile: pyproject.toml
+plugins: anyio-4.13.0, asyncio-0.26.0
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 5 items
+
+tests/parity/test_four_surface_parity.py::test_openapi_snapshot_matches_live_api PASSED [ 20%]
+tests/parity/test_four_surface_parity.py::test_mcp_schema_snapshot_matches_live_tools PASSED [ 40%]
+tests/parity/test_four_surface_parity.py::test_rest_and_cli_payloads_match PASSED [ 60%]
+tests/parity/test_four_surface_parity.py::test_rest_and_mcp_payloads_match PASSED [ 80%]
+tests/parity/test_four_surface_parity.py::test_web_and_rest_payloads_match_via_playwright PASSED [100%]
+
+- generated xml file: D:\mmmmm\mmmmm-aq2.0\plans\v2-rebuild\artifacts\cap-01\parity-test-report.xml -
+============================== 5 passed in 5.12s ==============================

@@ -1,0 +1,98 @@
+PR: https://github.com/agenticqueue/agenticqueue-v2/pull/1
+Captured at: 2026-04-26T20:15:48Z
+Captured HEAD: fa39942
+
+## gh pr checks
+build	pass	1m32s	https://github.com/agenticqueue/agenticqueue-v2/actions/runs/24965985720/job/73100723528
+lint	pass	27s	https://github.com/agenticqueue/agenticqueue-v2/actions/runs/24965985735/job/73100723529
+parity	pass	1m54s	https://github.com/agenticqueue/agenticqueue-v2/actions/runs/24965985719/job/73100723573
+test	pass	2m32s	https://github.com/agenticqueue/agenticqueue-v2/actions/runs/24965985718/job/73100723547
+
+## lint
+https://github.com/agenticqueue/agenticqueue-v2/actions/runs/24965985735
+
+✓ aq2-cap-01 lint agenticqueue/agenticqueue-v2#1 · 24965985735
+Triggered via pull_request about 3 minutes ago
+
+JOBS
+✓ lint in 27s (ID 73100723529)
+
+ANNOTATIONS
+! Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, actions/setup-node@v4, actions/setup-python@v5, astral-sh/setup-uv@v3, pnpm/action-setup@v3. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+lint: .github#2
+
+! Failed to save: <h2>Our services aren't available right now</h2><p>We're working to restore all services as soon as possible. Please check back soon.</p>0zXHuaQAAAABLUF2bcyASTJQ6VyJOh/h5UEhYMzFFREdFMDYxMwBFZGdl
+lint: .github#5
+
+! Failed to restore: Cache service responded with 400
+lint: .github#26
+
+
+For more information about the job, try: gh run view --job=73100723529
+View this run on GitHub: https://github.com/agenticqueue/agenticqueue-v2/actions/runs/24965985735
+
+## test
+https://github.com/agenticqueue/agenticqueue-v2/actions/runs/24965985718
+
+✓ aq2-cap-01 test agenticqueue/agenticqueue-v2#1 · 24965985718
+Triggered via pull_request about 3 minutes ago
+
+JOBS
+✓ test in 2m32s (ID 73100723547)
+
+ANNOTATIONS
+! Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, actions/setup-node@v4, actions/setup-python@v5, astral-sh/setup-uv@v3, pnpm/action-setup@v3. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+test: .github#2
+
+! Failed to save: <h2>Our services aren't available right now</h2><p>We're working to restore all services as soon as possible. Please check back soon.</p>0SXLuaQAAAADg6Jmf+blOQ4QZfKuLslArUEFPRURHRTA1MDcARWRnZQ==
+test: .github#5
+
+! Failed to restore: Cache service responded with 400
+test: .github#26
+
+
+For more information about the job, try: gh run view --job=73100723547
+View this run on GitHub: https://github.com/agenticqueue/agenticqueue-v2/actions/runs/24965985718
+
+## build
+https://github.com/agenticqueue/agenticqueue-v2/actions/runs/24965985720
+
+✓ aq2-cap-01 build agenticqueue/agenticqueue-v2#1 · 24965985720
+Triggered via pull_request about 3 minutes ago
+
+JOBS
+✓ build in 1m32s (ID 73100723528)
+
+ANNOTATIONS
+! Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, docker/setup-buildx-action@v3. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+build: .github#2
+
+
+For more information about the job, try: gh run view --job=73100723528
+View this run on GitHub: https://github.com/agenticqueue/agenticqueue-v2/actions/runs/24965985720
+
+## parity
+https://github.com/agenticqueue/agenticqueue-v2/actions/runs/24965985719
+
+✓ aq2-cap-01 parity agenticqueue/agenticqueue-v2#1 · 24965985719
+Triggered via pull_request about 3 minutes ago
+
+JOBS
+✓ parity in 1m54s (ID 73100723573)
+
+ANNOTATIONS
+! Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, actions/setup-node@v4, actions/setup-python@v5, actions/upload-artifact@v4, astral-sh/setup-uv@v3, pnpm/action-setup@v3. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+parity: .github#2
+
+! Failed to save: <h2>Our services aren't available right now</h2><p>We're working to restore all services as soon as possible. Please check back soon.</p>0I3LuaQAAAADxySEyP7+USa1zM/gAVFtJUEhYMzFFREdFMDYxNQBFZGdl
+parity: .github#5
+
+! Failed to restore: Cache service responded with 400
+parity: .github#26
+
+
+ARTIFACTS
+cap-01-parity-junit
+
+For more information about the job, try: gh run view --job=73100723573
+View this run on GitHub: https://github.com/agenticqueue/agenticqueue-v2/actions/runs/24965985719

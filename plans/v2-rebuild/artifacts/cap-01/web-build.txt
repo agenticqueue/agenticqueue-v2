@@ -1,0 +1,35 @@
+
+> @agenticqueue/web@0.1.0 build D:\mmmmm\mmmmm-aq2.0\apps\web
+> pnpm gen:types && next build
+
+
+> @agenticqueue/web@0.1.0 gen:types D:\mmmmm\mmmmm-aq2.0\apps\web
+> openapi-typescript ../../tests/parity/openapi.snapshot.json -o app/types/api.ts
+
+✨ openapi-typescript 7.13.0
+🚀 ../../tests/parity/openapi.snapshot.json → app/types/api.ts [23ms]
+   ▲ Next.js 15.5.15
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 2.8s
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/3) ...
+ ✓ Generating static pages (3/3)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ƒ /                                      131 B         102 kB
+├ ○ /_not-found                            988 B         103 kB
+├ ƒ /api/health                            131 B         102 kB
+└ ƒ /api/version                           131 B         102 kB
++ First Load JS shared by all             102 kB
+  ├ chunks/40431421-4ca4396edd5d645a.js  54.2 kB
+  ├ chunks/628-d761323f3500a9ba.js         46 kB
+  └ other shared chunks (total)          1.97 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

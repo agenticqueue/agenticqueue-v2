@@ -1,0 +1,5 @@
+aq health
+{"status":"ok","timestamp":"2026-04-26T19:10:59.227384Z"}
+
+aq version
+{"version":"0.0.0-dev","commit":"0d698f6","built_at":"2026-04-26T19:09:04Z"}

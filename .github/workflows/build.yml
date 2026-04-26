@@ -1,0 +1,24 @@
+name: build
+
+on:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Set compose build stamps
+        run: |
+          echo "AQ_VERSION=0.0.0-ci" >> "$GITHUB_ENV"
+          echo "AQ_GIT_COMMIT=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+          echo "AQ_BUILT_AT=$(date -u +%Y-%m-%dT%H:%M:%S+00:00)" >> "$GITHUB_ENV"
+
+      - run: docker compose build

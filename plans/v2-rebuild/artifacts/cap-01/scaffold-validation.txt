@@ -1,0 +1,19 @@
+ok pyproject.toml
+ok uv.lock
+ok package.json
+ok pnpm-workspace.yaml
+ok pnpm-lock.yaml
+ok docker-compose.yml
+ok .dockerignore
+ok .gitignore
+ok .editorconfig
+ok .gitattributes
+ok LICENSE
+ok README.md
+ok AUTHORS.md
+ok .github/CODEOWNERS
+ok tests/parity/openapi.snapshot.json
+ok tests/parity/mcp_schema.snapshot.json
+ok scripts/validate-cap01.sh
+ok scripts/validate-cap01.ps1
+SCAFFOLD_OK

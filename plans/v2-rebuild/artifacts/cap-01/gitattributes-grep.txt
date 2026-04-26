@@ -1,0 +1,2 @@
+ok plans/**/artifacts/**/*.png binary
+ok plans/**/artifacts/**/*.xml binary

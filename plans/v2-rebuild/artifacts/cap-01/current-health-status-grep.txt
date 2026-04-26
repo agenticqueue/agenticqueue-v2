@@ -1,0 +1,5 @@
+D:\mmmmm\mmmmm-aq2.0\apps\api\src\aq_api\_health.py:6:def current_health_status() -> HealthStatus:
+D:\mmmmm\mmmmm-aq2.0\apps\api\src\aq_api\app.py:3:from aq_api._health import current_health_status
+D:\mmmmm\mmmmm-aq2.0\apps\api\src\aq_api\app.py:18:return current_health_status()
+D:\mmmmm\mmmmm-aq2.0\apps\api\src\aq_api\mcp.py:3:from aq_api._health import current_health_status
+D:\mmmmm\mmmmm-aq2.0\apps\api\src\aq_api\mcp.py:23:return current_health_status()

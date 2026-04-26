@@ -1,0 +1,10 @@
+1ff27c1 [AQ2-11] Add cap 01 CI workflows
+cbc5d1b [AQ2-10] Add four-surface parity tests
+0f897d5 [fix] cap-01 web Docker render + KISS/DRY follow-ups
+c8a7bee plan(v2-rebuild): cap #4 + #5 — require MCP richness beyond basic API
+c04d14b [AQ2-9] Add Docker compose stack
+0d698f6 plan(v2-rebuild): add Backlog section to capabilities.md
+1291786 [AQ2-8] Add read-only Next.js health page
+bce8b05 [AQ2-7] Add Typer CLI surface
+f2ac8d6 [AQ2-6] Add FastMCP transports
+d8cfa91 [refactor] cap-01 small cleanups — extract UTC parser, sync version source, dedupe root pyproject
