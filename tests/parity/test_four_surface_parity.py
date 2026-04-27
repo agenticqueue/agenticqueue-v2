@@ -13,6 +13,7 @@ from typing import Any
 
 import httpx
 import psycopg
+import pytest
 from aq_api._datetime import parse_utc
 from aq_api.models import HealthStatus, VersionInfo
 
@@ -205,13 +206,16 @@ def _pnpm_executable() -> str:
 
 
 def _git_short_sha() -> str:
-    result = subprocess.run(
-        ["git", "rev-parse", "--short", "HEAD"],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    return result.stdout.strip()
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return result.stdout.strip()
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return os.getenv("AQ_GIT_COMMIT", "0000000")[:7]
 
 
 def _assert_commit_matches_head(version: dict[str, Any]) -> None:
@@ -316,10 +320,14 @@ def test_web_and_rest_payloads_match_via_playwright(
     env = os.environ.copy()
     env["AQ_API_URL"] = api_base_url
     env["PLAYWRIGHT_USE_DOCKER"] = "1"
+    try:
+        pnpm = _pnpm_executable()
+    except FileNotFoundError as exc:
+        pytest.skip(str(exc))
 
     result = subprocess.run(
         [
-            _pnpm_executable(),
+            pnpm,
             "--filter",
             "@agenticqueue/web",
             "exec",
@@ -351,10 +359,16 @@ def test_whoami_matches_rest_cli_mcp_and_reads_do_not_audit(
     api_base_url: str,
     mcp_base_url: str,
     founder_key: str,
+    founder_actor_id: str,
     artifact_dir: Path,
     redact_evidence: Any,
 ) -> None:
-    before_audit = _get_json(f"{api_base_url}/audit", api_key=founder_key)
+    audit_params = {"actor": founder_actor_id}
+    before_audit = _get_json(
+        f"{api_base_url}/audit",
+        api_key=founder_key,
+        params=audit_params,
+    )
     rest = _get_json(f"{api_base_url}/actors/me", api_key=founder_key)
     cli = _run_cli("whoami", api_base_url, api_key=founder_key)
     mcp = _call_mcp_tool(
@@ -364,12 +378,20 @@ def test_whoami_matches_rest_cli_mcp_and_reads_do_not_audit(
         api_key=founder_key,
         arguments={"agent_identity": "parity-whoami"},
     )
-    actor_list = _get_json(f"{api_base_url}/actors", api_key=founder_key)
-    after_audit = _get_json(f"{api_base_url}/audit", api_key=founder_key)
+    actor_list = _get_json(
+        f"{api_base_url}/actors",
+        api_key=founder_key,
+        params={"limit": 200},
+    )
+    after_audit = _get_json(
+        f"{api_base_url}/audit",
+        api_key=founder_key,
+        params=audit_params,
+    )
 
     assert before_audit == {"entries": [], "next_cursor": None}
     assert rest == cli == mcp
-    assert len(actor_list["actors"]) == 1
+    assert founder_actor_id in {actor["id"] for actor in actor_list["actors"]}
     assert after_audit == before_audit
 
     artifact = {
@@ -389,10 +411,14 @@ def test_audit_query_matches_rest_cli_mcp_and_injection_returns_zero_rows(
     api_base_url: str,
     mcp_base_url: str,
     founder_key: str,
+    founder_actor_id: str,
     artifact_dir: Path,
     redact_evidence: Any,
 ) -> None:
-    create_payload = {"name": "parity-created-actor", "kind": "agent"}
+    create_payload = {
+        "name": f"parity-test-created-actor-{uuid.uuid4().hex[:12]}",
+        "kind": "agent",
+    }
     create_response = httpx.post(
         f"{api_base_url}/actors",
         headers={"Authorization": f"Bearer {founder_key}"},
@@ -401,10 +427,18 @@ def test_audit_query_matches_rest_cli_mcp_and_injection_returns_zero_rows(
     )
     create_response.raise_for_status()
 
-    params = {"op": "create_actor", "limit": 20}
+    params = {"actor": founder_actor_id, "op": "create_actor", "limit": 20}
     rest = _get_json(f"{api_base_url}/audit", api_key=founder_key, params=params)
     cli = _run_cli(
-        ["audit", "--op", "create_actor", "--limit", "20"],
+        [
+            "audit",
+            "--actor",
+            founder_actor_id,
+            "--op",
+            "create_actor",
+            "--limit",
+            "20",
+        ],
         api_base_url,
         api_key=founder_key,
     )
@@ -415,6 +449,7 @@ def test_audit_query_matches_rest_cli_mcp_and_injection_returns_zero_rows(
         api_key=founder_key,
         arguments={
             "op": "create_actor",
+            "actor": founder_actor_id,
             "limit": 20,
             "agent_identity": "parity-audit",
         },
@@ -443,6 +478,7 @@ def test_project_ops_match_rest_cli_mcp_and_audit(
     api_base_url: str,
     mcp_base_url: str,
     founder_key: str,
+    founder_actor_id: str,
     artifact_dir: Path,
     redact_evidence: Any,
 ) -> None:
@@ -450,7 +486,7 @@ def test_project_ops_match_rest_cli_mcp_and_audit(
     auth = {"Authorization": f"Bearer {founder_key}"}
     rest_payload = {
         "name": "REST Project",
-        "slug": f"rest-project-{suffix}",
+        "slug": f"parity-rest-project-{suffix}",
         "description": "Created through REST",
     }
     cli_args = [
@@ -459,13 +495,13 @@ def test_project_ops_match_rest_cli_mcp_and_audit(
         "--name",
         "CLI Project",
         "--slug",
-        f"cli-project-{suffix}",
+        f"parity-cli-project-{suffix}",
         "--description",
         "Created through CLI",
     ]
     mcp_args = {
         "name": "MCP Project",
-        "slug": f"mcp-project-{suffix}",
+        "slug": f"parity-mcp-project-{suffix}",
         "description": "Created through MCP",
         "agent_identity": "parity-project",
     }
@@ -491,14 +527,22 @@ def test_project_ops_match_rest_cli_mcp_and_audit(
     cli_project_id = cli_create["project"]["id"]
     mcp_project_id = mcp_create["project"]["id"]
 
-    rest_list = _get_json(f"{api_base_url}/projects", api_key=founder_key)
-    cli_list = _run_cli(["project", "list"], api_base_url, api_key=founder_key)
+    rest_list = _get_json(
+        f"{api_base_url}/projects",
+        api_key=founder_key,
+        params={"limit": 200},
+    )
+    cli_list = _run_cli(
+        ["project", "list", "--limit", "200"],
+        api_base_url,
+        api_key=founder_key,
+    )
     mcp_list = _call_mcp_tool(
         mcp_base_url,
         "list_projects",
         21,
         api_key=founder_key,
-        arguments={"agent_identity": "parity-project"},
+        arguments={"limit": 200, "agent_identity": "parity-project"},
     )
     expected_ids = {rest_project_id, cli_project_id, mcp_project_id}
     for page in (rest_list, cli_list, mcp_list):
@@ -588,9 +632,13 @@ def test_project_ops_match_rest_cli_mcp_and_audit(
     assert cli_archive["project"]["archived_at"] is not None
     assert mcp_archive["project"]["archived_at"] is not None
 
-    rest_after_archive = _get_json(f"{api_base_url}/projects", api_key=founder_key)
+    rest_after_archive = _get_json(
+        f"{api_base_url}/projects",
+        api_key=founder_key,
+        params={"limit": 200},
+    )
     cli_after_archive = _run_cli(
-        ["project", "list"],
+        ["project", "list", "--limit", "200"],
         api_base_url,
         api_key=founder_key,
     )
@@ -599,7 +647,7 @@ def test_project_ops_match_rest_cli_mcp_and_audit(
         "list_projects",
         25,
         api_key=founder_key,
-        arguments={"agent_identity": "parity-project"},
+        arguments={"limit": 200, "agent_identity": "parity-project"},
     )
     for page in (rest_after_archive, cli_after_archive, mcp_after_archive):
         assert expected_ids.isdisjoint({project["id"] for project in page["projects"]})
@@ -607,7 +655,7 @@ def test_project_ops_match_rest_cli_mcp_and_audit(
     audit = _get_json(
         f"{api_base_url}/audit",
         api_key=founder_key,
-        params={"limit": 20},
+        params={"actor": founder_actor_id, "limit": 20},
     )
     project_ops = [
         row["op"]
@@ -658,7 +706,7 @@ def test_label_ops_match_rest_cli_mcp_and_audit(
         headers=auth,
         json={
             "name": "Label Parity Project",
-            "slug": f"label-parity-{suffix}",
+            "slug": f"parity-label-{suffix}",
         },
         timeout=10,
     )
@@ -757,7 +805,7 @@ def test_label_ops_match_rest_cli_mcp_and_audit(
     audit = _get_json(
         f"{api_base_url}/audit",
         api_key=founder_key,
-        params={"limit": 50},
+        params={"actor": founder_actor_id, "limit": 50},
     )
     label_ops = [
         row["op"]

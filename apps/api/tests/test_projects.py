@@ -8,6 +8,7 @@ import httpx
 import psycopg
 import pytest
 import pytest_asyncio
+from _db_cleanup import cleanup_cap03_state
 from aq_api.app import app
 from aq_api.models import (
     ArchiveProjectResponse,
@@ -24,6 +25,8 @@ from aq_api.services.auth import (
 from psycopg import Connection
 
 DATABASE_URL_SYNC = os.environ.get("DATABASE_URL_SYNC")
+ACTOR_PREFIX = "project-test-"
+PROJECT_SLUG_PREFIX = "project-test-"
 
 pytestmark = pytest.mark.skipif(
     not DATABASE_URL_SYNC,
@@ -56,16 +59,11 @@ async def async_client() -> AsyncIterator[httpx.AsyncClient]:
 
 
 def _truncate_cap03_state(conn: Connection[tuple[object, ...]]) -> None:
-    with conn.cursor() as cursor:
-        cursor.execute("DELETE FROM audit_log")
-        cursor.execute("DELETE FROM job_comments")
-        cursor.execute("DELETE FROM job_edges")
-        cursor.execute("DELETE FROM jobs")
-        cursor.execute("DELETE FROM pipelines")
-        cursor.execute("DELETE FROM labels")
-        cursor.execute("DELETE FROM projects")
-        cursor.execute("DELETE FROM api_keys")
-        cursor.execute("DELETE FROM actors")
+    cleanup_cap03_state(
+        conn,
+        actor_name_prefix=ACTOR_PREFIX,
+        project_slug_prefix=PROJECT_SLUG_PREFIX,
+    )
 
 
 def _insert_actor_with_key(
@@ -75,7 +73,7 @@ def _insert_actor_with_key(
     kind: str = "human",
     key: str | None = None,
 ) -> tuple[UUID, str]:
-    actor_name = name or f"project-test-{uuid.uuid4()}"
+    actor_name = name or f"{ACTOR_PREFIX}{uuid.uuid4()}"
     api_key = key or f"aq2_project_contract_{uuid.uuid4().hex}"
     with conn.cursor() as cursor:
         cursor.execute(
@@ -121,8 +119,12 @@ def _audit_rows(conn: Connection[tuple[object, ...]]) -> list[dict[str, object]]
             SELECT op, target_kind, target_id, request_payload,
                    response_payload, error_code
             FROM audit_log
+            WHERE authenticated_actor_id IN (
+                SELECT id FROM actors WHERE name LIKE %s
+            )
             ORDER BY ts ASC, id ASC
-            """
+            """,
+            (f"{ACTOR_PREFIX}%",),
         )
         rows = cursor.fetchall()
     return [
@@ -190,22 +192,26 @@ async def test_project_rest_ops_create_list_get_update_archive_and_audit(
         headers=headers,
         json={
             "name": "Project Ops",
-            "slug": "project-ops",
+            "slug": "project-test-ops",
             "description": "Initial description",
         },
     )
     assert create_response.status_code == 200
     created = CreateProjectResponse.model_validate(create_response.json())
     assert created.project.name == "Project Ops"
-    assert created.project.slug == "project-ops"
+    assert created.project.slug == "project-test-ops"
     assert created.project.description == "Initial description"
     assert created.project.archived_at is None
     assert created.project.created_by_actor_id == actor_id
 
-    list_response = await async_client.get("/projects", headers=headers)
+    list_response = await async_client.get(
+        "/projects",
+        headers=headers,
+        params={"limit": 200},
+    )
     assert list_response.status_code == 200
     listed = ListProjectsResponse.model_validate(list_response.json())
-    assert [project.id for project in listed.projects] == [created.project.id]
+    assert created.project.id in {project.id for project in listed.projects}
 
     get_response = await async_client.get(
         f"/projects/{created.project.id}",
@@ -224,7 +230,7 @@ async def test_project_rest_ops_create_list_get_update_archive_and_audit(
     updated = UpdateProjectResponse.model_validate(update_response.json())
     assert updated.project.id == created.project.id
     assert updated.project.name == "Project Ops Updated"
-    assert updated.project.slug == "project-ops"
+    assert updated.project.slug == "project-test-ops"
     assert updated.project.description == "Updated"
 
     archive_response = await async_client.post(
@@ -239,7 +245,11 @@ async def test_project_rest_ops_create_list_get_update_archive_and_audit(
     assert archived.project.archived_at.tzinfo == UTC
     assert _project_archived_at(conn, created.project.id) is not None
 
-    default_list = await async_client.get("/projects", headers=headers)
+    default_list = await async_client.get(
+        "/projects",
+        headers=headers,
+        params={"limit": 200},
+    )
     assert default_list.status_code == 200
     default_page = ListProjectsResponse.model_validate(default_list.json())
     assert created.project.id not in {project.id for project in default_page.projects}
@@ -247,7 +257,7 @@ async def test_project_rest_ops_create_list_get_update_archive_and_audit(
     archived_list = await async_client.get(
         "/projects",
         headers=headers,
-        params={"include_archived": "true"},
+        params={"include_archived": "true", "limit": 200},
     )
     assert archived_list.status_code == 200
     archived_page = ListProjectsResponse.model_validate(archived_list.json())
@@ -277,7 +287,7 @@ async def test_project_slug_collision_returns_409_and_audits_slug_taken(
     first = await async_client.post(
         "/projects",
         headers=headers,
-        json={"name": "Project One", "slug": "project-collision"},
+        json={"name": "Project One", "slug": "project-test-collision"},
     )
     assert first.status_code == 200
     created = CreateProjectResponse.model_validate(first.json())
@@ -285,7 +295,7 @@ async def test_project_slug_collision_returns_409_and_audits_slug_taken(
     duplicate = await async_client.post(
         "/projects",
         headers=headers,
-        json={"name": "Project Two", "slug": "project-collision"},
+        json={"name": "Project Two", "slug": "project-test-collision"},
     )
 
     assert duplicate.status_code == 409
@@ -302,7 +312,7 @@ async def test_project_slug_collision_returns_409_and_audits_slug_taken(
     with conn.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM projects WHERE slug = %s",
-            ("project-collision",),
+            ("project-test-collision",),
         )
         row = cursor.fetchone()
     assert row is not None

@@ -8,6 +8,7 @@ import httpx
 import psycopg
 import pytest
 import pytest_asyncio
+from _db_cleanup import cleanup_cap03_state
 from aq_api.app import app
 from aq_api.models import (
     AttachLabelResponse,
@@ -22,6 +23,8 @@ from aq_api.services.auth import (
 from psycopg import Connection
 
 DATABASE_URL_SYNC = os.environ.get("DATABASE_URL_SYNC")
+ACTOR_PREFIX = "label-test-"
+PROJECT_SLUG_PREFIX = "label-test-"
 
 pytestmark = pytest.mark.skipif(
     not DATABASE_URL_SYNC,
@@ -54,16 +57,11 @@ async def async_client() -> AsyncIterator[httpx.AsyncClient]:
 
 
 def _truncate_cap03_state(conn: Connection[tuple[object, ...]]) -> None:
-    with conn.cursor() as cursor:
-        cursor.execute("DELETE FROM audit_log")
-        cursor.execute("DELETE FROM job_comments")
-        cursor.execute("DELETE FROM job_edges")
-        cursor.execute("DELETE FROM jobs")
-        cursor.execute("DELETE FROM pipelines")
-        cursor.execute("DELETE FROM labels")
-        cursor.execute("DELETE FROM projects")
-        cursor.execute("DELETE FROM api_keys")
-        cursor.execute("DELETE FROM actors")
+    cleanup_cap03_state(
+        conn,
+        actor_name_prefix=ACTOR_PREFIX,
+        project_slug_prefix=PROJECT_SLUG_PREFIX,
+    )
 
 
 def _insert_actor_with_key(
@@ -73,7 +71,7 @@ def _insert_actor_with_key(
     kind: str = "human",
     key: str | None = None,
 ) -> tuple[UUID, str]:
-    actor_name = name or f"label-test-{uuid.uuid4()}"
+    actor_name = name or f"{ACTOR_PREFIX}{uuid.uuid4()}"
     api_key = key or f"aq2_label_contract_{uuid.uuid4().hex}"
     with conn.cursor() as cursor:
         cursor.execute(
@@ -200,8 +198,12 @@ def _audit_rows(conn: Connection[tuple[object, ...]]) -> list[dict[str, object]]
             SELECT op, target_kind, target_id, request_payload,
                    response_payload, error_code
             FROM audit_log
+            WHERE authenticated_actor_id IN (
+                SELECT id FROM actors WHERE name LIKE %s
+            )
             ORDER BY ts ASC, id ASC
-            """
+            """,
+            (f"{ACTOR_PREFIX}%",),
         )
         rows = cursor.fetchall()
     return [
@@ -336,13 +338,13 @@ async def test_cross_project_attach_returns_403_and_audits_label_not_in_project(
     source_project_id, _source_job_id = _insert_project_pipeline_job(
         conn,
         actor_id,
-        project_slug="label-source-project",
+        project_slug="label-test-source-project",
         job_title="Source job",
     )
     _target_project_id, target_job_id = _insert_project_pipeline_job(
         conn,
         actor_id,
-        project_slug="label-target-project",
+        project_slug="label-test-target-project",
         job_title="Target job",
     )
     await _register_label(async_client, key, source_project_id, "area:web")
@@ -372,7 +374,7 @@ async def test_concurrent_attach_preserves_both_labels(
     project_id, job_id = _insert_project_pipeline_job(
         conn,
         actor_id,
-        project_slug="label-concurrency-project",
+        project_slug="label-test-concurrency-project",
         job_title="Concurrent labels",
     )
     await _register_label(async_client, key, project_id, "area:web")

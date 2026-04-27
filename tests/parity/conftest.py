@@ -1,15 +1,22 @@
 import os
 import re
 import subprocess
+import uuid
 from collections.abc import Callable, Iterator
 from pathlib import Path
 from uuid import UUID
 
-import httpx
 import psycopg
 import pytest
+from aq_api.services.auth import (
+    DISPLAY_PREFIX_LENGTH,
+    PASSWORD_HASHER,
+    lookup_id_for_key,
+)
 
 ARTIFACT_DIR = Path(os.getenv("AQ_ARTIFACT_DIR", "plans/v2-rebuild/artifacts/cap-02"))
+PARITY_ACTOR_PREFIX = "parity-test-"
+PARITY_PROJECT_SLUG_PREFIX = "parity-"
 TOKEN_RE = re.compile(r"\baq2_[A-Za-z0-9_-]{20,}\b")
 ARGON2_RE = re.compile(r"\$argon2id\$[^\s\"'<>]+")
 UUID_RE = re.compile(
@@ -84,15 +91,62 @@ def _compose_command(*args: str) -> list[str]:
 
 def _truncate_sql() -> str:
     return (
-        "DELETE FROM audit_log; "
-        "DELETE FROM job_comments; "
-        "DELETE FROM job_edges; "
-        "DELETE FROM jobs; "
-        "DELETE FROM pipelines; "
-        "DELETE FROM labels; "
-        "DELETE FROM projects; "
-        "DELETE FROM api_keys; "
-        "DELETE FROM actors;"
+        "DELETE FROM audit_log "
+        "WHERE authenticated_actor_id IN ("
+        f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%'); "
+        "DELETE FROM job_comments "
+        "WHERE author_actor_id IN ("
+        f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%') "
+        "OR job_id IN ("
+        "SELECT jobs.id FROM jobs JOIN projects ON projects.id = jobs.project_id "
+        f"WHERE projects.slug LIKE '{PARITY_PROJECT_SLUG_PREFIX}%' "
+        "OR projects.created_by_actor_id IN ("
+        f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%')); "
+        "DELETE FROM job_edges "
+        "WHERE from_job_id IN ("
+        "SELECT jobs.id FROM jobs JOIN projects ON projects.id = jobs.project_id "
+        f"WHERE projects.slug LIKE '{PARITY_PROJECT_SLUG_PREFIX}%' "
+        "OR projects.created_by_actor_id IN ("
+        f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%')) "
+        "OR to_job_id IN ("
+        "SELECT jobs.id FROM jobs JOIN projects ON projects.id = jobs.project_id "
+        f"WHERE projects.slug LIKE '{PARITY_PROJECT_SLUG_PREFIX}%' "
+        "OR projects.created_by_actor_id IN ("
+        f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%')); "
+        "DELETE FROM jobs "
+        "WHERE created_by_actor_id IN ("
+        f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%') "
+        "OR claimed_by_actor_id IN ("
+        f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%') "
+        "OR project_id IN ("
+        "SELECT id FROM projects "
+        f"WHERE slug LIKE '{PARITY_PROJECT_SLUG_PREFIX}%' "
+        "OR created_by_actor_id IN ("
+        f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%')); "
+        "DELETE FROM labels "
+        "WHERE project_id IN ("
+        "SELECT id FROM projects "
+        f"WHERE slug LIKE '{PARITY_PROJECT_SLUG_PREFIX}%' "
+        "OR created_by_actor_id IN ("
+        f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%')); "
+        "DELETE FROM pipelines "
+        "WHERE created_by_actor_id IN ("
+        f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%') "
+        "OR project_id IN ("
+        "SELECT id FROM projects "
+        f"WHERE slug LIKE '{PARITY_PROJECT_SLUG_PREFIX}%' "
+        "OR created_by_actor_id IN ("
+        f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%')); "
+        "DELETE FROM projects "
+        f"WHERE slug LIKE '{PARITY_PROJECT_SLUG_PREFIX}%' "
+        "OR created_by_actor_id IN ("
+        f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%'); "
+        "DELETE FROM api_keys "
+        "WHERE actor_id IN ("
+        f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%') "
+        "OR revoked_by_actor_id IN ("
+        f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%'); "
+        f"DELETE FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%';"
     )
 
 
@@ -140,21 +194,52 @@ def truncate_db() -> Callable[[], None]:
     return truncate
 
 
+def _insert_parity_actor() -> dict[str, str]:
+    conninfo = _direct_conninfo()
+    if conninfo is None:
+        pytest.skip("DATABASE_URL_SYNC is required for scoped parity actor setup")
+
+    actor_name = f"{PARITY_ACTOR_PREFIX}founder-{uuid.uuid4().hex[:12]}"
+    actor_key = f"aq2_parity_contract_{uuid.uuid4().hex}"
+    with psycopg.connect(conninfo, autocommit=True) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO actors (name, kind)
+                VALUES (%s, 'human')
+                RETURNING id
+                """,
+                (actor_name,),
+            )
+            row = cursor.fetchone()
+            assert row is not None
+            actor_id = str(row[0])
+            UUID(actor_id)
+            cursor.execute(
+                """
+                INSERT INTO api_keys
+                    (actor_id, name, key_hash, prefix, lookup_id)
+                VALUES
+                    (%s, %s, %s, %s, %s)
+                """,
+                (
+                    actor_id,
+                    f"{PARITY_ACTOR_PREFIX}key-{uuid.uuid4()}",
+                    PASSWORD_HASHER.hash(actor_key),
+                    actor_key[:DISPLAY_PREFIX_LENGTH],
+                    lookup_id_for_key(actor_key),
+                ),
+            )
+
+    return {"actor_id": actor_id, "key": actor_key}
+
+
 @pytest.fixture
 def founder(
-    api_base_url: str,
     truncate_db: Callable[[], None],
 ) -> Iterator[dict[str, str]]:
     truncate_db()
-    response = httpx.post(f"{api_base_url}/setup", json={}, timeout=15)
-    response.raise_for_status()
-    payload = response.json()
-    assert isinstance(payload, dict)
-    actor_id = str(payload["actor_id"])
-    founder_key = str(payload["founder_key"])
-    UUID(actor_id)
-    assert founder_key.startswith("aq2_")
-    yield {"actor_id": actor_id, "key": founder_key}
+    yield _insert_parity_actor()
     truncate_db()
 
 

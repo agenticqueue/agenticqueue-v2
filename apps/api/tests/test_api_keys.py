@@ -9,6 +9,7 @@ import httpx
 import psycopg
 import pytest
 import pytest_asyncio
+from _db_cleanup import cleanup_actor_state
 from aq_api._audit import BusinessRuleException
 from aq_api._request_context import (
     reset_authenticated_actor_id,
@@ -25,6 +26,7 @@ from aq_api.services.auth import (
 from psycopg import Connection
 
 DATABASE_URL_SYNC = os.environ.get("DATABASE_URL_SYNC")
+ACTOR_PREFIX = "api-key-test-"
 
 pytestmark = pytest.mark.skipif(
     not DATABASE_URL_SYNC,
@@ -57,10 +59,7 @@ async def async_client() -> AsyncIterator[httpx.AsyncClient]:
 
 
 def _truncate_cap02_state(conn: Connection[tuple[object, ...]]) -> None:
-    with conn.cursor() as cursor:
-        cursor.execute("DELETE FROM audit_log")
-        cursor.execute("DELETE FROM api_keys")
-        cursor.execute("DELETE FROM actors")
+    cleanup_actor_state(conn, actor_name_prefix=ACTOR_PREFIX)
 
 
 def _insert_actor(
@@ -69,7 +68,7 @@ def _insert_actor(
     name: str | None = None,
     kind: str = "human",
 ) -> UUID:
-    actor_name = name or f"api-key-test-{uuid.uuid4()}"
+    actor_name = name or f"{ACTOR_PREFIX}{uuid.uuid4()}"
     with conn.cursor() as cursor:
         cursor.execute(
             """
@@ -170,8 +169,12 @@ def _audit_rows(conn: Connection[tuple[object, ...]]) -> list[dict[str, object]]
             SELECT op, target_kind, target_id, request_payload,
                    response_payload, error_code
             FROM audit_log
+            WHERE authenticated_actor_id IN (
+                SELECT id FROM actors WHERE name LIKE %s
+            )
             ORDER BY ts ASC, id ASC
-            """
+            """,
+            (f"{ACTOR_PREFIX}%",),
         )
         rows = cursor.fetchall()
     return [

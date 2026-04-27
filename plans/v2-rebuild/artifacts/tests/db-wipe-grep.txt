@@ -1,0 +1,36 @@
+AQ2-53 scoped DELETE scan
+checked_roots=apps\api\tests,tests\parity
+delete_statement_count=30
+unscoped_delete_count=0
+
+ALL_DELETE_STATEMENTS_ARE_SCOPED
+apps\api\tests\_db_cleanup.py: DELETE FROM audit_log WHERE authenticated_actor_id IN ( SELECT id FROM actors WHERE name LIKE %s ) """, (actor_like,), ) cursor.execute( """
+apps\api\tests\_db_cleanup.py: DELETE FROM api_keys WHERE actor_id IN (SELECT id FROM actors WHERE name LIKE %s) OR revoked_by_actor_id IN ( SELECT id FROM actors WHERE name LIKE %s ) """, (actor_like, actor_like), ) cursor.execute("
+apps\api\tests\_db_cleanup.py: DELETE FROM actors WHERE name LIKE %s", (actor_like,)) def cleanup_cap03_state( conn: Connection[tuple[object, ...]], *, actor_name_prefix: str, project_slug_prefix: str, ) -> None: actor_like = f"{actor_name_prefix}%" project_like = f"{pro
+apps\api\tests\_db_cleanup.py: DELETE FROM audit_log WHERE authenticated_actor_id IN ( SELECT id FROM actors WHERE name LIKE %s ) """, (actor_like,), ) cursor.execute( """
+apps\api\tests\_db_cleanup.py: DELETE FROM job_comments WHERE author_actor_id IN (SELECT id FROM actors WHERE name LIKE %s) OR job_id IN ( SELECT jobs.id FROM jobs JOIN projects ON projects.id = jobs.project_id WHERE projects.slug LIKE %s OR projects.created_by_actor_id
+apps\api\tests\_db_cleanup.py: DELETE FROM job_edges WHERE from_job_id IN ( SELECT jobs.id FROM jobs JOIN projects ON projects.id = jobs.project_id WHERE projects.slug LIKE %s OR projects.created_by_actor_id IN ( SELECT id FROM actors WHERE name LIKE %s ) ) OR to_job_id
+apps\api\tests\_db_cleanup.py: DELETE FROM jobs WHERE created_by_actor_id IN ( SELECT id FROM actors WHERE name LIKE %s ) OR claimed_by_actor_id IN ( SELECT id FROM actors WHERE name LIKE %s ) OR project_id IN ( SELECT id FROM projects WHERE slug LIKE %s OR created_by_ac
+apps\api\tests\_db_cleanup.py: DELETE FROM labels WHERE project_id IN ( SELECT id FROM projects WHERE slug LIKE %s OR created_by_actor_id IN ( SELECT id FROM actors WHERE name LIKE %s ) ) """, (project_like, actor_like), ) cursor.execute( """
+apps\api\tests\_db_cleanup.py: DELETE FROM pipelines WHERE created_by_actor_id IN ( SELECT id FROM actors WHERE name LIKE %s ) OR project_id IN ( SELECT id FROM projects WHERE slug LIKE %s OR created_by_actor_id IN ( SELECT id FROM actors WHERE name LIKE %s ) ) """, (act
+apps\api\tests\_db_cleanup.py: DELETE FROM projects WHERE slug LIKE %s OR created_by_actor_id IN ( SELECT id FROM actors WHERE name LIKE %s ) """, (project_like, actor_like), ) cursor.execute( """
+apps\api\tests\_db_cleanup.py: DELETE FROM api_keys WHERE actor_id IN (SELECT id FROM actors WHERE name LIKE %s) OR revoked_by_actor_id IN ( SELECT id FROM actors WHERE name LIKE %s ) """, (actor_like, actor_like), ) cursor.execute("
+apps\api\tests\_db_cleanup.py: DELETE FROM actors WHERE name LIKE %s", (actor_like,))
+apps\api\tests\test_audit_writer.py: DELETE FROM audit_log WHERE op LIKE 'audit-test-%' OR claimed_actor_identity LIKE 'audit-test-%' """ ) cursor.execute("
+apps\api\tests\test_audit_writer.py: DELETE FROM actors WHERE name LIKE 'audit-test-%'") def _insert_actor(conn: Connection[tuple[object, ...]], name: str) -> UUID: with conn.cursor() as cursor: cursor.execute( """ INSERT INTO actors (name, kind) VALUES (%s, 'human') RETURNING
+apps\api\tests\test_auth.py: DELETE FROM api_keys WHERE name LIKE 'auth-test-%'") cursor.execute("
+apps\api\tests\test_auth.py: DELETE FROM actors WHERE name LIKE 'auth-test-%'") @pytest.fixture(scope="module") def client() -> Iterator[TestClient]: with TestClient(app) as api_client: yield api_client from aq_api._db import engine asyncio.run(engine.dispose()) def _i
+apps\api\tests\test_db_schema.py: DELETE FROM api_keys WHERE name = 'test key'") cursor.execute("
+apps\api\tests\test_db_schema.py: DELETE FROM actors WHERE name LIKE 'schema-%'") def _insert_actor(conn: Connection[tuple[object, ...]], name: str) -> uuid.UUID: with conn.cursor() as cursor: cursor.execute( """ INSERT INTO actors (name, kind) VALUES (%s, 'human') RETURNIN
+apps\api\tests\test_setup.py: DELETE FROM audit_log WHERE authenticated_actor_id IN ( SELECT id FROM actors WHERE name = %s ) """, (FOUNDER_ACTOR_NAME,), ) cursor.execute( """
+apps\api\tests\test_setup.py: DELETE FROM api_keys WHERE actor_id IN (SELECT id FROM actors WHERE name = %s) OR revoked_by_actor_id IN ( SELECT id FROM actors WHERE name = %s ) OR name = %s """, (FOUNDER_ACTOR_NAME, FOUNDER_ACTOR_NAME, FOUNDER_ACTOR_NAME), ) cursor.exec
+apps\api\tests\test_setup.py: DELETE FROM actors WHERE name = %s", (FOUNDER_ACTOR_NAME,)) def _is_isolated_test_db(conninfo: str) -> bool: database = urlparse(conninfo).path.rsplit("/", maxsplit=1)[-1] return database.endswith("_test") def _has_any_actor(conn: Connectio
+tests\parity\conftest.py: DELETE FROM audit_log " "WHERE authenticated_actor_id IN (" f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%'); " "
+tests\parity\conftest.py: DELETE FROM job_comments " "WHERE author_actor_id IN (" f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%') " "OR job_id IN (" "SELECT jobs.id FROM jobs JOIN projects ON projects.id = jobs.project_id " f"WHERE projects.slug LI
+tests\parity\conftest.py: DELETE FROM job_edges " "WHERE from_job_id IN (" "SELECT jobs.id FROM jobs JOIN projects ON projects.id = jobs.project_id " f"WHERE projects.slug LIKE '{PARITY_PROJECT_SLUG_PREFIX}%' " "OR projects.created_by_actor_id IN (" f"SELECT id FROM
+tests\parity\conftest.py: DELETE FROM jobs " "WHERE created_by_actor_id IN (" f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%') " "OR claimed_by_actor_id IN (" f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%') " "OR project_id IN (" "
+tests\parity\conftest.py: DELETE FROM labels " "WHERE project_id IN (" "SELECT id FROM projects " f"WHERE slug LIKE '{PARITY_PROJECT_SLUG_PREFIX}%' " "OR created_by_actor_id IN (" f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%')); " "
+tests\parity\conftest.py: DELETE FROM pipelines " "WHERE created_by_actor_id IN (" f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%') " "OR project_id IN (" "SELECT id FROM projects " f"WHERE slug LIKE '{PARITY_PROJECT_SLUG_PREFIX}%' " "OR created_by_
+tests\parity\conftest.py: DELETE FROM projects " f"WHERE slug LIKE '{PARITY_PROJECT_SLUG_PREFIX}%' " "OR created_by_actor_id IN (" f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%'); " "
+tests\parity\conftest.py: DELETE FROM api_keys " "WHERE actor_id IN (" f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%') " "OR revoked_by_actor_id IN (" f"SELECT id FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%'); " f"
+tests\parity\conftest.py: DELETE FROM actors WHERE name LIKE '{PARITY_ACTOR_PREFIX}%';" ) def _direct_conninfo() -> str | None: value = os.getenv("DATABASE_URL_SYNC") if not value: return None return value.replace("postgresql+psycopg://", "postgresql://", 1) @pytest

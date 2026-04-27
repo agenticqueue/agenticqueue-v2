@@ -1,6 +1,7 @@
 import asyncio
 import os
 from collections.abc import AsyncIterator, Iterator
+from urllib.parse import urlparse
 from uuid import UUID
 
 import httpx
@@ -14,6 +15,7 @@ from psycopg import Connection
 
 DATABASE_URL_SYNC = os.environ.get("DATABASE_URL_SYNC")
 ALREADY_SETUP_BODY = b'{"error":"already_setup"}'
+FOUNDER_ACTOR_NAME = "founder"
 
 pytestmark = pytest.mark.skipif(
     not DATABASE_URL_SYNC,
@@ -26,6 +28,8 @@ def conn() -> Iterator[Connection[tuple[object, ...]]]:
     assert DATABASE_URL_SYNC is not None
     conninfo = DATABASE_URL_SYNC.replace("postgresql+psycopg://", "postgresql://", 1)
     with psycopg.connect(conninfo, autocommit=True) as connection:
+        if _has_any_actor(connection) and not _is_isolated_test_db(conninfo):
+            pytest.skip("setup tests require an isolated empty actor table")
         _truncate_cap02_state(connection)
         yield connection
         _truncate_cap02_state(connection)
@@ -47,9 +51,40 @@ async def async_client() -> AsyncIterator[httpx.AsyncClient]:
 
 def _truncate_cap02_state(conn: Connection[tuple[object, ...]]) -> None:
     with conn.cursor() as cursor:
-        cursor.execute("DELETE FROM audit_log")
-        cursor.execute("DELETE FROM api_keys")
-        cursor.execute("DELETE FROM actors")
+        cursor.execute(
+            """
+            DELETE FROM audit_log
+            WHERE authenticated_actor_id IN (
+                SELECT id FROM actors WHERE name = %s
+            )
+            """,
+            (FOUNDER_ACTOR_NAME,),
+        )
+        cursor.execute(
+            """
+            DELETE FROM api_keys
+            WHERE actor_id IN (SELECT id FROM actors WHERE name = %s)
+               OR revoked_by_actor_id IN (
+                    SELECT id FROM actors WHERE name = %s
+               )
+               OR name = %s
+            """,
+            (FOUNDER_ACTOR_NAME, FOUNDER_ACTOR_NAME, FOUNDER_ACTOR_NAME),
+        )
+        cursor.execute("DELETE FROM actors WHERE name = %s", (FOUNDER_ACTOR_NAME,))
+
+
+def _is_isolated_test_db(conninfo: str) -> bool:
+    database = urlparse(conninfo).path.rsplit("/", maxsplit=1)[-1]
+    return database.endswith("_test")
+
+
+def _has_any_actor(conn: Connection[tuple[object, ...]]) -> bool:
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT EXISTS (SELECT 1 FROM actors)")
+        row = cursor.fetchone()
+    assert row is not None
+    return bool(row[0])
 
 
 def _audit_count(conn: Connection[tuple[object, ...]]) -> int:
