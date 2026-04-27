@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+import psycopg
 from aq_api._datetime import parse_utc
 from aq_api.models import HealthStatus, VersionInfo
 
@@ -141,6 +142,59 @@ def _run_cli(
     payload = json.loads(result.stdout)
     assert isinstance(payload, dict)
     return payload
+
+
+def _direct_conninfo() -> str:
+    value = os.getenv("DATABASE_URL_SYNC")
+    if not value:
+        raise RuntimeError("DATABASE_URL_SYNC is required for label parity")
+    return value.replace("postgresql+psycopg://", "postgresql://", 1)
+
+
+def _contract_profile_id() -> str:
+    with psycopg.connect(_direct_conninfo(), autocommit=True) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT id FROM contract_profiles WHERE name = 'coding-task' LIMIT 1"
+            )
+            row = cursor.fetchone()
+    assert row is not None
+    return str(row[0])
+
+
+def _insert_pipeline_job(project_id: str, actor_id: str, title: str) -> str:
+    with psycopg.connect(_direct_conninfo(), autocommit=True) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO pipelines (project_id, name, created_by_actor_id)
+                VALUES (%s, %s, %s)
+                RETURNING id
+                """,
+                (project_id, f"label-parity-{uuid.uuid4().hex[:12]}", actor_id),
+            )
+            pipeline_row = cursor.fetchone()
+            assert pipeline_row is not None
+            pipeline_id = pipeline_row[0]
+            cursor.execute(
+                """
+                INSERT INTO jobs
+                    (
+                        pipeline_id,
+                        project_id,
+                        state,
+                        title,
+                        contract_profile_id,
+                        created_by_actor_id
+                    )
+                VALUES (%s, %s, 'ready', %s, %s, %s)
+                RETURNING id
+                """,
+                (pipeline_id, project_id, title, _contract_profile_id(), actor_id),
+            )
+            job_row = cursor.fetchone()
+    assert job_row is not None
+    return str(job_row[0])
 
 
 def _pnpm_executable() -> str:
@@ -584,6 +638,149 @@ def test_project_ops_match_rest_cli_mcp_and_audit(
         "audit": audit,
     }
     (artifact_dir / "projects-parity.txt").write_text(
+        redact_evidence(_json_text(artifact)),
+        encoding="utf-8",
+    )
+
+
+def test_label_ops_match_rest_cli_mcp_and_audit(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    founder_actor_id: str,
+    artifact_dir: Path,
+    redact_evidence: Any,
+) -> None:
+    suffix = uuid.uuid4().hex[:12]
+    auth = {"Authorization": f"Bearer {founder_key}"}
+    project_response = httpx.post(
+        f"{api_base_url}/projects",
+        headers=auth,
+        json={
+            "name": "Label Parity Project",
+            "slug": f"label-parity-{suffix}",
+        },
+        timeout=10,
+    )
+    project_response.raise_for_status()
+    project = project_response.json()["project"]
+    project_id = project["id"]
+    job_id = _insert_pipeline_job(project_id, founder_actor_id, "Label parity job")
+
+    rest_register_response = httpx.post(
+        f"{api_base_url}/projects/{project_id}/labels",
+        headers=auth,
+        json={"name": "area:web", "color": "#336699"},
+        timeout=10,
+    )
+    rest_register_response.raise_for_status()
+    rest_register = rest_register_response.json()
+    cli_register = _run_cli(
+        [
+            "label",
+            "register",
+            "--project",
+            project_id,
+            "--name",
+            "prio:high",
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_register = _call_mcp_tool(
+        mcp_base_url,
+        "register_label",
+        30,
+        api_key=founder_key,
+        arguments={
+            "project_id": project_id,
+            "name": "kind:test",
+            "agent_identity": "parity-label",
+        },
+    )
+
+    rest_attach_response = httpx.post(
+        f"{api_base_url}/jobs/{job_id}/labels",
+        headers=auth,
+        json={"label_name": "area:web"},
+        timeout=10,
+    )
+    rest_attach_response.raise_for_status()
+    rest_attach = rest_attach_response.json()
+    cli_attach = _run_cli(
+        ["label", "attach", job_id, "--name", "prio:high"],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_attach = _call_mcp_tool(
+        mcp_base_url,
+        "attach_label",
+        31,
+        api_key=founder_key,
+        arguments={
+            "job_id": job_id,
+            "label_name": "kind:test",
+            "agent_identity": "parity-label",
+        },
+    )
+    assert set(rest_attach["labels"]) == {"area:web"}
+    assert set(cli_attach["labels"]) == {"area:web", "prio:high"}
+    assert set(mcp_attach["labels"]) == {"area:web", "prio:high", "kind:test"}
+
+    rest_detach_response = httpx.delete(
+        f"{api_base_url}/jobs/{job_id}/labels/area:web",
+        headers=auth,
+        timeout=10,
+    )
+    rest_detach_response.raise_for_status()
+    rest_detach = rest_detach_response.json()
+    cli_detach = _run_cli(
+        ["label", "detach", job_id, "--name", "prio:high"],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_detach = _call_mcp_tool(
+        mcp_base_url,
+        "detach_label",
+        32,
+        api_key=founder_key,
+        arguments={
+            "job_id": job_id,
+            "label_name": "kind:test",
+            "agent_identity": "parity-label",
+        },
+    )
+    assert set(rest_detach["labels"]) == {"prio:high", "kind:test"}
+    assert set(cli_detach["labels"]) == {"kind:test"}
+    assert mcp_detach["labels"] == []
+
+    audit = _get_json(
+        f"{api_base_url}/audit",
+        api_key=founder_key,
+        params={"limit": 50},
+    )
+    label_ops = [
+        row["op"]
+        for row in audit["entries"]
+        if row["op"] in {"register_label", "attach_label", "detach_label"}
+    ]
+    assert label_ops.count("register_label") == 3
+    assert label_ops.count("attach_label") == 3
+    assert label_ops.count("detach_label") == 3
+
+    artifact = {
+        "project": project,
+        "job_id": job_id,
+        "register": {
+            "rest": rest_register,
+            "cli": cli_register,
+            "mcp": mcp_register,
+        },
+        "attach": {"rest": rest_attach, "cli": cli_attach, "mcp": mcp_attach},
+        "detach": {"rest": rest_detach, "cli": cli_detach, "mcp": mcp_detach},
+        "audit": audit,
+    }
+    (artifact_dir / "labels-parity.txt").write_text(
         redact_evidence(_json_text(artifact)),
         encoding="utf-8",
     )

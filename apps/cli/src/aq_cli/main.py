@@ -40,6 +40,7 @@ app = typer.Typer(add_completion=False, pretty_exceptions_enable=False)
 actor_app = typer.Typer(add_completion=False, help="Actor identity commands.")
 key_app = typer.Typer(add_completion=False, help="API key commands.")
 project_app = typer.Typer(add_completion=False, help="Project commands.")
+label_app = typer.Typer(add_completion=False, help="Label commands.")
 SLUG_CHARS_RE = re.compile(r"[^a-z0-9]+")
 
 
@@ -461,6 +462,53 @@ def project_archive(
 
 
 app.add_typer(project_app, name="project")
+
+
+@label_app.command("register")
+def label_register(
+    project_id: Annotated[str, typer.Option("--project")],
+    name: Annotated[str, typer.Option("--name")],
+    color: Annotated[str | None, typer.Option("--color")] = None,
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Register a Project-scoped Label."""
+    body: dict[str, object] = {"name": name}
+    if color is not None:
+        body["color"] = color
+    typer.echo(_post_auth(f"/projects/{project_id}/labels", body, timeout, config))
+
+
+@label_app.command("attach")
+def label_attach(
+    job_id: Annotated[str, typer.Argument(help="Job UUID.")],
+    name: Annotated[str, typer.Option("--name")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Attach a registered Label to a Job."""
+    typer.echo(
+        _post_auth(
+            f"/jobs/{job_id}/labels",
+            {"label_name": name},
+            timeout,
+            config,
+        )
+    )
+
+
+@label_app.command("detach")
+def label_detach(
+    job_id: Annotated[str, typer.Argument(help="Job UUID.")],
+    name: Annotated[str, typer.Option("--name")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Detach a Label from a Job."""
+    typer.echo(_delete_auth(f"/jobs/{job_id}/labels/{name}", timeout, config))
+
+
+app.add_typer(label_app, name="label")
 
 
 @key_app.command("revoke")

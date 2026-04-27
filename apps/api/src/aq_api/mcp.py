@@ -16,22 +16,29 @@ from aq_api._version import VERSION_INFO
 from aq_api.models import (
     ActorKind,
     ArchiveProjectResponse,
+    AttachLabelRequest,
+    AttachLabelResponse,
     AuditLogPage,
     AuditQueryParams,
     CreateActorRequest,
     CreateActorResponse,
     CreateProjectRequest,
     CreateProjectResponse,
+    DetachLabelRequest,
+    DetachLabelResponse,
     GetProjectResponse,
     HealthStatus,
     ListActorsResponse,
     ListProjectsResponse,
+    RegisterLabelRequest,
+    RegisterLabelResponse,
     RevokeApiKeyResponse,
     UpdateProjectRequest,
     UpdateProjectResponse,
     VersionInfo,
     WhoamiResponse,
 )
+from aq_api.models.labels import LabelColor, LabelName
 from aq_api.models.projects import (
     Description as ProjectDescription,
 )
@@ -46,6 +53,9 @@ from aq_api.services.actors import get_self_by_id
 from aq_api.services.actors import list_actors as list_actor_service
 from aq_api.services.api_keys import revoke_api_key as revoke_api_key_service
 from aq_api.services.audit import query_audit_log as query_audit_log_service
+from aq_api.services.labels import attach_label as attach_label_service
+from aq_api.services.labels import detach_label as detach_label_service
+from aq_api.services.labels import register_label as register_label_service
 from aq_api.services.projects import archive_project as archive_project_service
 from aq_api.services.projects import create_project as create_project_service
 from aq_api.services.projects import get_project as get_project_service
@@ -325,6 +335,58 @@ def create_mcp_server() -> FastMCP:
             _authenticated_actor_id()
             async with SessionLocal() as session:
                 return await archive_project_service(session, project_id)
+
+    @server.tool(
+        description="Register a Project-scoped Label for future Job attachment.",
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def register_label(
+        project_id: UUID,
+        name: LabelName,
+        color: LabelColor = None,
+        agent_identity: AgentIdentity = None,
+    ) -> RegisterLabelResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            request = RegisterLabelRequest(name=name, color=color)
+            async with SessionLocal() as session:
+                return await register_label_service(session, project_id, request)
+
+    @server.tool(
+        description="Attach one registered Label to a Job's TEXT[] label cache.",
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def attach_label(
+        job_id: UUID,
+        label_name: LabelName,
+        agent_identity: AgentIdentity = None,
+    ) -> AttachLabelResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            request = AttachLabelRequest(label_name=label_name)
+            async with SessionLocal() as session:
+                return await attach_label_service(session, job_id, request)
+
+    @server.tool(
+        description="Detach one Label from a Job's TEXT[] label cache.",
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def detach_label(
+        job_id: UUID,
+        label_name: LabelName,
+        agent_identity: AgentIdentity = None,
+    ) -> DetachLabelResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            request = DetachLabelRequest(label_name=label_name)
+            async with SessionLocal() as session:
+                return await detach_label_service(session, job_id, request)
 
     return server
 

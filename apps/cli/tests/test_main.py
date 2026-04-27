@@ -516,6 +516,115 @@ def test_project_get_update_archive_use_expected_paths(
     ]
 
 
+def test_label_register_posts_body_and_prints_raw_json(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    project_id = "44444444-4444-4444-8444-444444444444"
+    body = (
+        '{"label":{"id":"55555555-5555-4555-8555-555555555555",'
+        '"project_id":"44444444-4444-4444-8444-444444444444",'
+        '"name":"area:web","color":"#336699",'
+        '"created_at":"2026-04-27T01:00:00Z","archived_at":null}}'
+    )
+    calls: list[tuple[str, dict[str, str], dict[str, object], float]] = []
+
+    def fake_post(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        calls.append((url, headers, json, timeout))
+        return _json_response(url, body, method="POST")
+
+    monkeypatch.setattr("aq_cli.main.httpx.post", fake_post)
+
+    result = runner.invoke(
+        app,
+        [
+            "label",
+            "register",
+            "--project",
+            project_id,
+            "--name",
+            "area:web",
+            "--color",
+            "#336699",
+        ],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert result.exit_code == 0
+    assert result.stdout == f"{body}\n"
+    assert calls == [
+        (
+            f"http://api.test/projects/{project_id}/labels",
+            {"Authorization": "Bearer aq2_cli_contract_key"},
+            {"name": "area:web", "color": "#336699"},
+            10.0,
+        )
+    ]
+
+
+def test_label_attach_and_detach_use_expected_paths(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    job_id = "66666666-6666-4666-8666-666666666666"
+    body = (
+        '{"job_id":"66666666-6666-4666-8666-666666666666",'
+        '"labels":["area:web"]}'
+    )
+    calls: list[tuple[str, str, dict[str, object] | None, float]] = []
+
+    def fake_post(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("POST", url, json, timeout))
+        return _json_response(url, body, method="POST")
+
+    def fake_delete(
+        url: str,
+        *,
+        headers: dict[str, str],
+        timeout: float,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("DELETE", url, None, timeout))
+        return _json_response(url, body, method="DELETE")
+
+    monkeypatch.setattr("aq_cli.main.httpx.post", fake_post)
+    monkeypatch.setattr("aq_cli.main.httpx.delete", fake_delete)
+
+    attach_result = runner.invoke(
+        app,
+        ["label", "attach", job_id, "--name", "area:web"],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+    detach_result = runner.invoke(
+        app,
+        ["label", "detach", job_id, "--name", "area:web"],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert attach_result.exit_code == 0
+    assert detach_result.exit_code == 0
+    assert calls == [
+        (
+            "POST",
+            f"http://api.test/jobs/{job_id}/labels",
+            {"label_name": "area:web"},
+            10.0,
+        ),
+        ("DELETE", f"http://api.test/jobs/{job_id}/labels/area:web", None, 10.0),
+    ]
+
+
 def test_key_revoke_deletes_with_bearer_and_prints_raw_json(
     monkeypatch: MonkeyPatch,
 ) -> None:

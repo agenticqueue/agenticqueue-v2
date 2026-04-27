@@ -25,6 +25,9 @@ TOOL_NAMES = [
     "get_project",
     "update_project",
     "archive_project",
+    "register_label",
+    "attach_label",
+    "detach_label",
 ]
 DEFAULT_TOOL_ARGUMENTS = {
     "create_project": lambda: {
