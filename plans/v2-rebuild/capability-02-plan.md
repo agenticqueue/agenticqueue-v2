@@ -54,7 +54,7 @@ Cap #2 first commit on `aq2-cap-02` is gated on AQ2-15 + the rewritten AQ2-18 be
 - **Validation errors (422 from Pydantic before the handler runs)** are not audited — the mutation never started.
 
 ### P0-4 — Setup bootstrap is auditless
-**Locked**: `setup` writes ZERO audit rows. The founder + bridge Actor rows themselves are the bootstrap evidence (their `created_at` timestamps are the audit). Future audit queries that ask "what happened before any audit row?" get the empty set; that's setup. This drops the impossibility of attributing audit to an actor that doesn't yet exist.
+**Locked**: `setup` writes ZERO audit rows. The founder Actor row itself is the bootstrap evidence (its `created_at` timestamp is the audit). Future audit queries that ask "what happened before any audit row?" get the empty set; that's setup. This drops the impossibility of attributing audit to an actor that doesn't yet exist. (Post-merge correction 2026-04-27: rev 1 of this plan said "founder + bridge Actor rows" — the bridge actor was dropped per the corrected MCP auth model; only the founder row is created at setup.)
 
 ### P0-5 — Secret leakage in artifacts, three-layer fix
 1. **Audit redactor** is regex-recursive on field names. Pattern: `(?i)(^|_)(key|token|secret|password|hash)(_|$)`. Replaces value with `"[REDACTED]"`. Applies on every nested level of JSONB before insert.
@@ -189,17 +189,20 @@ web:
 ### Env additions (`.env.example`)
 ```
 POSTGRES_PASSWORD=             # required, no default
+POSTGRES_DB=aq2
 DATABASE_URL=postgresql+asyncpg://aq:<POSTGRES_PASSWORD>@db:5432/aq2
 DATABASE_URL_SYNC=postgresql+psycopg://aq:<POSTGRES_PASSWORD>@db:5432/aq2
+AQ_KEY_LOOKUP_SECRET=          # required, random 32+ char secret used as HMAC key for api_keys.lookup_id
 AQ_SESSION_SECRET=             # required, ≥32 chars
 AQ_COOKIE_SECURE=false         # set true behind TLS proxy
 ```
+(Post-merge correction 2026-04-27: rev 1 of this plan omitted `AQ_KEY_LOOKUP_SECRET`; that env was added by AQ2-35's HMAC key-lookup work and is required at boot. `pydantic-settings` rejects startup if missing or empty.)
 
 ---
 
 ## Database schema
 
-Two Alembic migrations.
+Three Alembic migrations.
 
 ### `0001_initial.py`
 Empty baseline. Establishes the migration chain.
@@ -253,6 +256,23 @@ CREATE INDEX audit_log_target_idx   ON audit_log (target_kind, target_id) WHERE 
 -- Used by setup tx: `SELECT pg_advisory_xact_lock(hashtext('aq:setup-singleton'));`
 -- No DDL needed; advisory locks are session/tx-scoped, not stored.
 ```
+
+### `0003_api_key_lookup_id.py` (added by AQ2-35 follow-up)
+
+```sql
+-- Adds HMAC-indexed lookup_id to api_keys; replaces prefix-based candidate scanning.
+-- Closes the prefix-collision CPU-amplification finding from C1 audit (AQ2-35).
+ALTER TABLE api_keys
+  ADD COLUMN lookup_id BYTEA NOT NULL;
+
+CREATE UNIQUE INDEX api_keys_lookup_id_uniq ON api_keys (lookup_id);
+
+-- The 8-char `prefix` column remains (display-only).
+-- Auth flow: lookup_id = HMAC-SHA256(AQ_KEY_LOOKUP_SECRET, key)[:16]
+-- Single SELECT by lookup_id, single Argon2 verify per request.
+```
+
+(Post-merge correction 2026-04-27: rev 1 of this plan said "Two Alembic migrations" and described prefix-based candidate scanning. AQ2-35 followed up after C1 audit identified the CPU-amplification vector and added 0003. Rotating `AQ_KEY_LOOKUP_SECRET` invalidates every existing API key — must be paired with revoke + re-mint of all active keys; no dual-secret rotation in v1.)
 
 ---
 
@@ -370,7 +390,7 @@ Each story body in Plane uses ADR-AQ-030 bounded-fields shape. Plan-level summar
 
 1. **Service layer.** Create `apps/api/src/aq_api/services/` with pure-Python service functions: `services.auth.resolve_actor(session, key) -> Actor | None`. REST handlers AND MCP tool handlers (later stories) call these. No HTTP delegation between surfaces.
 
-2. **Bearer auth dependency.** `apps/api/src/aq_api/_auth.py` exposes FastAPI dependency `current_actor()` that: parses `Authorization: Bearer <key>`, extracts 8-char prefix, queries candidate `api_keys` rows with that prefix where `revoked_at IS NULL`, verifies plaintext via argon2 (constant-time), returns `Actor`, OR raises `HTTPException(401)` with byte-equal opaque body `{"error":"unauthenticated"}`. Populates request contextvar `authenticated_actor_id`. Applied to BOTH `/<rest paths>` AND `/mcp` mount.
+2. **Bearer auth dependency.** `apps/api/src/aq_api/_auth.py` exposes FastAPI dependency `current_actor()` that: parses `Authorization: Bearer <key>`, computes the HMAC-SHA256 lookup_id (per AQ2-35: `hmac.new(AQ_KEY_LOOKUP_SECRET, key, sha256).digest()[:16]`), queries the single matching `api_keys` row by `lookup_id` where `revoked_at IS NULL`, verifies plaintext via argon2 (constant-time, ONE verify call regardless of database size), returns `Actor`, OR raises `HTTPException(401)` with byte-equal opaque body `{"error":"unauthenticated"}`. Populates request contextvar `authenticated_actor_id`. Applied to BOTH `/<rest paths>` AND `/mcp` mount. (Post-merge correction 2026-04-27: rev 1 of this plan described prefix-based candidate scanning. AQ2-35 replaced that with HMAC-indexed O(1) lookup to close a CPU-amplification vector and eliminate prefix-collision concerns. The 8-char `prefix` column remains in the table for display only.)
 
 **Scope (in).** `apps/api/src/aq_api/services/auth.py`; `apps/api/src/aq_api/_auth.py`; `apps/api/src/aq_api/_request_context.py` (ContextVars `authenticated_actor_id` + `claimed_actor_identity`); `apps/api/tests/test_auth.py`. Update `apps/api/src/aq_api/app.py` to apply auth dep to MCP mount.
 
@@ -380,7 +400,7 @@ Each story body in Plane uses ADR-AQ-030 bounded-fields shape. Plan-level summar
 - 401 body is byte-equal across every failure mode (no enumeration).
 - Plaintext key NEVER logged; FastAPI access-log scrubs `Authorization` header (configure custom logger).
 - Revocation is live (no result cache) — every request hits DB.
-- Multi-prefix-collision: try every candidate; reject only after all verify failures.
+- Single Argon2 verify per request (per AQ2-35 HMAC-indexed lookup); no prefix-collision multi-verify path.
 - argon2 verifier is module-level singleton.
 - All handlers `async def`.
 
@@ -470,8 +490,7 @@ Auth + audit primitives exist with passing tests. Codex stops, posts evidence on
 **Security guardrails.**
 - `~/.aq/config.toml` mode 0600 on POSIX; ACL-restricted to current user on Windows.
 - CLI refuses to overwrite existing config without `--force`.
-- First-run gate: advisory lock `pg_advisory_xact_lock(hashtext('aq:setup-singleton'))` before the existence check. Concurrent calls serialize.
-- Setup endpoint rate-limit: 5 attempts/min while open.
+- First-run gate: advisory lock `pg_advisory_xact_lock(hashtext('aq:setup-singleton'))` before the existence check. Concurrent calls serialize. (Post-merge correction 2026-04-27: rev 1 of this plan also required a separate "5 attempts/min" rate limit. The advisory-lock pattern is the actual defense — it serializes concurrent calls inherently and makes a separate rate-limit redundant. The implementation does NOT add a rate limiter; this plan is corrected to match.)
 - Founder key returned ONCE in response; never re-fetchable.
 - Validation script artifact for setup is redacted before commit (script pipes through `redact-evidence.sh`).
 
@@ -479,7 +498,7 @@ Auth + audit primitives exist with passing tests. Codex stops, posts evidence on
 
 **Verification.**
 1. Fresh DB: `curl -X POST localhost:8001/setup` → 200 with `founder_key`. (Artifact redacted before commit.)
-2. Re-run: 409 byte-equal `{"error":"already_initialized"}`.
+2. Re-run: 409 byte-equal `{"error":"already_setup"}`. (Post-merge correction 2026-04-27: rev 1 of this plan said `already_initialized`. Implementation returns `already_setup`; verified live in C2 audit.)
 3. Concurrent race: 10 parallel calls → exactly one 200, nine 409.
 4. `~/.aq/config.toml` mode 0600 (POSIX).
 5. **No** `audit_log` row for `setup` (per locked rule).
@@ -513,7 +532,7 @@ Auth + audit primitives exist with passing tests. Codex stops, posts evidence on
 - `whoami`, `list_actors` not audited (reads).
 - `create_actor` audited (mutation). Audit row writes redacted request_payload + response_payload (the plaintext key is redacted).
 - `create_actor` mints key ONCE; subsequent `GET /api-keys/{id}` (later cap) never returns it.
-- `list_actors` excludes `deactivated_at IS NOT NULL` rows by default; `?include_deactivated=true` opt-in IS audited (it's a sensitive read, not a mutation, but treated as one for trail).
+- `list_actors` excludes `deactivated_at IS NOT NULL` rows by default; `?include_deactivated=true` opt-in is NOT audited (reads-not-audited locked rule applies; reading deactivated rows is still a read, not a mutation). (Post-merge correction 2026-04-27: rev 1 of this plan said this opt-in was audited "for trail." That contradicted the locked rule and is not how the implementation works. Reads are never audited, period.)
 - `extra="forbid"` rejects unknown request fields with 422.
 
 **KISS/DRY.** All handlers `async def`. REST handlers signature: `Annotated[Actor, Depends(current_actor)]`. CLI extends `_post`/`_delete`. MCP tools delegate to service functions (NOT httpx).
