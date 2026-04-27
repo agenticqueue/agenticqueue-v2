@@ -14,12 +14,12 @@ app = FastAPI(
 
 
 @app.get("/healthz", response_model=HealthStatus)
-def healthz() -> HealthStatus:
+async def healthz() -> HealthStatus:
     return current_health_status()
 
 
 @app.get("/version", response_model=VersionInfo)
-def get_version() -> VersionInfo:
+async def get_version() -> VersionInfo:
     return VERSION_INFO
 
 

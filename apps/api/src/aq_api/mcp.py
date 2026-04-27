@@ -19,7 +19,7 @@ def create_mcp_server() -> FastMCP:
         ),
         annotations={"readOnlyHint": True},
     )
-    def health_check() -> HealthStatus:
+    async def health_check() -> HealthStatus:
         return current_health_status()
 
     @server.tool(
@@ -29,7 +29,7 @@ def create_mcp_server() -> FastMCP:
         ),
         annotations={"readOnlyHint": True},
     )
-    def get_version() -> VersionInfo:
+    async def get_version() -> VersionInfo:
         return VERSION_INFO
 
     return server

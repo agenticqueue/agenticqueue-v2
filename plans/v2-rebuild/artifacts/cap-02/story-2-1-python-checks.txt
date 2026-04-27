@@ -1,0 +1,17 @@
+COMMAND: uv run ruff check .
+All checks passed!
+RUFF_EXIT=0
+COMMAND: uv run mypy --strict apps/api/src/aq_api/
+Success: no issues found in 10 source files
+MYPY_EXIT=0
+COMMAND: uv run pytest -q apps/api/tests
+.........                                                                [100%]
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastmcp\server\auth\providers\jwt.py:10
+  D:\mmmmm\mmmmm-aq2.0\.venv\Lib\site-packages\fastmcp\server\auth\providers\jwt.py:10: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+  It will be compatible before version 2.0.0.
+    from authlib.jose import JsonWebKey, JsonWebToken
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+9 passed, 1 warning in 1.71s
+PYTEST_EXIT=0
