@@ -6,6 +6,7 @@ import json
 import os
 import shutil
 import subprocess
+import uuid
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -379,6 +380,210 @@ def test_audit_query_matches_rest_cli_mcp_and_injection_returns_zero_rows(
 
     artifact = {"rest": rest, "cli": cli, "mcp": mcp, "injection": injection}
     (artifact_dir / "audit-parity.txt").write_text(
+        redact_evidence(_json_text(artifact)),
+        encoding="utf-8",
+    )
+
+
+def test_project_ops_match_rest_cli_mcp_and_audit(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    artifact_dir: Path,
+    redact_evidence: Any,
+) -> None:
+    suffix = uuid.uuid4().hex[:12]
+    auth = {"Authorization": f"Bearer {founder_key}"}
+    rest_payload = {
+        "name": "REST Project",
+        "slug": f"rest-project-{suffix}",
+        "description": "Created through REST",
+    }
+    cli_args = [
+        "project",
+        "create",
+        "--name",
+        "CLI Project",
+        "--slug",
+        f"cli-project-{suffix}",
+        "--description",
+        "Created through CLI",
+    ]
+    mcp_args = {
+        "name": "MCP Project",
+        "slug": f"mcp-project-{suffix}",
+        "description": "Created through MCP",
+        "agent_identity": "parity-project",
+    }
+
+    rest_create_response = httpx.post(
+        f"{api_base_url}/projects",
+        headers=auth,
+        json=rest_payload,
+        timeout=10,
+    )
+    rest_create_response.raise_for_status()
+    rest_create = rest_create_response.json()
+    cli_create = _run_cli(cli_args, api_base_url, api_key=founder_key)
+    mcp_create = _call_mcp_tool(
+        mcp_base_url,
+        "create_project",
+        20,
+        api_key=founder_key,
+        arguments=mcp_args,
+    )
+
+    rest_project_id = rest_create["project"]["id"]
+    cli_project_id = cli_create["project"]["id"]
+    mcp_project_id = mcp_create["project"]["id"]
+
+    rest_list = _get_json(f"{api_base_url}/projects", api_key=founder_key)
+    cli_list = _run_cli(["project", "list"], api_base_url, api_key=founder_key)
+    mcp_list = _call_mcp_tool(
+        mcp_base_url,
+        "list_projects",
+        21,
+        api_key=founder_key,
+        arguments={"agent_identity": "parity-project"},
+    )
+    expected_ids = {rest_project_id, cli_project_id, mcp_project_id}
+    for page in (rest_list, cli_list, mcp_list):
+        assert expected_ids.issubset({project["id"] for project in page["projects"]})
+
+    rest_get = _get_json(
+        f"{api_base_url}/projects/{rest_project_id}",
+        api_key=founder_key,
+    )
+    cli_get = _run_cli(
+        ["project", "get", cli_project_id],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_get = _call_mcp_tool(
+        mcp_base_url,
+        "get_project",
+        22,
+        api_key=founder_key,
+        arguments={
+            "project_id": mcp_project_id,
+            "agent_identity": "parity-project",
+        },
+    )
+    assert rest_get["project"]["id"] == rest_project_id
+    assert cli_get["project"]["id"] == cli_project_id
+    assert mcp_get["project"]["id"] == mcp_project_id
+
+    rest_update_response = httpx.patch(
+        f"{api_base_url}/projects/{rest_project_id}",
+        headers=auth,
+        json={"description": "REST updated"},
+        timeout=10,
+    )
+    rest_update_response.raise_for_status()
+    rest_update = rest_update_response.json()
+    cli_update = _run_cli(
+        [
+            "project",
+            "update",
+            cli_project_id,
+            "--description",
+            "CLI updated",
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_update = _call_mcp_tool(
+        mcp_base_url,
+        "update_project",
+        23,
+        api_key=founder_key,
+        arguments={
+            "project_id": mcp_project_id,
+            "description": "MCP updated",
+            "agent_identity": "parity-project",
+        },
+    )
+    assert rest_update["project"]["description"] == "REST updated"
+    assert cli_update["project"]["description"] == "CLI updated"
+    assert mcp_update["project"]["description"] == "MCP updated"
+
+    rest_archive_response = httpx.post(
+        f"{api_base_url}/projects/{rest_project_id}/archive",
+        headers=auth,
+        json={},
+        timeout=10,
+    )
+    rest_archive_response.raise_for_status()
+    rest_archive = rest_archive_response.json()
+    cli_archive = _run_cli(
+        ["project", "archive", cli_project_id],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_archive = _call_mcp_tool(
+        mcp_base_url,
+        "archive_project",
+        24,
+        api_key=founder_key,
+        arguments={
+            "project_id": mcp_project_id,
+            "agent_identity": "parity-project",
+        },
+    )
+    assert rest_archive["project"]["archived_at"] is not None
+    assert cli_archive["project"]["archived_at"] is not None
+    assert mcp_archive["project"]["archived_at"] is not None
+
+    rest_after_archive = _get_json(f"{api_base_url}/projects", api_key=founder_key)
+    cli_after_archive = _run_cli(
+        ["project", "list"],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_after_archive = _call_mcp_tool(
+        mcp_base_url,
+        "list_projects",
+        25,
+        api_key=founder_key,
+        arguments={"agent_identity": "parity-project"},
+    )
+    for page in (rest_after_archive, cli_after_archive, mcp_after_archive):
+        assert expected_ids.isdisjoint({project["id"] for project in page["projects"]})
+
+    audit = _get_json(
+        f"{api_base_url}/audit",
+        api_key=founder_key,
+        params={"limit": 20},
+    )
+    project_ops = [
+        row["op"]
+        for row in audit["entries"]
+        if row["op"] in {"create_project", "update_project", "archive_project"}
+    ]
+    assert project_ops.count("create_project") == 3
+    assert project_ops.count("update_project") == 3
+    assert project_ops.count("archive_project") == 3
+
+    artifact = {
+        "creates": {"rest": rest_create, "cli": cli_create, "mcp": mcp_create},
+        "lists": {
+            "rest": rest_list,
+            "cli": cli_list,
+            "mcp": mcp_list,
+            "rest_after_archive": rest_after_archive,
+            "cli_after_archive": cli_after_archive,
+            "mcp_after_archive": mcp_after_archive,
+        },
+        "gets": {"rest": rest_get, "cli": cli_get, "mcp": mcp_get},
+        "updates": {"rest": rest_update, "cli": cli_update, "mcp": mcp_update},
+        "archives": {
+            "rest": rest_archive,
+            "cli": cli_archive,
+            "mcp": mcp_archive,
+        },
+        "audit": audit,
+    }
+    (artifact_dir / "projects-parity.txt").write_text(
         redact_evidence(_json_text(artifact)),
         encoding="utf-8",
     )

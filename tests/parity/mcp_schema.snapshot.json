@@ -746,6 +746,629 @@
             "tags": []
           }
         }
+      },
+      {
+        "name": "create_project",
+        "description": "Create a Project. Slug uniqueness is enforced globally.",
+        "inputSchema": {
+          "properties": {
+            "name": {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            "slug": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+              "type": "string"
+            },
+            "description": {
+              "anyOf": [
+                {
+                  "maxLength": 16384,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "agent_identity": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+            }
+          },
+          "required": [
+            "name",
+            "slug"
+          ],
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "project": {
+              "properties": {
+                "id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "name": {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "slug": {
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+                  "type": "string"
+                },
+                "description": {
+                  "anyOf": [
+                    {
+                      "maxLength": 16384,
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "archived_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "created_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "created_by_actor_id": {
+                  "anyOf": [
+                    {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "slug",
+                "created_at"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "project"
+          ],
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        }
+      },
+      {
+        "name": "list_projects",
+        "description": "List Projects with opaque cursor pagination. Archived Projects are excluded unless include_archived is true.",
+        "inputSchema": {
+          "properties": {
+            "limit": {
+              "default": 50,
+              "type": "integer"
+            },
+            "cursor": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "include_archived": {
+              "default": false,
+              "type": "boolean"
+            },
+            "agent_identity": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+            }
+          },
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "projects": {
+              "items": {
+                "properties": {
+                  "id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "name": {
+                    "maxLength": 256,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "slug": {
+                    "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+                    "type": "string"
+                  },
+                  "description": {
+                    "anyOf": [
+                      {
+                        "maxLength": 16384,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null
+                  },
+                  "archived_at": {
+                    "anyOf": [
+                      {
+                        "format": "date-time",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null
+                  },
+                  "created_at": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "created_by_actor_id": {
+                    "anyOf": [
+                      {
+                        "format": "uuid",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "slug",
+                  "created_at"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "next_cursor": {
+              "anyOf": [
+                {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "projects"
+          ],
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": true
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        }
+      },
+      {
+        "name": "get_project",
+        "description": "Return one Project by UUID.",
+        "inputSchema": {
+          "properties": {
+            "project_id": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "agent_identity": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+            }
+          },
+          "required": [
+            "project_id"
+          ],
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "project": {
+              "properties": {
+                "id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "name": {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "slug": {
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+                  "type": "string"
+                },
+                "description": {
+                  "anyOf": [
+                    {
+                      "maxLength": 16384,
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "archived_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "created_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "created_by_actor_id": {
+                  "anyOf": [
+                    {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "slug",
+                "created_at"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "project"
+          ],
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": true
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        }
+      },
+      {
+        "name": "update_project",
+        "description": "Update mutable Project metadata by UUID.",
+        "inputSchema": {
+          "properties": {
+            "project_id": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "name": {
+              "anyOf": [
+                {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "description": {
+              "anyOf": [
+                {
+                  "maxLength": 16384,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "agent_identity": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+            }
+          },
+          "required": [
+            "project_id"
+          ],
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "project": {
+              "properties": {
+                "id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "name": {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "slug": {
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+                  "type": "string"
+                },
+                "description": {
+                  "anyOf": [
+                    {
+                      "maxLength": 16384,
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "archived_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "created_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "created_by_actor_id": {
+                  "anyOf": [
+                    {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "slug",
+                "created_at"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "project"
+          ],
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        }
+      },
+      {
+        "name": "archive_project",
+        "description": "Archive a Project by setting archived_at; rows are retained.",
+        "inputSchema": {
+          "properties": {
+            "project_id": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "agent_identity": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+            }
+          },
+          "required": [
+            "project_id"
+          ],
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "project": {
+              "properties": {
+                "id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "name": {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "slug": {
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+                  "type": "string"
+                },
+                "description": {
+                  "anyOf": [
+                    {
+                      "maxLength": 16384,
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "archived_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "created_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "created_by_actor_id": {
+                  "anyOf": [
+                    {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "slug",
+                "created_at"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "project"
+          ],
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        }
       }
     ]
   }

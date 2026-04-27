@@ -303,6 +303,219 @@ def test_actor_create_posts_body_and_prints_one_shot_key(
     ]
 
 
+def test_project_create_posts_body_and_prints_raw_json(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    body = (
+        '{"project":{"id":"44444444-4444-4444-8444-444444444444",'
+        '"name":"AQ 2.0 Backlog","slug":"aq-2-backlog",'
+        '"description":"Project board","archived_at":null,'
+        '"created_at":"2026-04-27T01:00:00Z",'
+        '"created_by_actor_id":"11111111-1111-4111-8111-111111111111"}}'
+    )
+    calls: list[tuple[str, dict[str, str], dict[str, object], float]] = []
+
+    def fake_post(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        calls.append((url, headers, json, timeout))
+        return _json_response(url, body, method="POST")
+
+    monkeypatch.setattr("aq_cli.main.httpx.post", fake_post)
+
+    result = runner.invoke(
+        app,
+        [
+            "project",
+            "create",
+            "--name",
+            "AQ 2.0 Backlog",
+            "--slug",
+            "aq-2-backlog",
+            "--description",
+            "Project board",
+        ],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert result.exit_code == 0
+    assert result.stdout == f"{body}\n"
+    assert calls == [
+        (
+            "http://api.test/projects",
+            {"Authorization": "Bearer aq2_cli_contract_key"},
+            {
+                "name": "AQ 2.0 Backlog",
+                "slug": "aq-2-backlog",
+                "description": "Project board",
+            },
+            10.0,
+        )
+    ]
+
+
+def test_project_create_derives_slug_when_omitted(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    body = (
+        '{"project":{"id":"44444444-4444-4444-8444-444444444444",'
+        '"name":"AQ 2.0 Backlog","slug":"aq-2-0-backlog",'
+        '"description":null,"archived_at":null,'
+        '"created_at":"2026-04-27T01:00:00Z",'
+        '"created_by_actor_id":"11111111-1111-4111-8111-111111111111"}}'
+    )
+    calls: list[dict[str, object]] = []
+
+    def fake_post(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        calls.append(json)
+        return _json_response(url, body, method="POST")
+
+    monkeypatch.setattr("aq_cli.main.httpx.post", fake_post)
+
+    result = runner.invoke(
+        app,
+        ["project", "create", "--name", "AQ 2.0 Backlog"],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert result.exit_code == 0
+    assert calls == [{"name": "AQ 2.0 Backlog", "slug": "aq-2-0-backlog"}]
+
+
+def test_project_list_sends_archived_query_params(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    body = '{"projects":[],"next_cursor":null}'
+    calls: list[tuple[str, dict[str, str], dict[str, object], float]] = []
+
+    def fake_get(
+        url: str,
+        *,
+        headers: dict[str, str],
+        params: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        calls.append((url, headers, params, timeout))
+        return _json_response(url, body)
+
+    monkeypatch.setattr("aq_cli.main.httpx.get", fake_get)
+
+    result = runner.invoke(
+        app,
+        [
+            "project",
+            "list",
+            "--limit",
+            "10",
+            "--cursor",
+            "cursor-1",
+            "--include-archived",
+        ],
+        env={API_URL_ENV: "http://api.test/", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert result.exit_code == 0
+    assert result.stdout == f"{body}\n"
+    assert calls == [
+        (
+            "http://api.test/projects",
+            {"Authorization": "Bearer aq2_cli_contract_key"},
+            {"limit": 10, "cursor": "cursor-1", "include_archived": True},
+            5.0,
+        )
+    ]
+
+
+def test_project_get_update_archive_use_expected_paths(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    project_id = "44444444-4444-4444-8444-444444444444"
+    body = (
+        '{"project":{"id":"44444444-4444-4444-8444-444444444444",'
+        '"name":"AQ 2.0 Backlog","slug":"aq-2-backlog",'
+        '"description":null,"archived_at":null,'
+        '"created_at":"2026-04-27T01:00:00Z",'
+        '"created_by_actor_id":"11111111-1111-4111-8111-111111111111"}}'
+    )
+    calls: list[tuple[str, str, dict[str, object] | None, float]] = []
+
+    def fake_get(
+        url: str,
+        *,
+        headers: dict[str, str],
+        timeout: float,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("GET", url, None, timeout))
+        return _json_response(url, body)
+
+    def fake_patch(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("PATCH", url, json, timeout))
+        return _json_response(url, body, method="PATCH")
+
+    def fake_post(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("POST", url, json, timeout))
+        return _json_response(url, body, method="POST")
+
+    monkeypatch.setattr("aq_cli.main.httpx.get", fake_get)
+    monkeypatch.setattr("aq_cli.main.httpx.patch", fake_patch)
+    monkeypatch.setattr("aq_cli.main.httpx.post", fake_post)
+
+    get_result = runner.invoke(
+        app,
+        ["project", "get", project_id],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+    update_result = runner.invoke(
+        app,
+        ["project", "update", project_id, "--name", "AQ 2.0 Backlog"],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+    archive_result = runner.invoke(
+        app,
+        ["project", "archive", project_id],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert get_result.exit_code == 0
+    assert update_result.exit_code == 0
+    assert archive_result.exit_code == 0
+    assert calls == [
+        ("GET", f"http://api.test/projects/{project_id}", None, 5.0),
+        (
+            "PATCH",
+            f"http://api.test/projects/{project_id}",
+            {"name": "AQ 2.0 Backlog"},
+            10.0,
+        ),
+        ("POST", f"http://api.test/projects/{project_id}/archive", {}, 10.0),
+    ]
+
+
 def test_key_revoke_deletes_with_bearer_and_prints_raw_json(
     monkeypatch: MonkeyPatch,
 ) -> None:

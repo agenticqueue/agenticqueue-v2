@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from pathlib import Path
 from typing import Annotated, NoReturn
 
@@ -38,6 +39,8 @@ ActorKindOption = Annotated[
 app = typer.Typer(add_completion=False, pretty_exceptions_enable=False)
 actor_app = typer.Typer(add_completion=False, help="Actor identity commands.")
 key_app = typer.Typer(add_completion=False, help="API key commands.")
+project_app = typer.Typer(add_completion=False, help="Project commands.")
+SLUG_CHARS_RE = re.compile(r"[^a-z0-9]+")
 
 
 def _api_url(path: str) -> str:
@@ -187,6 +190,36 @@ def _post_auth(
     return response.text
 
 
+def _patch_auth(
+    path: str,
+    body: dict[str, object],
+    timeout: float,
+    config_path: Path | None,
+) -> str:
+    url = _authenticated_api_url(path, config_path)
+    try:
+        response = httpx.patch(
+            url,
+            headers=_auth_headers(config_path),
+            json=body,
+            timeout=timeout,
+        )
+    except httpx.TimeoutException as exc:
+        _fail("timeout", url, message=str(exc), type=type(exc).__name__)
+    except httpx.HTTPError as exc:
+        _fail("request_error", url, message=str(exc), type=type(exc).__name__)
+
+    if not 200 <= response.status_code < 300:
+        _fail(
+            "http_error",
+            url,
+            status_code=response.status_code,
+            body=response.text,
+        )
+
+    return response.text
+
+
 def _delete_auth(
     path: str,
     timeout: float,
@@ -213,6 +246,11 @@ def _delete_auth(
         )
 
     return response.text
+
+
+def _slug_from_name(name: str) -> str:
+    slug = SLUG_CHARS_RE.sub("-", name.lower()).strip("-")
+    return slug[:63].strip("-") or "project"
 
 
 @app.command()
@@ -351,6 +389,78 @@ def actor_create(
 
 
 app.add_typer(actor_app, name="actor")
+
+
+@project_app.command("create")
+def project_create(
+    name: Annotated[str, typer.Option("--name")],
+    slug: Annotated[str | None, typer.Option("--slug")] = None,
+    description: Annotated[str | None, typer.Option("--description")] = None,
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Create a Project and print the Project response."""
+    body: dict[str, object] = {"name": name, "slug": slug or _slug_from_name(name)}
+    if description is not None:
+        body["description"] = description
+    typer.echo(_post_auth("/projects", body, timeout, config))
+
+
+@project_app.command("list")
+def project_list(
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+    limit: Annotated[int, typer.Option("--limit", min=1, max=200)] = 50,
+    cursor: Annotated[str | None, typer.Option("--cursor")] = None,
+    include_archived: Annotated[bool, typer.Option("--include-archived")] = False,
+) -> None:
+    """Print the paginated ListProjectsResponse JSON payload."""
+    params: QueryParams = {"limit": limit}
+    if cursor is not None:
+        params["cursor"] = cursor
+    if include_archived:
+        params["include_archived"] = True
+    typer.echo(_get_auth("/projects", timeout, config, params=params))
+
+
+@project_app.command("get")
+def project_get(
+    project_id: Annotated[str, typer.Argument(help="Project UUID.")],
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    """Print one Project JSON payload."""
+    typer.echo(_get_auth(f"/projects/{project_id}", timeout, config))
+
+
+@project_app.command("update")
+def project_update(
+    project_id: Annotated[str, typer.Argument(help="Project UUID.")],
+    name: Annotated[str | None, typer.Option("--name")] = None,
+    description: Annotated[str | None, typer.Option("--description")] = None,
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Update a Project and print the Project response."""
+    body: dict[str, object] = {}
+    if name is not None:
+        body["name"] = name
+    if description is not None:
+        body["description"] = description
+    typer.echo(_patch_auth(f"/projects/{project_id}", body, timeout, config))
+
+
+@project_app.command("archive")
+def project_archive(
+    project_id: Annotated[str, typer.Argument(help="Project UUID.")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Archive a Project with a soft-delete timestamp."""
+    typer.echo(_post_auth(f"/projects/{project_id}/archive", {}, timeout, config))
+
+
+app.add_typer(project_app, name="project")
 
 
 @key_app.command("revoke")

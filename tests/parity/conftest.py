@@ -39,9 +39,15 @@ def artifact_dir() -> Path:
     return ARTIFACT_DIR
 
 
+def _default_api_url() -> str:
+    if Path("/.dockerenv").exists():
+        return "http://127.0.0.1:8000"
+    return "http://localhost:8001"
+
+
 @pytest.fixture
 def api_base_url() -> str:
-    return os.getenv("AQ_API_URL", "http://localhost:8001").rstrip("/")
+    return os.getenv("AQ_API_URL", _default_api_url()).rstrip("/")
 
 
 @pytest.fixture
@@ -77,7 +83,17 @@ def _compose_command(*args: str) -> list[str]:
 
 
 def _truncate_sql() -> str:
-    return "DELETE FROM audit_log; DELETE FROM api_keys; DELETE FROM actors;"
+    return (
+        "DELETE FROM audit_log; "
+        "DELETE FROM job_comments; "
+        "DELETE FROM job_edges; "
+        "DELETE FROM jobs; "
+        "DELETE FROM pipelines; "
+        "DELETE FROM labels; "
+        "DELETE FROM projects; "
+        "DELETE FROM api_keys; "
+        "DELETE FROM actors;"
+    )
 
 
 def _direct_conninfo() -> str | None:

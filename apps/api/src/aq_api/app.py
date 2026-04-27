@@ -16,6 +16,7 @@ from aq_api.models import HealthStatus, VersionInfo
 from aq_api.routes.actors import router as actors_router
 from aq_api.routes.api_keys import router as api_keys_router
 from aq_api.routes.audit import router as audit_router
+from aq_api.routes.projects import router as projects_router
 from aq_api.routes.setup import router as setup_router
 
 # OpenAPI uses the same env-driven version path as the runtime `/version` surface.
@@ -69,6 +70,7 @@ app.include_router(setup_router)
 app.include_router(actors_router)
 app.include_router(api_keys_router)
 app.include_router(audit_router)
+app.include_router(projects_router)
 
 
 # app.mount("/mcp", mcp.http_app(path="/")) redirects POST /mcp to /mcp/.

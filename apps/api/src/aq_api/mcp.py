@@ -15,21 +15,42 @@ from aq_api._request_context import (
 from aq_api._version import VERSION_INFO
 from aq_api.models import (
     ActorKind,
+    ArchiveProjectResponse,
     AuditLogPage,
     AuditQueryParams,
     CreateActorRequest,
     CreateActorResponse,
+    CreateProjectRequest,
+    CreateProjectResponse,
+    GetProjectResponse,
     HealthStatus,
     ListActorsResponse,
+    ListProjectsResponse,
     RevokeApiKeyResponse,
+    UpdateProjectRequest,
+    UpdateProjectResponse,
     VersionInfo,
     WhoamiResponse,
+)
+from aq_api.models.projects import (
+    Description as ProjectDescription,
+)
+from aq_api.models.projects import (
+    Name as ProjectName,
+)
+from aq_api.models.projects import (
+    Slug as ProjectSlug,
 )
 from aq_api.services.actors import create_actor as create_actor_service
 from aq_api.services.actors import get_self_by_id
 from aq_api.services.actors import list_actors as list_actor_service
 from aq_api.services.api_keys import revoke_api_key as revoke_api_key_service
 from aq_api.services.audit import query_audit_log as query_audit_log_service
+from aq_api.services.projects import archive_project as archive_project_service
+from aq_api.services.projects import create_project as create_project_service
+from aq_api.services.projects import get_project as get_project_service
+from aq_api.services.projects import list_projects as list_project_service
+from aq_api.services.projects import update_project as update_project_service
 
 MCP_NAME = "AgenticQueue 2.0 MCP"
 MCP_HTTP_PATH = "/mcp"
@@ -200,6 +221,110 @@ def create_mcp_server() -> FastMCP:
             )
             async with SessionLocal() as session:
                 return await query_audit_log_service(session, params)
+
+    @server.tool(
+        description="Create a Project. Slug uniqueness is enforced globally.",
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def create_project(
+        name: ProjectName,
+        slug: ProjectSlug,
+        description: ProjectDescription = None,
+        agent_identity: AgentIdentity = None,
+    ) -> CreateProjectResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = CreateProjectRequest(
+                name=name,
+                slug=slug,
+                description=description,
+            )
+            async with SessionLocal() as session:
+                return await create_project_service(
+                    session,
+                    request,
+                    actor_id=actor_id,
+                )
+
+    @server.tool(
+        description=(
+            "List Projects with opaque cursor pagination. Archived Projects are "
+            "excluded unless include_archived is true."
+        ),
+        annotations={"readOnlyHint": True},
+    )
+    async def list_projects(
+        limit: int = 50,
+        cursor: str | None = None,
+        include_archived: bool = False,
+        agent_identity: AgentIdentity = None,
+    ) -> ListProjectsResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await list_project_service(
+                    session,
+                    limit=limit,
+                    cursor=cursor,
+                    include_archived=include_archived,
+                )
+
+    @server.tool(
+        description="Return one Project by UUID.",
+        annotations={"readOnlyHint": True},
+    )
+    async def get_project(
+        project_id: UUID,
+        agent_identity: AgentIdentity = None,
+    ) -> GetProjectResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await get_project_service(session, project_id)
+
+    @server.tool(
+        description="Update mutable Project metadata by UUID.",
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def update_project(
+        project_id: UUID,
+        name: ProjectName | None = None,
+        description: ProjectDescription = None,
+        agent_identity: AgentIdentity = None,
+    ) -> UpdateProjectResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            data: dict[str, object] = {}
+            if name is not None:
+                data["name"] = name
+            if description is not None:
+                data["description"] = description
+            request = UpdateProjectRequest.model_validate(data)
+            async with SessionLocal() as session:
+                return await update_project_service(session, project_id, request)
+
+    @server.tool(
+        description="Archive a Project by setting archived_at; rows are retained.",
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def archive_project(
+        project_id: UUID,
+        agent_identity: AgentIdentity = None,
+    ) -> ArchiveProjectResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await archive_project_service(session, project_id)
 
     return server
 

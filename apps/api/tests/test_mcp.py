@@ -24,6 +24,11 @@ async def test_mcp_tools_return_shared_contract_payloads() -> None:
             "create_actor",
             "revoke_api_key",
             "query_audit_log",
+            "create_project",
+            "list_projects",
+            "get_project",
+            "update_project",
+            "archive_project",
         }
         assert tool_by_name["health_check"].annotations is not None
         assert tool_by_name["health_check"].annotations.readOnlyHint is True
@@ -40,6 +45,19 @@ async def test_mcp_tools_return_shared_contract_payloads() -> None:
         assert tool_by_name["revoke_api_key"].annotations.destructiveHint is True
         assert tool_by_name["query_audit_log"].annotations is not None
         assert tool_by_name["query_audit_log"].annotations.readOnlyHint is True
+        assert tool_by_name["create_project"].annotations is not None
+        assert tool_by_name["create_project"].annotations.readOnlyHint is False
+        assert tool_by_name["create_project"].annotations.destructiveHint is False
+        assert tool_by_name["list_projects"].annotations is not None
+        assert tool_by_name["list_projects"].annotations.readOnlyHint is True
+        assert tool_by_name["get_project"].annotations is not None
+        assert tool_by_name["get_project"].annotations.readOnlyHint is True
+        assert tool_by_name["update_project"].annotations is not None
+        assert tool_by_name["update_project"].annotations.readOnlyHint is False
+        assert tool_by_name["update_project"].annotations.destructiveHint is False
+        assert tool_by_name["archive_project"].annotations is not None
+        assert tool_by_name["archive_project"].annotations.readOnlyHint is False
+        assert tool_by_name["archive_project"].annotations.destructiveHint is False
         for tool in tool_by_name.values():
             agent_schema = tool.inputSchema["properties"]["agent_identity"]
             assert agent_schema["default"] is None
