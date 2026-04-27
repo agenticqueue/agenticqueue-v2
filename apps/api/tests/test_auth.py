@@ -1,3 +1,4 @@
+import asyncio
 import os
 import uuid
 from collections.abc import Iterator
@@ -37,6 +38,9 @@ def conn() -> Iterator[Connection[tuple[object, ...]]]:
 def client() -> Iterator[TestClient]:
     with TestClient(app) as api_client:
         yield api_client
+    from aq_api._db import engine
+
+    asyncio.run(engine.dispose())
 
 
 def _insert_actor_with_key(

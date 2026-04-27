@@ -1,0 +1,3 @@
+.                                                                        [100%]
+---------------- generated xml file: /tmp/audit-denial-test.xml ----------------
+1 passed, 5 deselected in 0.42s
