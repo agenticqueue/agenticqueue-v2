@@ -20,19 +20,7 @@ updates:
         patterns:
           - "*"
     ignore:
-      - dependency-name: tailwindcss
-        update-types:
-          - version-update:semver-major
-      - dependency-name: eslint
-        update-types:
-          - version-update:semver-major
-      - dependency-name: next
-        update-types:
-          - version-update:semver-major
-      - dependency-name: react
-        update-types:
-          - version-update:semver-major
-      - dependency-name: react-dom
+      - dependency-name: "*"
         update-types:
           - version-update:semver-major
 
