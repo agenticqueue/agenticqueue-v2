@@ -37,6 +37,7 @@ ActorKindOption = Annotated[
 
 app = typer.Typer(add_completion=False, pretty_exceptions_enable=False)
 actor_app = typer.Typer(add_completion=False, help="Actor identity commands.")
+key_app = typer.Typer(add_completion=False, help="API key commands.")
 
 
 def _api_url(path: str) -> str:
@@ -186,6 +187,34 @@ def _post_auth(
     return response.text
 
 
+def _delete_auth(
+    path: str,
+    timeout: float,
+    config_path: Path | None,
+) -> str:
+    url = _authenticated_api_url(path, config_path)
+    try:
+        response = httpx.delete(
+            url,
+            headers=_auth_headers(config_path),
+            timeout=timeout,
+        )
+    except httpx.TimeoutException as exc:
+        _fail("timeout", url, message=str(exc), type=type(exc).__name__)
+    except httpx.HTTPError as exc:
+        _fail("request_error", url, message=str(exc), type=type(exc).__name__)
+
+    if not 200 <= response.status_code < 300:
+        _fail(
+            "http_error",
+            url,
+            status_code=response.status_code,
+            body=response.text,
+        )
+
+    return response.text
+
+
 @app.command()
 def health(timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS) -> None:
     """Print the HealthStatus JSON payload."""
@@ -287,3 +316,16 @@ def actor_create(
 
 
 app.add_typer(actor_app, name="actor")
+
+
+@key_app.command("revoke")
+def key_revoke(
+    api_key_id: Annotated[str, typer.Argument(help="API key UUID to revoke.")],
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    """Revoke one of the authenticated Actor's API keys."""
+    typer.echo(_delete_auth(f"/api-keys/{api_key_id}", timeout, config))
+
+
+app.add_typer(key_app, name="key")

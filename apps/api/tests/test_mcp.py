@@ -22,6 +22,7 @@ async def test_mcp_tools_return_shared_contract_payloads() -> None:
             "get_self",
             "list_actors",
             "create_actor",
+            "revoke_api_key",
         }
         assert tool_by_name["health_check"].annotations is not None
         assert tool_by_name["health_check"].annotations.readOnlyHint is True
@@ -33,6 +34,9 @@ async def test_mcp_tools_return_shared_contract_payloads() -> None:
         assert tool_by_name["list_actors"].annotations.readOnlyHint is True
         assert tool_by_name["create_actor"].annotations is not None
         assert tool_by_name["create_actor"].annotations.readOnlyHint is False
+        assert tool_by_name["revoke_api_key"].annotations is not None
+        assert tool_by_name["revoke_api_key"].annotations.readOnlyHint is False
+        assert tool_by_name["revoke_api_key"].annotations.destructiveHint is True
 
         health = await client.call_tool("health_check", {})
         version = await client.call_tool("get_version", {})

@@ -11,12 +11,14 @@ from aq_api.models import (
     CreateActorResponse,
     HealthStatus,
     ListActorsResponse,
+    RevokeApiKeyResponse,
     VersionInfo,
     WhoamiResponse,
 )
 from aq_api.services.actors import create_actor as create_actor_service
 from aq_api.services.actors import get_self_by_id
 from aq_api.services.actors import list_actors as list_actor_service
+from aq_api.services.api_keys import revoke_api_key as revoke_api_key_service
 
 MCP_NAME = "AgenticQueue 2.0 MCP"
 MCP_HTTP_PATH = "/mcp"
@@ -104,6 +106,24 @@ def create_mcp_server() -> FastMCP:
         request = CreateActorRequest(name=name, kind=kind, key_name=key_name)
         async with SessionLocal() as session:
             return await create_actor_service(session, request)
+
+    @server.tool(
+        description=(
+            "Revoke one of the caller Actor's API keys. Cross-actor attempts "
+            "are forbidden and audited; revoking the last active key is blocked."
+        ),
+        annotations={"readOnlyHint": False, "destructiveHint": True},
+    )
+    async def revoke_api_key(api_key_id: UUID) -> RevokeApiKeyResponse:
+        from aq_api._db import SessionLocal
+
+        actor_id = _authenticated_actor_id()
+        async with SessionLocal() as session:
+            return await revoke_api_key_service(
+                session,
+                actor_id=actor_id,
+                api_key_id=api_key_id,
+            )
 
     return server
 

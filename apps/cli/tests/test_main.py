@@ -290,3 +290,44 @@ def test_actor_create_posts_body_and_prints_one_shot_key(
             10.0,
         )
     ]
+
+
+def test_key_revoke_deletes_with_bearer_and_prints_raw_json(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    api_key_id = "33333333-3333-4333-8333-333333333333"
+    body = (
+        '{"api_key":{"id":"33333333-3333-4333-8333-333333333333",'
+        '"actor_id":"22222222-2222-4222-8222-222222222222",'
+        '"name":"default","prefix":"aq2_cont",'
+        '"created_at":"2026-04-27T01:00:00Z",'
+        '"revoked_at":"2026-04-27T02:00:00Z"}}'
+    )
+    calls: list[tuple[str, dict[str, str], float]] = []
+
+    def fake_delete(
+        url: str,
+        *,
+        headers: dict[str, str],
+        timeout: float,
+    ) -> httpx.Response:
+        calls.append((url, headers, timeout))
+        return _json_response(url, body, method="DELETE")
+
+    monkeypatch.setattr("aq_cli.main.httpx.delete", fake_delete)
+
+    result = runner.invoke(
+        app,
+        ["key", "revoke", api_key_id],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert result.exit_code == 0
+    assert result.stdout == f"{body}\n"
+    assert calls == [
+        (
+            f"http://api.test/api-keys/{api_key_id}",
+            {"Authorization": "Bearer aq2_cli_contract_key"},
+            5.0,
+        )
+    ]
