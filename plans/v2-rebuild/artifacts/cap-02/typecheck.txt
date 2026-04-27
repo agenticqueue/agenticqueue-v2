@@ -1,0 +1,2 @@
+COMMAND: uv run mypy --strict apps/api/src/aq_api/models/
+Success: no issues found in 5 source files

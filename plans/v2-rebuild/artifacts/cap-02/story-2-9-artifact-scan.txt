@@ -1,0 +1,45 @@
+COMMAND gitleaks dir targeted Story 2.9 changed paths
+
+TARGET apps/api/src/aq_api/models/audit.py
+10:25AM INF scanned ~1282 bytes (1.28 KB) in 1ms
+10:25AM INF no leaks found
+
+TARGET apps/api/src/aq_api/services/audit.py
+10:25AM INF scanned ~5525 bytes (5.53 KB) in 6.61ms
+10:25AM INF no leaks found
+
+TARGET apps/api/src/aq_api/routes/audit.py
+10:25AM INF scanned ~1703 bytes (1.70 KB) in 3.5ms
+10:25AM INF no leaks found
+
+TARGET apps/api/src/aq_api/app.py
+10:25AM INF scanned ~2228 bytes (2.23 KB) in 5.91ms
+10:25AM INF no leaks found
+
+TARGET apps/api/src/aq_api/mcp.py
+10:25AM INF scanned ~5701 bytes (5.70 KB) in 3.01ms
+10:25AM INF no leaks found
+
+TARGET apps/api/tests/test_audit_models.py
+10:25AM INF scanned ~2442 bytes (2.44 KB) in 9.92ms
+10:25AM INF no leaks found
+
+TARGET apps/api/tests/test_audit_query.py
+10:25AM INF scanned ~8898 bytes (8.90 KB) in 7.16ms
+10:25AM INF no leaks found
+
+TARGET apps/api/tests/test_mcp.py
+10:25AM INF scanned ~2565 bytes (2.57 KB) in 5.88ms
+10:25AM INF no leaks found
+
+TARGET apps/cli/src/aq_cli/main.py
+10:25AM INF scanned ~10765 bytes (10.77 KB) in 6.72ms
+10:25AM INF no leaks found
+
+TARGET apps/cli/tests/test_main.py
+10:25AM INF scanned ~11569 bytes (11.57 KB) in 11.8ms
+10:25AM INF no leaks found
+
+TARGET plans/v2-rebuild/artifacts/cap-02
+10:25AM INF scanned ~75758 bytes (75.76 KB) in 29.8ms
+10:25AM INF no leaks found

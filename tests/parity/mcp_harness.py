@@ -8,20 +8,39 @@ from typing import Any
 import httpx
 
 DEFAULT_API_URL = "http://localhost:8001"
+TOOL_NAMES = [
+    "health_check",
+    "get_version",
+    "get_self",
+    "list_actors",
+    "create_actor",
+    "revoke_api_key",
+    "query_audit_log",
+]
 
 
-def call_tool(tool_name: str, api_base_url: str) -> dict[str, Any]:
+def call_tool(
+    tool_name: str,
+    api_base_url: str,
+    *,
+    api_key: str | None = None,
+    arguments: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    headers = {
+        "Accept": "application/json,text/event-stream",
+        "Content-Type": "application/json",
+    }
+    if api_key is not None:
+        headers["Authorization"] = f"Bearer {api_key}"
+
     response = httpx.post(
         f"{api_base_url.rstrip('/')}/mcp",
-        headers={
-            "Accept": "application/json,text/event-stream",
-            "Content-Type": "application/json",
-        },
+        headers=headers,
         json={
             "jsonrpc": "2.0",
             "id": 1,
             "method": "tools/call",
-            "params": {"name": tool_name, "arguments": {}},
+            "params": {"name": tool_name, "arguments": arguments or {}},
         },
         timeout=10,
     )
@@ -38,14 +57,44 @@ def call_tool(tool_name: str, api_base_url: str) -> dict[str, Any]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Call an AQ2 MCP parity tool.")
-    parser.add_argument("tool", choices=["health_check", "get_version"])
+    parser.add_argument("tool", choices=TOOL_NAMES)
     parser.add_argument(
         "--api-base-url",
         default=os.getenv("AQ_API_URL", DEFAULT_API_URL),
         help="AQ API base URL; defaults to AQ_API_URL or localhost:8001.",
     )
+    parser.add_argument(
+        "--api-key",
+        default=os.getenv("AQ_API_KEY"),
+        help="Bearer key; defaults to AQ_API_KEY.",
+    )
+    parser.add_argument(
+        "--agent-identity",
+        default=None,
+        help="Optional informational MCP agent identity.",
+    )
+    parser.add_argument(
+        "--arguments-json",
+        default="{}",
+        help="Tool arguments JSON object merged after --agent-identity.",
+    )
     args = parser.parse_args()
-    print(json.dumps(call_tool(args.tool, args.api_base_url), separators=(",", ":")))
+    arguments = json.loads(args.arguments_json)
+    if not isinstance(arguments, dict):
+        raise TypeError("--arguments-json must decode to an object")
+    if args.agent_identity is not None:
+        arguments["agent_identity"] = args.agent_identity
+    print(
+        json.dumps(
+            call_tool(
+                args.tool,
+                args.api_base_url,
+                api_key=args.api_key,
+                arguments=arguments,
+            ),
+            separators=(",", ":"),
+        )
+    )
 
 
 if __name__ == "__main__":

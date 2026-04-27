@@ -1,0 +1,24 @@
+                                                             Table "public.api_keys"
+       Column        |           Type           | Collation | Nullable |      Default      | Storage  | Compression | Stats target | Description 
+---------------------+--------------------------+-----------+----------+-------------------+----------+-------------+--------------+-------------
+ id                  | uuid                     |           | not null | gen_random_uuid() | plain    |             |              | 
+ actor_id            | uuid                     |           | not null |                   | plain    |             |              | 
+ name                | text                     |           | not null |                   | extended |             |              | 
+ key_hash            | text                     |           | not null |                   | extended |             |              | 
+ prefix              | text                     |           | not null |                   | extended |             |              | 
+ created_at          | timestamp with time zone |           | not null | now()             | plain    |             |              | 
+ revoked_at          | timestamp with time zone |           |          |                   | plain    |             |              | 
+ revoked_by_actor_id | uuid                     |           |          |                   | plain    |             |              | 
+ lookup_id           | bytea                    |           | not null |                   | extended |             |              | 
+Indexes:
+    "api_keys_pkey" PRIMARY KEY, btree (id)
+    "api_keys_actor_active_idx" btree (actor_id) WHERE revoked_at IS NULL
+    "api_keys_lookup_id_uniq" UNIQUE, btree (lookup_id)
+Check constraints:
+    "api_keys_revoked_fields_check" CHECK ((revoked_at IS NULL) = (revoked_by_actor_id IS NULL))
+Foreign-key constraints:
+    "api_keys_actor_id_fkey" FOREIGN KEY (actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    "api_keys_revoked_by_actor_id_fkey" FOREIGN KEY (revoked_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+Access method: heap
+
+

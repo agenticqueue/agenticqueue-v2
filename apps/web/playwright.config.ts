@@ -21,6 +21,10 @@ export default defineConfig({
         timeout: 120_000,
         env: {
           AQ_API_URL: process.env.AQ_API_URL ?? "http://localhost:8001",
+          AQ_COOKIE_SECURE: process.env.AQ_COOKIE_SECURE ?? "false",
+          ...(process.env.AQ_SESSION_SECRET
+            ? { AQ_SESSION_SECRET: process.env.AQ_SESSION_SECRET }
+            : {}),
         },
       },
   projects: [

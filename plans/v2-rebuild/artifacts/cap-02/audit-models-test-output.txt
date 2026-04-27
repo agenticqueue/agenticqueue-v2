@@ -1,0 +1,4 @@
+COMMAND: uv run pytest -q apps/api/tests/test_audit_models.py --junit-xml=plans/v2-rebuild/artifacts/cap-02/audit-models-test.xml
+......                                                                   [100%]
+- generated xml file: D:\mmmmm\mmmmm-aq2.0\plans\v2-rebuild\artifacts\cap-02\audit-models-test.xml -
+6 passed in 0.13s

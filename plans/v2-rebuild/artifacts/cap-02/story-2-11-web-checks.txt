@@ -1,0 +1,345 @@
+Story 2.11 web checks - 2026-04-27T11:06:52.4560965-05:00
+
+## web lint
+
+> @agenticqueue/web@0.1.0 lint D:\mmmmm\mmmmm-aq2.0-cap02-work\apps\web
+> pnpm gen:types && eslint .
+
+
+> @agenticqueue/web@0.1.0 gen:types D:\mmmmm\mmmmm-aq2.0-cap02-work\apps\web
+> openapi-typescript ../../tests/parity/openapi.snapshot.json -o app/types/api.ts
+
+✨ openapi-typescript 7.13.0
+🚀 ../../tests/parity/openapi.snapshot.json → app/types/api.ts [37.1ms]
+EXIT_CODE=0
+
+## web build
+
+> @agenticqueue/web@0.1.0 build D:\mmmmm\mmmmm-aq2.0-cap02-work\apps\web
+> pnpm gen:types && next build
+
+
+> @agenticqueue/web@0.1.0 gen:types D:\mmmmm\mmmmm-aq2.0-cap02-work\apps\web
+> openapi-typescript ../../tests/parity/openapi.snapshot.json -o app/types/api.ts
+
+✨ openapi-typescript 7.13.0
+🚀 ../../tests/parity/openapi.snapshot.json → app/types/api.ts [26ms]
+   ▲ Next.js 15.5.15
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 2.8s
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/3) ...
+ ✓ Generating static pages (3/3)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ƒ /                                      141 B         102 kB
+├ ○ /_not-found                            991 B         103 kB
+├ ƒ /api/actors/me                         141 B         102 kB
+├ ƒ /api/health                            141 B         102 kB
+├ ƒ /api/version                           141 B         102 kB
+├ ƒ /login                                 141 B         102 kB
+├ ƒ /logout                                141 B         102 kB
+└ ƒ /whoami                                141 B         102 kB
++ First Load JS shared by all             102 kB
+  ├ chunks/40431421-4ca4396edd5d645a.js  54.2 kB
+  ├ chunks/628-d761323f3500a9ba.js         46 kB
+  └ other shared chunks (total)          1.97 kB
+
+
+ƒ Middleware                               43 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+EXIT_CODE=0
+
+## docker compose build web
+ Image mmmmm-aq20-web Building
+ Image mmmmm-aq20-api Building
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.09kB done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 655B 0.0s done
+#2 DONE 0.0s
+
+#3 [auth] library/node:pull token for registry-1.docker.io
+#3 DONE 0.0s
+
+#4 [internal] load metadata for docker.io/library/node:20-alpine
+#4 DONE 0.6s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 208B done
+#5 DONE 0.0s
+
+#6 [deps 1/6] FROM docker.io/library/node:20-alpine@sha256:[TOKEN_REDACTED]
+#6 resolve docker.io/library/node:20-alpine@sha256:[TOKEN_REDACTED] 0.0s done
+#6 DONE 0.0s
+
+#7 [internal] load build context
+#7 transferring context: 6.37kB 0.0s done
+#7 DONE 0.0s
+
+#8 [deps 2/6] WORKDIR /app
+#8 CACHED
+
+#9 [deps 3/6] RUN corepack enable
+#9 CACHED
+
+#10 [deps 6/6] RUN pnpm install --frozen-lockfile
+#10 CACHED
+
+#11 [deps 4/6] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+#11 CACHED
+
+#12 [deps 5/6] COPY apps/web/package.json ./apps/web/package.json
+#12 CACHED
+
+#13 [builder 1/3] COPY tests/parity/openapi.snapshot.json ./tests/parity/openapi.snapshot.json
+#13 CACHED
+
+#14 [builder 2/3] COPY apps/web ./apps/web
+#14 DONE 0.0s
+
+#15 [builder 3/3] RUN pnpm --filter @agenticqueue/web gen:types     && pnpm --filter @agenticqueue/web build
+#15 0.759
+#15 0.759 > @agenticqueue/web@0.1.0 gen:types /app/apps/web
+#15 0.759 > openapi-typescript ../../tests/parity/openapi.snapshot.json -o app/types/api.ts
+#15 0.759
+#15 1.854 ✨ openapi-typescript 7.13.0
+#15 1.894 🚀 ../../tests/parity/openapi.snapshot.json → app/types/api.ts [47.4ms]
+#15 2.246
+#15 2.246 > @agenticqueue/web@0.1.0 build /app/apps/web
+#15 2.246 > pnpm gen:types && next build
+#15 2.246
+#15 2.504
+#15 2.504 > @agenticqueue/web@0.1.0 gen:types /app/apps/web
+#15 2.504 > openapi-typescript ../../tests/parity/openapi.snapshot.json -o app/types/api.ts
+#15 2.504
+#15 3.122 ✨ openapi-typescript 7.13.0
+#15 3.151 🚀 ../../tests/parity/openapi.snapshot.json → app/types/api.ts [31.1ms]
+#15 4.215 Attention: Next.js now collects completely anonymous telemetry regarding usage.
+#15 4.218 This information is used to shape Next.js' roadmap and prioritize features.
+#15 4.218 You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+#15 4.218 https://nextjs.org/telemetry
+#15 4.218
+#15 4.329    ▲ Next.js 15.5.15
+#15 4.329
+#15 4.409    Creating an optimized production build ...
+#15 15.43  ✓ Compiled successfully in 8.5s
+#15 15.44    Linting and checking validity of types ...
+#15 19.69    Collecting page data ...
+#15 21.39    Generating static pages (0/3) ...
+#15 22.34  ✓ Generating static pages (3/3)
+#15 23.16    Finalizing page optimization ...
+#15 23.16    Collecting build traces ...
+#15 32.06
+#15 32.07 Route (app)                                 Size  First Load JS
+#15 32.07 ┌ ƒ /                                      141 B         102 kB
+#15 32.07 ├ ○ /_not-found                            996 B         103 kB
+#15 32.07 ├ ƒ /api/actors/me                         141 B         102 kB
+#15 32.07 ├ ƒ /api/health                            141 B         102 kB
+#15 32.07 ├ ƒ /api/version                           141 B         102 kB
+#15 32.07 ├ ƒ /login                                 141 B         102 kB
+#15 32.07 ├ ƒ /logout                                141 B         102 kB
+#15 32.07 └ ƒ /whoami                                141 B         102 kB
+#15 32.07 + First Load JS shared by all             102 kB
+#15 32.07   ├ chunks/09c3fec0-1226c3ff1021d309.js  54.2 kB
+#15 32.07   ├ chunks/826-cf3a79e89df7b509.js       45.6 kB
+#15 32.07   └ other shared chunks (total)           1.9 kB
+#15 32.07
+#15 32.07
+#15 32.07 ƒ Middleware                             42.9 kB
+#15 32.07
+#15 32.08 ○  (Static)   prerendered as static content
+#15 32.08 ƒ  (Dynamic)  server-rendered on demand
+#15 32.08
+#15 DONE 32.2s
+
+#16 [runtime 3/4] RUN corepack enable
+#16 CACHED
+
+#17 [runtime 4/4] COPY --from=builder /app ./
+#17 DONE 4.1s
+
+#18 exporting to image
+#18 exporting layers
+#18 exporting layers 13.2s done
+#18 exporting manifest sha256:[TOKEN_REDACTED] 0.0s done
+#18 exporting config sha256:[TOKEN_REDACTED] 0.0s done
+#18 exporting attestation manifest sha256:[TOKEN_REDACTED]
+#18 exporting attestation manifest sha256:[TOKEN_REDACTED] 0.0s done
+#18 exporting manifest list sha256:[TOKEN_REDACTED] 0.0s done
+#18 naming to docker.io/library/mmmmm-aq20-web:latest 0.0s done
+#18 unpacking to docker.io/library/mmmmm-aq20-web:latest
+#18 unpacking to docker.io/library/mmmmm-aq20-web:latest 9.0s done
+#18 DONE 22.5s
+
+#19 resolving provenance for metadata file
+#19 DONE 0.0s
+ Image mmmmm-aq20-web Built
+EXIT_CODE=0
+
+## docker compose up web with container AQ_API_URL
+ Container mmmmm-aq20-db-1 Running
+ Container mmmmm-aq20-api-1 Running
+ Container mmmmm-aq20-web-1 Recreate
+ Container mmmmm-aq20-web-1 Recreated
+ Container mmmmm-aq20-db-1 Waiting
+ Container mmmmm-aq20-db-1 Healthy
+ Container mmmmm-aq20-api-1 Waiting
+ Container mmmmm-aq20-api-1 Healthy
+ Container mmmmm-aq20-web-1 Starting
+ Container mmmmm-aq20-web-1 Started
+ Container mmmmm-aq20-db-1 Waiting
+ Container mmmmm-aq20-api-1 Waiting
+ Container mmmmm-aq20-web-1 Waiting
+ Container mmmmm-aq20-api-1 Healthy
+ Container mmmmm-aq20-db-1 Healthy
+ Container mmmmm-aq20-web-1 Healthy
+EXIT_CODE=0
+
+## playwright cookie/httpOnly test
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › e2e\auth.spec.ts:41:5 › cookie is httpOnly and whoami renders the authenticated actor
+[1A[2K  1 passed (1.9s)
+EXIT_CODE=0
+
+## playwright login enumeration test
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › e2e\auth.spec.ts:94:5 › invalid-key login response is byte-equal to no-key login response
+[1A[2K  1 passed (1.0s)
+EXIT_CODE=0
+
+## playwright full auth e2e
+
+Running 4 tests using 1 worker
+
+[1A[2K[1/4] [chromium] › e2e\auth.spec.ts:41:5 › cookie is httpOnly and whoami renders the authenticated actor
+[1A[2K[2/4] [chromium] › e2e\auth.spec.ts:94:5 › invalid-key login response is byte-equal to no-key login response
+[1A[2K[3/4] [chromium] › e2e\auth.spec.ts:107:5 › api actors me rejects requests without a session cookie
+[1A[2K[4/4] [chromium] › e2e\auth.spec.ts:113:5 › logout clears the session cookie
+[1A[2K  4 passed (2.2s)
+EXIT_CODE=0
+
+## docker web health/login smoke
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › e2e\health.spec.ts:15:5 › public health proxy works and root routes to login
+[1A[2K  1 passed (1.5s)
+EXIT_CODE=0
+
+## python ruff
+All checks passed!
+EXIT_CODE=0
+
+## python mypy strict
+Success: no issues found in 30 source files
+EXIT_CODE=0
+
+## host api and cli pytest
+ssssssssss...........ssssssssssssssssssss.......sss.....sssssssss....... [ 96%]
+...                                                                      [100%]
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastmcp\server\auth\providers\jwt.py:10
+  D:\mmmmm\mmmmm-aq2.0-cap02-work\.venv\Lib\site-packages\fastmcp\server\auth\providers\jwt.py:10: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+  It will be compatible before version 2.0.0.
+    from authlib.jose import JsonWebKey, JsonWebToken
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+33 passed, 42 skipped, 1 warning in 2.06s
+EXIT_CODE=0
+
+## docker api and cli pytest
+Bytecode compiled 4120 files in 178ms
+........................................................................ [ 96%]
+...                                                                      [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/fastmcp/server/auth/providers/jwt.py:10
+  /app/.venv/lib/python3.12/site-packages/fastmcp/server/auth/providers/jwt.py:10: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+  It will be compatible before version 2.0.0.
+    from authlib.jose import JsonWebKey, JsonWebToken
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+75 passed, 1 warning in 20.76s
+EXIT_CODE=0
+
+## web runtime env missing secret fails
+
+> @agenticqueue/web@0.1.0 validate:runtime-env D:\mmmmm\mmmmm-aq2.0-cap02-work\apps\web
+> node scripts/validate-runtime-env.mjs
+
+AQ_SESSION_SECRET must be set and at least 32 characters.
+D:\mmmmm\mmmmm-aq2.0-cap02-work\apps\web:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @agenticqueue/web@0.1.0 validate:runtime-env: `node scripts/validate-runtime-env.mjs`
+Exit status 1
+EXIT_CODE=1
+EXPECTED_EXIT_CODE=1
+
+## web lint after env-only playwright config
+
+> @agenticqueue/web@0.1.0 lint D:\mmmmm\mmmmm-aq2.0-cap02-work\apps\web
+> pnpm gen:types && eslint .
+
+
+> @agenticqueue/web@0.1.0 gen:types D:\mmmmm\mmmmm-aq2.0-cap02-work\apps\web
+> openapi-typescript ../../tests/parity/openapi.snapshot.json -o app/types/api.ts
+
+✨ openapi-typescript 7.13.0
+🚀 ../../tests/parity/openapi.snapshot.json → app/types/api.ts [31.5ms]
+EXIT_CODE=0
+
+## web build after env-only playwright config
+
+> @agenticqueue/web@0.1.0 build D:\mmmmm\mmmmm-aq2.0-cap02-work\apps\web
+> pnpm gen:types && next build
+
+
+> @agenticqueue/web@0.1.0 gen:types D:\mmmmm\mmmmm-aq2.0-cap02-work\apps\web
+> openapi-typescript ../../tests/parity/openapi.snapshot.json -o app/types/api.ts
+
+✨ openapi-typescript 7.13.0
+🚀 ../../tests/parity/openapi.snapshot.json → app/types/api.ts [43.9ms]
+   ▲ Next.js 15.5.15
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 1457ms
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/3) ...
+ ✓ Generating static pages (3/3)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ƒ /                                      141 B         102 kB
+├ ○ /_not-found                            991 B         103 kB
+├ ƒ /api/actors/me                         141 B         102 kB
+├ ƒ /api/health                            141 B         102 kB
+├ ƒ /api/version                           141 B         102 kB
+├ ƒ /login                                 141 B         102 kB
+├ ƒ /logout                                141 B         102 kB
+└ ƒ /whoami                                141 B         102 kB
++ First Load JS shared by all             102 kB
+  ├ chunks/40431421-4ca4396edd5d645a.js  54.2 kB
+  ├ chunks/628-d761323f3500a9ba.js         46 kB
+  └ other shared chunks (total)          1.97 kB
+
+
+ƒ Middleware                               43 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+EXIT_CODE=0

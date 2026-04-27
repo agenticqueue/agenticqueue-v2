@@ -1,0 +1,26 @@
+## ruff
+All checks passed!
+## mypy
+Success: no issues found in 30 source files
+## host api+cli pytest
+ssssssssss...........ssssssssssssssssssss.......sss.....sssssssss....... [ 96%]
+...                                                                      [100%]
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastmcp\server\auth\providers\jwt.py:10
+  D:\mmmmm\mmmmm-aq2.0-cap02-work\.venv\Lib\site-packages\fastmcp\server\auth\providers\jwt.py:10: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+  It will be compatible before version 2.0.0.
+    from authlib.jose import JsonWebKey, JsonWebToken
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+33 passed, 42 skipped, 1 warning in 6.87s
+## docker api+cli pytest
+........................................................................ [ 96%]
+...                                                                      [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/fastmcp/server/auth/providers/jwt.py:10
+  /app/.venv/lib/python3.12/site-packages/fastmcp/server/auth/providers/jwt.py:10: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+  It will be compatible before version 2.0.0.
+    from authlib.jose import JsonWebKey, JsonWebToken
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+75 passed, 1 warning in 20.98s

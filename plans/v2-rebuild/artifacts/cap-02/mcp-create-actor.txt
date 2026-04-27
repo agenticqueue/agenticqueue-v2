@@ -1,0 +1,19 @@
+MCP HTTP create_actor returned one-shot key and structured Actor response
+{
+  "actor": {
+    "created_at": "2026-04-27T15:00:48.636391Z",
+    "deactivated_at": null,
+    "id": "[UUID_REDACTED]",
+    "kind": "agent",
+    "name": "actor-evidence-mcp-worker"
+  },
+  "api_key": {
+    "actor_id": "[UUID_REDACTED]",
+    "created_at": "2026-04-27T15:00:48.636391Z",
+    "id": "[UUID_REDACTED]",
+    "name": "default",
+    "prefix": "aq2_9n-6",
+    "revoked_at": null
+  },
+  "key": "[TOKEN_REDACTED]"
+}

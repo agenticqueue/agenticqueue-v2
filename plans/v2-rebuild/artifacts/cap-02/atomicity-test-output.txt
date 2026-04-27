@@ -1,0 +1,13 @@
+Bytecode compiled 4120 files in 212ms
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.4.2, pluggy-1.6.0
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.13.0, asyncio-0.26.0
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 2 items
+
+tests/parity/test_audit_atomicity.py ..                                  [100%]
+
+-------------- generated xml file: /tmp/atomicity-test-report.xml --------------
+============================== 2 passed in 0.53s ===============================

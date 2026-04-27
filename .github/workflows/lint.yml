@@ -41,4 +41,6 @@ jobs:
 
       - run: uv run ruff check .
 
+      - run: uv run mypy --strict apps/api/src/aq_api/ apps/cli/src/aq_cli/
+
       - run: pnpm --filter @agenticqueue/web lint

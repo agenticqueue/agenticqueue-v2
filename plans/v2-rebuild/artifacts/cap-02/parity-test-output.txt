@@ -1,0 +1,12 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.11, pytest-8.4.2, pluggy-1.6.0
+rootdir: D:\mmmmm\mmmmm-aq2.0-cap02-work
+configfile: pyproject.toml
+plugins: anyio-4.13.0, asyncio-0.26.0
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 7 items
+
+tests\parity\test_four_surface_parity.py .......                         [100%]
+
+- generated xml file: D:\mmmmm\mmmmm-aq2.0-cap02-work\plans\v2-rebuild\artifacts\cap-02\parity-test-report.xml -
+============================= 7 passed in 12.96s ==============================

@@ -1,0 +1,22 @@
+{
+  "error_code": null,
+  "op": "create_actor",
+  "request_payload": {
+    "key_name": "[REDACTED]",
+    "kind": "agent",
+    "name": "actor-evidence-worker"
+  },
+  "response_payload": {
+    "actor": {
+      "created_at": "2026-04-27T15:00:48.247912Z",
+      "deactivated_at": null,
+      "id": "[UUID_REDACTED]",
+      "kind": "agent",
+      "name": "actor-evidence-worker"
+    },
+    "api_key": "[REDACTED]",
+    "key": "[REDACTED]"
+  },
+  "target_id": "[UUID_REDACTED]",
+  "target_kind": "actor"
+}

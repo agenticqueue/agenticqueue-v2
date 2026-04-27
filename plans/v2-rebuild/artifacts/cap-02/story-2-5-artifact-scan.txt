@@ -1,0 +1,13 @@
+COMMAND redact-evidence.sh AQ2-26 artifacts
+redact-evidence exit 0
+
+COMMAND Select-String secret patterns in AQ2-26 artifacts
+No AQ2-26 artifact secret patterns found.
+
+COMMAND gitleaks dir targeted paths
+9:30PM INF scanned ~63164 bytes (63.16 KB) in 26ms
+9:30PM INF no leaks found
+9:30PM INF scanned ~131331 bytes (131.33 KB) in 44.6ms
+9:30PM INF no leaks found
+9:30PM INF scanned ~86157 bytes (86.16 KB) in 31.7ms
+9:30PM INF no leaks found

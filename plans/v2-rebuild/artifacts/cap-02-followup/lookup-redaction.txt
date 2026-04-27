@@ -1,0 +1,5 @@
+COMMAND scripts/redact-evidence.sh AQ2-35 artifacts
+redact-evidence exit 0
+
+COMMAND Select-String secret patterns in AQ2-35 artifacts including scan output
+No AQ2-35 artifact secret patterns found.

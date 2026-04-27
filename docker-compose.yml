@@ -1,4 +1,21 @@
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-aq2}
+      POSTGRES_USER: aq
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aq -d ${POSTGRES_DB:-aq2} || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    networks:
+      - aq2
+    volumes:
+      - aq2_pg_data:/var/lib/postgresql/data
+
   api:
     build:
       context: .
@@ -7,6 +24,14 @@ services:
         AQ_VERSION: ${AQ_VERSION:-0.0.0-dev}
         AQ_GIT_COMMIT: ${AQ_GIT_COMMIT:-0000000}
         AQ_BUILT_AT: ${AQ_BUILT_AT:-1970-01-01T00:00:00+00:00}
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL_SYNC: ${DATABASE_URL_SYNC}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      AQ_KEY_LOOKUP_SECRET: ${AQ_KEY_LOOKUP_SECRET}
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/healthz || exit 1"]
       interval: 5s
@@ -27,6 +52,8 @@ services:
         condition: service_healthy
     environment:
       AQ_API_URL: ${AQ_API_URL:-http://api:8000}
+      AQ_COOKIE_SECURE: ${AQ_COOKIE_SECURE:-false}
+      AQ_SESSION_SECRET: ${AQ_SESSION_SECRET}
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:3000/api/health || exit 1"]
       interval: 5s
@@ -41,3 +68,6 @@ services:
 networks:
   aq2:
     driver: bridge
+
+volumes:
+  aq2_pg_data:

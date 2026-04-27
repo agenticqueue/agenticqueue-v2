@@ -1,0 +1,130 @@
+COMMAND: docker run ghcr.io/gitleaks/gitleaks:v8.30.1 detect targeted Story 2.11 files
+STARTED_AT=2026-04-27T11:09:38.2983242-05:00
+
+## /repo/apps/web/app/lib/session.ts
+Unable to find image 'ghcr.io/gitleaks/gitleaks:v8.30.1' locally
+v8.30.1: Pulling from gitleaks/gitleaks
+a43ab0c74cc4: Pulling fs layer
+d49a2dee86fb: Pulling fs layer
+61fdfd7c0175: Pulling fs layer
+d92b655ae8e2: Pulling fs layer
+a43ab0c74cc4: Download complete
+d49a2dee86fb: Download complete
+cc89e3f50cd2: Download complete
+d92b655ae8e2: Download complete
+d49a2dee86fb: Pull complete
+d92b655ae8e2: Pull complete
+61fdfd7c0175: Download complete
+a43ab0c74cc4: Pull complete
+61fdfd7c0175: Pull complete
+Digest: sha256:[TOKEN_REDACTED]
+Status: Downloaded newer image for ghcr.io/gitleaks/gitleaks:v8.30.1
+4:09PM INF scanned ~1255 bytes (1.25 KB) in 76.2ms
+4:09PM INF no leaks found
+EXIT_CODE=0
+
+## /repo/apps/web/app/lib/upstream.ts
+4:09PM INF scanned ~309 bytes (309 bytes) in 82.3ms
+4:09PM INF no leaks found
+EXIT_CODE=0
+
+## /repo/apps/web/app/login/page.tsx
+4:09PM INF scanned ~1999 bytes (2 KB) in 111ms
+4:09PM INF no leaks found
+EXIT_CODE=0
+
+## /repo/apps/web/app/logout/route.ts
+4:09PM INF scanned ~411 bytes (411 bytes) in 64.8ms
+4:09PM INF no leaks found
+EXIT_CODE=0
+
+## /repo/apps/web/app/api/actors/me/route.ts
+4:09PM INF scanned ~1367 bytes (1.37 KB) in 62.4ms
+4:09PM INF no leaks found
+EXIT_CODE=0
+
+## /repo/apps/web/app/whoami/page.tsx
+4:09PM INF scanned ~3495 bytes (3.49 KB) in 63.9ms
+4:09PM INF no leaks found
+EXIT_CODE=0
+
+## /repo/apps/web/app/page.tsx
+4:09PM INF scanned ~143 bytes (143 bytes) in 59.3ms
+4:09PM INF no leaks found
+EXIT_CODE=0
+
+## /repo/apps/web/middleware.ts
+4:09PM INF scanned ~2022 bytes (2.02 KB) in 83.8ms
+4:09PM INF no leaks found
+EXIT_CODE=0
+
+## /repo/apps/web/scripts/validate-runtime-env.mjs
+4:09PM INF scanned ~396 bytes (396 bytes) in 98.7ms
+4:09PM INF no leaks found
+EXIT_CODE=0
+
+## /repo/apps/web/e2e/auth.spec.ts
+4:09PM INF scanned ~4245 bytes (4.24 KB) in 57.4ms
+4:09PM INF no leaks found
+EXIT_CODE=0
+
+## /repo/apps/web/e2e/health.spec.ts
+4:09PM INF scanned ~1030 bytes (1.03 KB) in 72.4ms
+4:09PM INF no leaks found
+EXIT_CODE=0
+
+## /repo/apps/web/package.json
+4:09PM INF scanned ~1707 bytes (1.71 KB) in 58.7ms
+4:09PM INF no leaks found
+EXIT_CODE=0
+
+## /repo/docker-compose.yml
+4:09PM INF scanned ~1728 bytes (1.73 KB) in 50.6ms
+4:09PM INF no leaks found
+EXIT_CODE=0
+
+## /repo/.env.example
+4:09PM INF scanned ~368 bytes (368 bytes) in 41.4ms
+4:09PM INF no leaks found
+EXIT_CODE=0
+
+## /repo/plans/v2-rebuild/artifacts/cap-02/story-2-11-web-checks.txt
+4:09PM INF scanned ~10716 bytes (10.72 KB) in 65.5ms
+4:09PM INF no leaks found
+EXIT_CODE=0
+
+## /repo/plans/v2-rebuild/artifacts/cap-02/web-cookie-test.xml
+4:09PM INF scanned ~393 bytes (393 bytes) in 88.8ms
+4:09PM INF no leaks found
+EXIT_CODE=0
+
+## /repo/plans/v2-rebuild/artifacts/cap-02/web-login-enumeration.xml
+4:09PM INF scanned ~397 bytes (397 bytes) in 87.4ms
+4:09PM INF no leaks found
+EXIT_CODE=0
+
+## /repo/plans/v2-rebuild/artifacts/cap-02/web-e2e.xml
+4:09PM INF scanned ~751 bytes (751 bytes) in 128ms
+4:09PM INF no leaks found
+EXIT_CODE=0
+
+## /repo/plans/v2-rebuild/artifacts/cap-02/web-log-scan.txt
+4:09PM INF scanned ~152 bytes (152 bytes) in 59.6ms
+4:09PM INF no leaks found
+EXIT_CODE=0
+
+## /repo/plans/v2-rebuild/artifacts/cap-02/web-health-smoke.html
+4:10PM INF scanned ~8588 bytes (8.59 KB) in 57.1ms
+4:10PM INF no leaks found
+EXIT_CODE=0
+ALL_TARGETED_SCANS_EXIT_0
+
+## /repo/plans/v2-rebuild/artifacts/cap-02/story-2-11-web-checks.txt (post env-fail evidence)
+4:10PM INF scanned ~11171 bytes (11.17 KB) in 126ms
+4:10PM INF no leaks found
+EXIT_CODE=0
+
+## /repo/apps/web/playwright.config.ts (post env-only fix)
+4:12PM INF scanned ~928 bytes (928 bytes) in 135ms
+4:12PM INF no leaks found
+EXIT_CODE=0

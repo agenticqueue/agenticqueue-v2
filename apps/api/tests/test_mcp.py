@@ -2,10 +2,10 @@ from datetime import UTC, datetime
 
 import pytest
 from aq_api._datetime import parse_utc
+from aq_api._version import VERSION_INFO
 from aq_api.app import app
 from aq_api.mcp import create_mcp_server
 from aq_api.models import HealthStatus, VersionInfo
-from fastapi.testclient import TestClient
 from fastmcp import Client
 
 
@@ -16,11 +16,35 @@ async def test_mcp_tools_return_shared_contract_payloads() -> None:
     async with Client(create_mcp_server()) as client:
         tools = await client.list_tools()
         tool_by_name = {tool.name: tool for tool in tools}
-        assert set(tool_by_name) == {"health_check", "get_version"}
+        assert set(tool_by_name) == {
+            "health_check",
+            "get_version",
+            "get_self",
+            "list_actors",
+            "create_actor",
+            "revoke_api_key",
+            "query_audit_log",
+        }
         assert tool_by_name["health_check"].annotations is not None
         assert tool_by_name["health_check"].annotations.readOnlyHint is True
         assert tool_by_name["get_version"].annotations is not None
         assert tool_by_name["get_version"].annotations.readOnlyHint is True
+        assert tool_by_name["get_self"].annotations is not None
+        assert tool_by_name["get_self"].annotations.readOnlyHint is True
+        assert tool_by_name["list_actors"].annotations is not None
+        assert tool_by_name["list_actors"].annotations.readOnlyHint is True
+        assert tool_by_name["create_actor"].annotations is not None
+        assert tool_by_name["create_actor"].annotations.readOnlyHint is False
+        assert tool_by_name["revoke_api_key"].annotations is not None
+        assert tool_by_name["revoke_api_key"].annotations.readOnlyHint is False
+        assert tool_by_name["revoke_api_key"].annotations.destructiveHint is True
+        assert tool_by_name["query_audit_log"].annotations is not None
+        assert tool_by_name["query_audit_log"].annotations.readOnlyHint is True
+        for tool in tool_by_name.values():
+            agent_schema = tool.inputSchema["properties"]["agent_identity"]
+            assert agent_schema["default"] is None
+            assert agent_schema["anyOf"][0]["maxLength"] == 200
+            assert agent_schema["anyOf"][0]["pattern"] == "^$|^[A-Za-z0-9_./:-]+$"
 
         health = await client.call_tool("health_check", {})
         version = await client.call_tool("get_version", {})
@@ -31,9 +55,7 @@ async def test_mcp_tools_return_shared_contract_payloads() -> None:
     version_payload = VersionInfo.model_validate(version.structured_content)
     assert health_payload.status == "ok"
     assert parse_utc(health.structured_content["timestamp"]) >= before
-    assert version_payload == VersionInfo.model_validate(
-        TestClient(app).get("/version").json()
-    )
+    assert version_payload == VERSION_INFO
 
 
 def test_streamable_http_mcp_mount_is_registered() -> None:

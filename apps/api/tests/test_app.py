@@ -1,11 +1,25 @@
+from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 
+from aq_api._auth import current_actor
 from aq_api._datetime import parse_utc
 from aq_api.app import app
 from aq_api.models import HealthStatus, VersionInfo
 from fastapi.testclient import TestClient
 
 client = TestClient(app)
+
+
+async def _allow_auth() -> AsyncIterator[object]:
+    yield object()
+
+
+def _install_auth_override() -> None:
+    app.dependency_overrides[current_actor] = _allow_auth
+
+
+def _clear_auth_override() -> None:
+    app.dependency_overrides.pop(current_actor, None)
 
 
 def test_parse_utc_accepts_z_suffix() -> None:
@@ -34,8 +48,12 @@ def test_healthz_returns_valid_health_status() -> None:
 
 
 def test_version_returns_process_stable_version_info() -> None:
-    first = client.get("/version")
-    second = client.get("/version")
+    _install_auth_override()
+    try:
+        first = client.get("/version")
+        second = client.get("/version")
+    finally:
+        _clear_auth_override()
 
     assert first.status_code == 200
     assert second.status_code == 200
@@ -44,8 +62,12 @@ def test_version_returns_process_stable_version_info() -> None:
 
 
 def test_openapi_documents_health_and_version() -> None:
+    _install_auth_override()
     response = client.get("/openapi.json")
-    version_response = client.get("/version")
+    try:
+        version_response = client.get("/version")
+    finally:
+        _clear_auth_override()
 
     assert response.status_code == 200
     assert version_response.status_code == 200

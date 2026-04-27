@@ -1,0 +1,21 @@
+COMMAND gitleaks dir targeted Story 2.10 changed paths
+
+TARGET apps/api/src/aq_api/mcp.py
+10:43AM INF scanned ~7307 bytes (7.31 KB) in 9.75ms
+10:43AM INF no leaks found
+
+TARGET apps/api/tests/test_mcp.py
+10:43AM INF scanned ~2882 bytes (2.88 KB) in 5.56ms
+10:43AM INF no leaks found
+
+TARGET apps/api/tests/test_mcp_agent_identity.py
+10:43AM INF scanned ~7221 bytes (7.22 KB) in 12.7ms
+10:43AM INF no leaks found
+
+TARGET tests/parity/mcp_schema.snapshot.json
+10:43AM INF scanned ~21158 bytes (21.16 KB) in 5.67ms
+10:43AM INF no leaks found
+
+TARGET plans/v2-rebuild/artifacts/cap-02
+10:43AM INF scanned ~80434 bytes (80.43 KB) in 85.2ms
+10:43AM INF no leaks found

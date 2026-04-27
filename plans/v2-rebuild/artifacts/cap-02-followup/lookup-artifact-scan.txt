@@ -1,0 +1,49 @@
+COMMAND gitleaks dir targeted AQ2-35 changed paths
+TARGET .env.example
+9:38AM INF scanned ~273 bytes (273 bytes) in 2.51ms
+9:38AM INF no leaks found
+
+TARGET docker-compose.yml
+9:38AM INF scanned ~1631 bytes (1.63 KB) in 3.03ms
+9:38AM INF no leaks found
+
+TARGET apps/api/alembic/versions/0003_api_key_lookup_id.py
+9:38AM INF scanned ~1345 bytes (1.35 KB) in 4.76ms
+9:38AM INF no leaks found
+
+TARGET apps/api/src/aq_api/_settings.py
+9:38AM INF scanned ~875 bytes (875 bytes) in 3.04ms
+9:38AM INF no leaks found
+
+TARGET apps/api/src/aq_api/models/db.py
+9:38AM INF scanned ~4184 bytes (4.18 KB) in 3.11ms
+9:38AM INF no leaks found
+
+TARGET apps/api/src/aq_api/services/auth.py
+9:38AM INF scanned ~1657 bytes (1.66 KB) in 4.52ms
+9:38AM INF no leaks found
+
+TARGET apps/api/src/aq_api/services/setup.py
+9:38AM INF scanned ~1749 bytes (1.75 KB) in 3.56ms
+9:38AM INF no leaks found
+
+TARGET apps/api/tests/test_auth.py
+9:38AM INF scanned ~5457 bytes (5.46 KB) in 8.57ms
+9:38AM INF no leaks found
+
+TARGET apps/api/tests/test_db_schema.py
+9:38AM INF scanned ~4289 bytes (4.29 KB) in 9.26ms
+9:38AM INF no leaks found
+
+TARGET apps/api/tests/test_auth_lookup_amplification.py
+9:38AM INF scanned ~4314 bytes (4.31 KB) in 10.1ms
+9:38AM INF no leaks found
+
+TARGET plans/v2-rebuild/capabilities.md
+9:38AM INF scanned ~51640 bytes (51.64 KB) in 12.2ms
+9:38AM INF no leaks found
+
+TARGET plans/v2-rebuild/artifacts/cap-02-followup
+9:38AM INF scanned ~16600 bytes (16.60 KB) in 16.6ms
+9:38AM INF no leaks found
+

@@ -1,0 +1,5 @@
+COMMAND scripts/redact-evidence.sh Story 2.6 artifacts
+redact-evidence exit 0
+
+COMMAND Select-String secret patterns in Story 2.6 artifacts including scan output
+No Story 2.6 artifact secret patterns found.

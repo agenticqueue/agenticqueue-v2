@@ -1,0 +1,5 @@
+COMMAND: docker compose exec -T api uv run --with pytest pytest -q apps/api/tests/test_db_schema.py --junit-xml=/tmp/schema-test-report.xml
+Bytecode compiled 4120 files in 222ms
+...                                                                      [100%]
+--------------- generated xml file: /tmp/schema-test-report.xml ----------------
+3 passed in 0.20s

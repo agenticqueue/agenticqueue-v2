@@ -1,0 +1,37 @@
+{
+  "rest": {
+    "actor": {
+      "id": "[UUID_REDACTED]",
+      "name": "founder",
+      "kind": "human",
+      "created_at": "2026-04-27T16:46:17.913165Z",
+      "deactivated_at": null
+    }
+  },
+  "cli": {
+    "actor": {
+      "id": "[UUID_REDACTED]",
+      "name": "founder",
+      "kind": "human",
+      "created_at": "2026-04-27T16:46:17.913165Z",
+      "deactivated_at": null
+    }
+  },
+  "mcp": {
+    "actor": {
+      "id": "[UUID_REDACTED]",
+      "name": "founder",
+      "kind": "human",
+      "created_at": "2026-04-27T16:46:17.913165Z",
+      "deactivated_at": null
+    }
+  },
+  "audit_before": {
+    "entries": [],
+    "next_cursor": null
+  },
+  "audit_after": {
+    "entries": [],
+    "next_cursor": null
+  }
+}

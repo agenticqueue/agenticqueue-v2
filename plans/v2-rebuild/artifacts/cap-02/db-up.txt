@@ -1,0 +1,8 @@
+COMMAND: docker compose up -d --wait db
+ Container mmmmm-aq20-db-1 Running
+ Container mmmmm-aq20-db-1 Waiting
+ Container mmmmm-aq20-db-1 Healthy
+DB_WAIT_EXIT=0
+COMMAND: docker compose exec -T db pg_isready -U aq -d aq2
+/var/run/postgresql:5432 - accepting connections
+PG_ISREADY_EXIT=0

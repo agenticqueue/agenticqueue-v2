@@ -15,6 +15,7 @@ These constraints govern every capability below.
 ### Auth model
 - **API key = Actor identity.** Each key has a name; audit log attributes mutations to that name. No capability table, no `admin`/`supervisor`/`approve` permissions.
 - **API keys are minted in the UI by a human only.** No `create_api_key` on CLI / MCP / REST.
+- **API key lookup is HMAC-indexed.** `AQ_KEY_LOOKUP_SECRET` derives non-display `lookup_id` values for O(1) auth lookup; rotating that secret invalidates every existing API key and must be paired with revoking/re-minting all active keys. No dual-secret rotation in v1.
 - **Claim leases auto-release on missed heartbeats.** `AQ_CLAIM_LEASE_SECONDS` (default 900) bounds the time an `in_progress` Job can sit without a `heartbeat_job` call before AQ flips it back to `ready` and writes an audit row with `op='claim_auto_release'`, `error_code='lease_expired'`. Manual `reset_claim` still works as the explicit human escape hatch. See cap #4.
 - **Claim-binding** (data integrity, not permission): `release_job` and `submit_job` accept only the claimant. `reset_claim` is recovery — any key, requires reason, audit-logged.
 - **First-run bootstrap**: `aq setup` (host-local CLI) creates the first Actor + first session before any key exists.

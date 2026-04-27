@@ -45,9 +45,28 @@ jobs:
           echo "AQ_GIT_COMMIT=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
           echo "AQ_BUILT_AT=$(date -u +%Y-%m-%dT%H:%M:%S+00:00)" >> "$GITHUB_ENV"
 
-      - run: docker compose build
+      - name: Write compose CI env
+        run: |
+          POSTGRES_PASSWORD="$(openssl rand -hex 24)"
+          AQ_KEY_LOOKUP_SECRET="$(openssl rand -hex 32)"
+          AQ_SESSION_SECRET="$(openssl rand -hex 32)"
+          {
+            echo "POSTGRES_DB=aq2_test"
+            echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
+            echo "DATABASE_URL=postgresql+asyncpg://aq:${POSTGRES_PASSWORD}@db:5432/aq2_test"
+            echo "DATABASE_URL_SYNC=postgresql+psycopg://aq:${POSTGRES_PASSWORD}@db:5432/aq2_test"
+            echo "AQ_KEY_LOOKUP_SECRET=${AQ_KEY_LOOKUP_SECRET}"
+            echo "AQ_SESSION_SECRET=${AQ_SESSION_SECRET}"
+            echo "AQ_COOKIE_SECURE=false"
+            echo "AQ_API_URL=http://api:8000"
+          } > .env.ci
 
-      - run: docker compose up -d --wait
+      - run: docker compose --env-file .env.ci build
+
+      - run: docker compose --env-file .env.ci up -d --wait
+
+      - name: Reset test DB before authenticated smoke
+        run: docker compose --env-file .env.ci exec -T db psql -U aq -d aq2_test -v ON_ERROR_STOP=1 -c "DELETE FROM audit_log; DELETE FROM api_keys; DELETE FROM actors;"
 
       - name: Assert image commit matches HEAD
         run: |
@@ -62,19 +81,57 @@ jobs:
               check=True,
               text=True,
           ).stdout.strip()
-          version = json.loads(urllib.request.urlopen("http://localhost:8001/version").read())
+          setup_request = urllib.request.Request(
+              "http://localhost:8001/setup",
+              data=b"{}",
+              headers={"content-type": "application/json"},
+              method="POST",
+          )
+          setup = json.loads(urllib.request.urlopen(setup_request).read())
+          key = setup["founder_key"]
+          print(f"::add-mask::{key}")
+          version_request = urllib.request.Request(
+              "http://localhost:8001/version",
+              headers={"Authorization": f"Bearer {key}"},
+          )
+          version = json.loads(urllib.request.urlopen(version_request).read())
           assert version["commit"] == sha, f"commit mismatch: {version['commit']} vs {sha}"
-          print("COMMIT_MATCHES_HEAD")
+          print(f"COMMIT_MATCHES_HEAD {sha}")
           PY
 
       - run: uv run pytest apps/api/tests apps/cli/tests -v
 
+      - run: docker compose --env-file .env.ci exec -T api uv run --group dev pytest apps/api/tests apps/cli/tests -v
+
+      - name: Reset DB and mint web test key
+        run: |
+          docker compose --env-file .env.ci exec -T db psql -U aq -d aq2_test -v ON_ERROR_STOP=1 -c "DELETE FROM audit_log; DELETE FROM api_keys; DELETE FROM actors;"
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          setup_request = urllib.request.Request(
+              "http://localhost:8001/setup",
+              data=b"{}",
+              headers={"content-type": "application/json"},
+              method="POST",
+          )
+          setup = json.loads(urllib.request.urlopen(setup_request).read())
+          key = setup["founder_key"]
+          print(f"::add-mask::{key}")
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as handle:
+              handle.write(f"AQ_WEB_TEST_KEY={key}\n")
+          PY
+
       - run: pnpm --filter @agenticqueue/web exec playwright install --with-deps chromium
 
-      - run: pnpm --filter @agenticqueue/web exec playwright test e2e/health.spec.ts
+      - run: pnpm --filter @agenticqueue/web exec playwright test e2e/health.spec.ts e2e/auth.spec.ts
         env:
           AQ_API_URL: http://localhost:8001
+          AQ_COOKIE_SECURE: "false"
           PLAYWRIGHT_USE_DOCKER: "1"
+          AQ_WEB_TEST_KEY: ${{ env.AQ_WEB_TEST_KEY }}
 
       - if: always()
-        run: docker compose down
+        run: docker compose --env-file .env.ci down --remove-orphans
