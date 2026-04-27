@@ -1,0 +1,6 @@
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="1.033545">
+<testsuite name="auth.spec.ts" timestamp="2026-04-27T16:08:35.863Z" hostname="chromium" tests="1" failures="0" skipped="0" time="0.057" errors="0">
+<testcase name="invalid-key login response is byte-equal to no-key login response" classname="auth.spec.ts" time="0.057">
+</testcase>
+</testsuite>
+</testsuites>

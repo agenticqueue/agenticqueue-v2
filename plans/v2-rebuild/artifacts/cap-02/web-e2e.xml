@@ -1,0 +1,12 @@
+<testsuites id="" name="" tests="4" failures="0" skipped="0" errors="0" time="2.231639">
+<testsuite name="auth.spec.ts" timestamp="2026-04-27T16:08:38.378Z" hostname="chromium" tests="4" failures="0" skipped="0" time="1.261" errors="0">
+<testcase name="cookie is httpOnly and whoami renders the authenticated actor" classname="auth.spec.ts" time="0.635">
+</testcase>
+<testcase name="invalid-key login response is byte-equal to no-key login response" classname="auth.spec.ts" time="0.03">
+</testcase>
+<testcase name="api actors me rejects requests without a session cookie" classname="auth.spec.ts" time="0.013">
+</testcase>
+<testcase name="logout clears the session cookie" classname="auth.spec.ts" time="0.583">
+</testcase>
+</testsuite>
+</testsuites>

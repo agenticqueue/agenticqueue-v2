@@ -1,0 +1,6 @@
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="1.905797">
+<testsuite name="auth.spec.ts" timestamp="2026-04-27T16:08:32.647Z" hostname="chromium" tests="1" failures="0" skipped="0" time="0.925" errors="0">
+<testcase name="cookie is httpOnly and whoami renders the authenticated actor" classname="auth.spec.ts" time="0.925">
+</testcase>
+</testsuite>
+</testsuites>
