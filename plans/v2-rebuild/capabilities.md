@@ -15,6 +15,7 @@ These constraints govern every capability below.
 ### Auth model
 - **API key = Actor identity.** Each key has a name; audit log attributes mutations to that name. No capability table, no `admin`/`supervisor`/`approve` permissions.
 - **API keys are minted in the UI by a human only.** No `create_api_key` on CLI / MCP / REST.
+- **Claim leases auto-release on missed heartbeats.** `AQ_CLAIM_LEASE_SECONDS` (default 900) bounds the time an `in_progress` Job can sit without a `heartbeat_job` call before AQ flips it back to `ready` and writes an audit row with `op='claim_auto_release'`, `error_code='lease_expired'`. Manual `reset_claim` still works as the explicit human escape hatch. See cap #4.
 - **Claim-binding** (data integrity, not permission): `release_job` and `submit_job` accept only the claimant. `reset_claim` is recovery — any key, requires reason, audit-logged.
 - **First-run bootstrap**: `aq setup` (host-local CLI) creates the first Actor + first session before any key exists.
 - **AQ 2.0 v1 is a trusted single-instance coordination tool.** API keys identify Actors for audit, not authorization. Not safe for multi-tenant shared services.
@@ -175,6 +176,8 @@ Labels (project-scoped):
 - `attach_label` — `POST /jobs/{id}/labels`, `aq label attach`, MCP `attach_label`
 - `detach_label` — `DELETE /jobs/{id}/labels/{name}`, `aq label detach`, MCP `detach_label`
 
+**Storage shape (locked decision 2026-04-27):** Job labels are denormalized onto the Job row as `labels TEXT[] NOT NULL DEFAULT '{}'`, GIN-indexed (`USING gin (labels)`). The project-scoped `labels` registry table remains the source of truth for *which label names exist* (so `register_label` is still required before `attach_label` can succeed); the TEXT[] column on `jobs` is the query path used by `list_ready_jobs(label_filter)` and `claim_next_job(label_filter)` so those ops are O(index lookup) instead of O(join). `attach_label`/`detach_label` mutations update both the registry-junction (if implemented) and the TEXT[] cache atomically. Implementation may collapse the junction into the TEXT[] entirely if the registry validation can be enforced at write time — that decision lands in cap #3 implementation, not here.
+
 Workflow (versioned static templates):
 - `create_workflow` — `POST /workflows`, `aq workflow create`, MCP `create_workflow`
 - `list_workflows` — `GET /workflows`, `aq workflow list`, MCP `list_workflows`
@@ -196,6 +199,7 @@ Job (CRUD only — no claim/submit yet):
 - `update_job` — `PATCH /jobs/{id}` (metadata only: title, description, label attachments; rejects state writes), `aq job update`, MCP `update_job`
 - `comment_on_job` — `POST /jobs/{id}/comments`, `aq job comment`, MCP `comment_on_job`
 - `cancel_job` — `POST /jobs/{id}/cancel`, `aq job cancel`, MCP `cancel_job`
+- `list_ready_jobs` — `GET /jobs/ready?label=area:web&label=area:api&project=...`, `aq jobs ready`, MCP `list_ready_jobs`. Read-only; **never audited** (matches cap #2 reads-not-audited lock). Returns a paginated, FIFO-ordered set of Jobs in state `ready` whose attached labels (per the existing `register_label`/`attach_label` model above) are a superset of the supplied `label_filter`. Same filter semantics that `claim_next_job` (cap #4) uses, so an MCP-connected agent can preview the queue before deciding to claim. Limit `<= 100`, opaque cursor for paging. Contract Profile sketched per ADR-AQ-030.
 
 Contract Profile discovery (read-only):
 - `list_contract_profiles` — `GET /profiles`, `aq profile list`, MCP `list_contract_profiles`
@@ -220,12 +224,20 @@ Plus: a database migration that seeds the v1 Contract Profiles (`coding-task`, `
 **Scope guardrails (NOT in this capability):**
 - No `submit_job` — claim works, but the only way to exit `in_progress` here is `release_job` or `reset_claim`. Submit ships in #5.
 - No `gated_on` resolution — claim works on any `ready` Job; the gating logic that promotes `draft → ready` lands in #10. For now, Jobs go directly to `ready` on creation.
-- No claim filtering by `required_capabilities` — there are no capabilities. Claim is FIFO over `ready` Jobs (optionally filtered by Project).
+- ~~No claim filtering by `required_capabilities` — there are no capabilities. Claim is FIFO over `ready` Jobs (optionally filtered by Project).~~ **Superseded 2026-04-27** by label-based filtering (see `label_filter` on `claim_next_job` below). **Why superseded:** the original lock conflated "no agent-capability registry" with "no work routing at all." We still don't have an agent-capability registry — agents do not declare profiles to AQ. But Jobs already carry labels (cap #3), and labels are the right axis for an MCP-connected agent to scope the work it picks up (e.g., `area:web` agents grab web work, `area:api` agents grab API work). This is data-driven routing, not a capability table.
+- No agent-capability registry. Agents do not register profiles with AQ. Routing is entirely on the caller side: the agent passes `label_filter` to `claim_next_job` and is responsible for its own scope discipline. AQ enforces the filter atomically; AQ does not reason about which agent "should" claim what.
+- No `parallel_safe` file-conflict flag. Two `ready` Jobs with no `gated_on` edge between them are eligible to be claimed concurrently by different Actors even if their work touches the same file. Application-level conflict (merge collisions, lock files) is the agents' problem to coordinate, not AQ's.
 
 **Implements ops:**
-- `claim_next_job` — `POST /jobs/claim`, `aq claim`, MCP `claim_next_job`. Uses `SELECT ... FOR UPDATE SKIP LOCKED` semantics in a single transaction that also inserts the audit row.
-- `release_job` — `POST /jobs/{id}/release`, `aq release`, MCP `release_job`. Claimant only. Job returns to `ready`.
-- `reset_claim` — `POST /jobs/{id}/reset-claim` with required `reason`, `aq job reset-claim`, MCP `reset_claim`. Any key. Job returns to `ready`.
+- `claim_next_job` — `POST /jobs/claim`, `aq claim`, MCP `claim_next_job`. Uses `SELECT ... FOR UPDATE SKIP LOCKED` semantics in a single transaction that also inserts the audit row. Accepts an optional `label_filter` (list of label names; the SKIP LOCKED query adds `AND labels @> :label_filter` against the GIN-indexed `jobs.labels` TEXT[] column locked in cap #3). FIFO ordering preserved within the filter scope. The claim audit row records the resolved `label_filter` so we can answer "why did this agent get this Job?" later.
+- `release_job` — `POST /jobs/{id}/release`, `aq release`, MCP `release_job`. Claimant only. Job returns to `ready`. Sets `claim_heartbeat_at` to NULL.
+- `reset_claim` — `POST /jobs/{id}/reset-claim` with required `reason`, `aq job reset-claim`, MCP `reset_claim`. Any key. Job returns to `ready`. Manual escape hatch — stays unchanged.
+- `heartbeat_job` — `POST /jobs/{id}/heartbeat`, `aq job heartbeat`, MCP `heartbeat_job`. Claimant only. Refreshes `claim_heartbeat_at` to `now()`. Audited per cap #2 rules (mutation = audit row); the audit row carries `target_id = job_id` and a minimal payload `{}` (no useful business state). Cross-claimant attempt → 403 with `error_code='heartbeat_forbidden'`, audit row recorded. Contract Profile sketched per ADR-AQ-030.
+
+**Heartbeat lease (locked decision 2026-04-27):**
+- New column on `jobs`: `claim_heartbeat_at TIMESTAMPTZ NULL`. Set by `claim_next_job` on every successful claim. Refreshed by `heartbeat_job`. Cleared by `release_job`, `reset_claim`, and the auto-release sweep below.
+- Configuration: `AQ_CLAIM_LEASE_SECONDS` (default `900` = 15 minutes). Required at boot via `pydantic-settings`. Range-checked to `[60, 86400]` to prevent foot-guns at either extreme.
+- Auto-release sweep: a single background path (in-process coroutine on the API OR a `pg_cron` job — implementation chooses; both meet the contract) re-flips Jobs from `in_progress` to `ready` when `now() - claim_heartbeat_at > :lease`. Each auto-release writes an audit row with `op='claim_auto_release'`, `error_code='lease_expired'`, and the previous claimant's `actor_id` in `target_id`. Manual `reset_claim` stays — explicit human escape hatch unchanged, used when the auto-release window is too long for a known-dead agent.
 
 **MCP richness (required from this capability forward — sets the pattern for every later cap):**
 
@@ -236,8 +248,8 @@ Cap #1 ships only `health_check` + `get_version`, which are trivially safe and s
    - "Errors come back as structured objects: `{error_code, rule_violated, details}`. Do NOT retry on `rule_violated` — it indicates a fixable client mistake (wrong claimant, wrong state, missing field), not a transient failure."
    - "After a successful `claim_next_job`, the next call should be `get_packet` if you didn't cache the response — the claim already returns a Packet inline (cap #8) but `get_packet` is idempotent and safe to re-call."
 2. **Tool annotations** per [MCP spec](https://modelcontextprotocol.io/specification/) — set explicitly on every tool, not defaulted:
-   - `claim_next_job`, `release_job`, `reset_claim` → `destructiveHint: true`, `idempotentHint: false` (state-changing).
-   - `get_job`, `list_jobs`, `whoami` (and every read-only op) → `readOnlyHint: true`.
+   - `claim_next_job`, `release_job`, `reset_claim`, `heartbeat_job` → `destructiveHint: true`, `idempotentHint: false` (state-changing). `heartbeat_job` is technically idempotent on the row's `claim_heartbeat_at` value, but the audit-row side-effect is not, so it ships as `idempotentHint: false`.
+   - `get_job`, `list_jobs`, `list_ready_jobs`, `whoami` (and every read-only op) → `readOnlyHint: true`.
    - These let hosts like Claude Code skip the approval prompt for read-only ops and gate destructive ops behind explicit consent.
 3. **Tool descriptions** — auto-derived from the Pydantic model docstrings + a per-op "why-to-use / when-to-use" line authored in the MCP tool definition (NOT in the model). Description must answer: *what the tool does, what state it requires, what it returns, what to call next*.
 4. **Output content bundling** — `claim_next_job` returns a multi-part MCP content list:
@@ -250,7 +262,7 @@ Cap #1 ships only `health_check` + `get_version`, which are trivially safe and s
 - **Resources** (URI-addressable on-demand content): land in cap #5 (`aq://policies/contract-profile/{name}`) and cap #11 (Workflow / Pipeline / ADR / Learning resources by URI).
 - **Prompts** (server-defined slash-command templates): land in cap #6 dogfood — one prompt template `/aq-claim-and-work` wrapping the standard claim → read-packet → submit pattern.
 
-**Validation summary:** Create a Project, Pipeline, two `ready` Jobs. Two CLI clients (different keys) call `aq claim` simultaneously on the same Project; assert one gets a Job ID and the other gets the second Job (or null if there's only one). Re-run with one Job — exactly one client gets it, the other gets `None`. From the winner, call `aq release` — Job returns to `ready`. Re-claim, then from a different key call `aq job reset-claim --reason "claimant crashed"` — Job returns to `ready` and the audit log shows the reason. Run the race 50× to confirm no double-claim. **Plus MCP richness checks:** call MCP `tools/list`, assert `claim_next_job` has `destructiveHint=true` and `readOnlyHint=false`; call `get_job` and assert `readOnlyHint=true`; call MCP server `instructions` endpoint, assert it returns the agent_identity + error-shape rules; call `claim_next_job` from a real MCP client and assert the response is a multi-part content list including a Packet block and a next-step text hint.
+**Validation summary:** Create a Project, Pipeline, two `ready` Jobs. Two CLI clients (different keys) call `aq claim` simultaneously on the same Project; assert one gets a Job ID and the other gets the second Job (or null if there's only one). Re-run with one Job — exactly one client gets it, the other gets `None`. From the winner, call `aq release` — Job returns to `ready`. Re-claim, then from a different key call `aq job reset-claim --reason "claimant crashed"` — Job returns to `ready` and the audit log shows the reason. Run the race 50× to confirm no double-claim. **Label filter checks:** create five Jobs with mixed `area:web` / `area:api` labels; `aq jobs ready --label area:web` returns only the web-labeled subset in FIFO order; `aq claim --label area:api` skips the web ones even when they're at the head of FIFO; the resulting claim audit row records `request_payload.label_filter = ["area:api"]`. **Heartbeat lease checks:** claim a Job, set `AQ_CLAIM_LEASE_SECONDS=60`, sleep 70s without a heartbeat, observe the auto-release sweep flips the Job back to `ready` with audit row `op='claim_auto_release'` `error_code='lease_expired'`; another claim, send `aq job heartbeat` every 20s for 90s, confirm the Job stays `in_progress` and `claim_heartbeat_at` advances; cross-claimant heartbeat (a different actor's key) returns 403 `error_code='heartbeat_forbidden'` with audit row recorded. **Plus MCP richness checks:** call MCP `tools/list`, assert `claim_next_job` and `heartbeat_job` have `destructiveHint=true` and `readOnlyHint=false`; call `get_job` and `list_ready_jobs` and assert `readOnlyHint=true`; call MCP server `instructions` endpoint, assert it returns the agent_identity + error-shape rules; call `claim_next_job` from a real MCP client and assert the response is a multi-part content list including a Packet block and a next-step text hint.
 
 **Status:** `[ ]`
 
