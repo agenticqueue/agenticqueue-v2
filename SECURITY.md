@@ -10,7 +10,7 @@ Please report suspected vulnerabilities through GitHub private vulnerability rep
 
 https://github.com/agenticqueue/agenticqueue-v2/security/advisories/new
 
-If GitHub private reporting is unavailable, email Mario Watson at mariomillions414@gmail.com with a concise description, reproduction steps, affected commit or version, and any relevant logs.
+If GitHub private reporting is unavailable, email Mario Watson at mario@agenticqueue.com with a concise description, reproduction steps, affected commit or version, and any relevant logs.
 
 ## Response Expectations
 
