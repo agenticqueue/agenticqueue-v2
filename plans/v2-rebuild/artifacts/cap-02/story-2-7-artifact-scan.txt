@@ -1,0 +1,37 @@
+COMMAND gitleaks dir targeted Story 2.7 changed paths
+
+TARGET apps/api/src/aq_api/services/actors.py
+10:04AM INF scanned ~5460 bytes (5.46 KB) in 3.24ms
+10:04AM INF no leaks found
+
+TARGET apps/api/src/aq_api/routes/actors.py
+10:04AM INF scanned ~2110 bytes (2.11 KB) in 2.6ms
+10:04AM INF no leaks found
+
+TARGET apps/api/src/aq_api/app.py
+10:04AM INF scanned ~2043 bytes (2.04 KB) in 6.04ms
+10:04AM INF no leaks found
+
+TARGET apps/api/src/aq_api/mcp.py
+10:04AM INF scanned ~3849 bytes (3.85 KB) in 3.3ms
+10:04AM INF no leaks found
+
+TARGET apps/api/tests/test_actors.py
+10:04AM INF scanned ~10005 bytes (10.01 KB) in 8.78ms
+10:04AM INF no leaks found
+
+TARGET apps/api/tests/test_mcp.py
+10:04AM INF scanned ~2121 bytes (2.12 KB) in 2.54ms
+10:04AM INF no leaks found
+
+TARGET apps/cli/src/aq_cli/main.py
+10:04AM INF scanned ~8351 bytes (8.35 KB) in 6.27ms
+10:04AM INF no leaks found
+
+TARGET apps/cli/tests/test_main.py
+10:04AM INF scanned ~8749 bytes (8.75 KB) in 8.58ms
+10:04AM INF no leaks found
+
+TARGET plans/v2-rebuild/artifacts/cap-02
+10:04AM INF scanned ~66786 bytes (66.79 KB) in 22.1ms
+10:04AM INF no leaks found

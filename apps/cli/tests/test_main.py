@@ -4,7 +4,7 @@ import stat
 from pathlib import Path
 
 import httpx
-from aq_cli.main import API_URL_ENV, app
+from aq_cli.main import API_KEY_ENV, API_URL_ENV, app
 from pytest import MonkeyPatch
 from typer.testing import CliRunner
 
@@ -162,3 +162,131 @@ def test_setup_refuses_to_overwrite_existing_config(
 
     assert result.exit_code == 1
     assert json.loads(result.stderr)["error"] == "config_exists"
+
+
+def test_whoami_sends_bearer_and_prints_raw_json(monkeypatch: MonkeyPatch) -> None:
+    body = (
+        '{"actor":{"id":"11111111-1111-4111-8111-111111111111",'
+        '"name":"founder","kind":"human",'
+        '"created_at":"2026-04-27T01:00:00Z","deactivated_at":null}}'
+    )
+    calls: list[tuple[str, dict[str, str], float]] = []
+
+    def fake_get(
+        url: str,
+        *,
+        headers: dict[str, str],
+        timeout: float,
+    ) -> httpx.Response:
+        calls.append((url, headers, timeout))
+        return _json_response(url, body)
+
+    monkeypatch.setattr("aq_cli.main.httpx.get", fake_get)
+
+    result = runner.invoke(
+        app,
+        ["whoami"],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert result.exit_code == 0
+    assert result.stdout == f"{body}\n"
+    assert calls == [
+        (
+            "http://api.test/actors/me",
+            {"Authorization": "Bearer aq2_cli_contract_key"},
+            5.0,
+        )
+    ]
+
+
+def test_actor_list_sends_query_params(monkeypatch: MonkeyPatch) -> None:
+    body = '{"actors":[],"next_cursor":"cursor-2"}'
+    calls: list[tuple[str, dict[str, str], dict[str, object], float]] = []
+
+    def fake_get(
+        url: str,
+        *,
+        headers: dict[str, str],
+        params: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        calls.append((url, headers, params, timeout))
+        return _json_response(url, body)
+
+    monkeypatch.setattr("aq_cli.main.httpx.get", fake_get)
+
+    result = runner.invoke(
+        app,
+        [
+            "actor",
+            "list",
+            "--limit",
+            "2",
+            "--cursor",
+            "cursor-1",
+            "--include-deactivated",
+        ],
+        env={API_URL_ENV: "http://api.test/", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert result.exit_code == 0
+    assert result.stdout == f"{body}\n"
+    assert calls == [
+        (
+            "http://api.test/actors",
+            {"Authorization": "Bearer aq2_cli_contract_key"},
+            {
+                "limit": 2,
+                "cursor": "cursor-1",
+                "include_deactivated": True,
+            },
+            5.0,
+        )
+    ]
+
+
+def test_actor_create_posts_body_and_prints_one_shot_key(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    body = (
+        '{"actor":{"id":"22222222-2222-4222-8222-222222222222",'
+        '"name":"worker","kind":"agent",'
+        '"created_at":"2026-04-27T01:00:00Z","deactivated_at":null},'
+        '"api_key":{"id":"33333333-3333-4333-8333-333333333333",'
+        '"actor_id":"22222222-2222-4222-8222-222222222222",'
+        '"name":"default","prefix":"aq2_cont",'
+        '"created_at":"2026-04-27T01:00:00Z","revoked_at":null},'
+        '"key":"aq2_contract_plaintext_key"}'
+    )
+    calls: list[tuple[str, dict[str, str], dict[str, object], float]] = []
+
+    def fake_post(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        calls.append((url, headers, json, timeout))
+        return _json_response(url, body, method="POST")
+
+    monkeypatch.setattr("aq_cli.main.httpx.post", fake_post)
+
+    result = runner.invoke(
+        app,
+        ["actor", "create", "--name", "worker", "--kind", "agent"],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert result.exit_code == 0
+    assert result.stdout == f"{body}\n"
+    assert json.loads(result.stdout)["key"] == "aq2_contract_plaintext_key"
+    assert calls == [
+        (
+            "http://api.test/actors",
+            {"Authorization": "Bearer aq2_cli_contract_key"},
+            {"name": "worker", "kind": "agent", "key_name": "default"},
+            10.0,
+        )
+    ]

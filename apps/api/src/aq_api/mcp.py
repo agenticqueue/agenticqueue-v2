@@ -1,11 +1,32 @@
+from uuid import UUID
+
 from fastmcp import FastMCP
 
 from aq_api._health import current_health_status
+from aq_api._request_context import get_authenticated_actor_id
 from aq_api._version import VERSION_INFO
-from aq_api.models import HealthStatus, VersionInfo
+from aq_api.models import (
+    ActorKind,
+    CreateActorRequest,
+    CreateActorResponse,
+    HealthStatus,
+    ListActorsResponse,
+    VersionInfo,
+    WhoamiResponse,
+)
+from aq_api.services.actors import create_actor as create_actor_service
+from aq_api.services.actors import get_self_by_id
+from aq_api.services.actors import list_actors as list_actor_service
 
 MCP_NAME = "AgenticQueue 2.0 MCP"
 MCP_HTTP_PATH = "/mcp"
+
+
+def _authenticated_actor_id() -> UUID:
+    actor_id = get_authenticated_actor_id()
+    if actor_id is None:
+        raise RuntimeError("MCP tool requires authenticated Bearer context")
+    return actor_id
 
 
 def create_mcp_server() -> FastMCP:
@@ -31,6 +52,58 @@ def create_mcp_server() -> FastMCP:
     )
     async def get_version() -> VersionInfo:
         return VERSION_INFO
+
+    @server.tool(
+        description="Return the authenticated Actor for the caller's Bearer token.",
+        annotations={"readOnlyHint": True},
+    )
+    async def get_self() -> WhoamiResponse:
+        from aq_api._db import SessionLocal
+
+        async with SessionLocal() as session:
+            return await get_self_by_id(session, _authenticated_actor_id())
+
+    @server.tool(
+        description=(
+            "List active Actors with opaque cursor pagination. Read-only; "
+            "deactivated Actors are excluded unless include_deactivated is true."
+        ),
+        annotations={"readOnlyHint": True},
+    )
+    async def list_actors(
+        limit: int = 50,
+        cursor: str | None = None,
+        include_deactivated: bool = False,
+    ) -> ListActorsResponse:
+        from aq_api._db import SessionLocal
+
+        _authenticated_actor_id()
+        async with SessionLocal() as session:
+            return await list_actor_service(
+                session,
+                limit=limit,
+                cursor=cursor,
+                include_deactivated=include_deactivated,
+            )
+
+    @server.tool(
+        description=(
+            "Create an Actor and mint its initial API key. Returns the plaintext "
+            "key exactly once in this response."
+        ),
+        annotations={"readOnlyHint": False},
+    )
+    async def create_actor(
+        name: str,
+        kind: ActorKind,
+        key_name: str = "default",
+    ) -> CreateActorResponse:
+        from aq_api._db import SessionLocal
+
+        _authenticated_actor_id()
+        request = CreateActorRequest(name=name, kind=kind, key_name=key_name)
+        async with SessionLocal() as session:
+            return await create_actor_service(session, request)
 
     return server
 

@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="1.977" timestamp="2026-04-27T15:00:04.728408+00:00" hostname="7475a8f4d8c7"><testcase classname="apps.api.tests.test_actors" name="test_create_actor_mints_key_once_and_writes_redacted_audit" time="0.480" /></testsuite></testsuites>
