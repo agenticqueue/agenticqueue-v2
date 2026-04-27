@@ -1,0 +1,10 @@
+COMMAND: scripts/redact-evidence.sh plans/v2-rebuild/artifacts/cap-02/*
+REDACTOR_EXIT=0
+
+COMMAND: Select-String artifact secret-pattern scan
+NO_SECRET_PATTERNS_FOUND
+
+COMMAND: gitleaks artifact scan
+8:59PM INF scanned ~41566 bytes (41.57 KB) in 15.9ms
+8:59PM INF no leaks found
+GITLEAKS_EXIT=0

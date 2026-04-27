@@ -7,5 +7,5 @@ fi
 
 for file in "$@"; do
   [ -f "$file" ] || continue
-  perl -0pi -e 's/\$argon2id\$[^\s"'\''<>]+/[ARGON2_REDACTED]/g; s/\b[A-Za-z0-9_-]{40,}\b/[TOKEN_REDACTED]/g; s/\b[A-Za-z0-9_-]{32}\b/[TOKEN_REDACTED]/g' "$file"
+  perl -0pi -e 's/\$argon2id\$[^\s"'\''<>]+/[ARGON2_REDACTED]/g; s/\baq2_[A-Za-z0-9_-]{20,}\b/[TOKEN_REDACTED]/g; s/\b[A-Fa-f0-9]{32,}\b/[TOKEN_REDACTED]/g' "$file"
 done

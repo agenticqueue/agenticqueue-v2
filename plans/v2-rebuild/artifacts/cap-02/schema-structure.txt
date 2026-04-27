@@ -1,0 +1,109 @@
+COMMAND: docker compose exec -T db psql -U aq -d aq2 -c "\dt+"
+                                         List of relations
+ Schema |      Name       | Type  | Owner | Persistence | Access method |    Size    | Description
+--------+-----------------+-------+-------+-------------+---------------+------------+-------------
+ public | actors          | table | aq    | permanent   | heap          | 8192 bytes |
+ public | alembic_version | table | aq    | permanent   | heap          | 8192 bytes |
+ public | api_keys        | table | aq    | permanent   | heap          | 8192 bytes |
+ public | audit_log       | table | aq    | permanent   | heap          | 8192 bytes |
+(4 rows)
+
+
+COMMAND: docker compose exec -T db psql -U aq -d aq2 -c "\d+ actors"
+                                                           Table "public.actors"
+     Column     |           Type           | Collation | Nullable |      Default      | Storage  | Compression | Stats target | Description
+----------------+--------------------------+-----------+----------+-------------------+----------+-------------+--------------+-------------
+ id             | uuid                     |           | not null | gen_random_uuid() | plain    |             |              |
+ name           | text                     |           | not null |                   | extended |             |              |
+ kind           | text                     |           | not null |                   | extended |             |              |
+ created_at     | timestamp with time zone |           | not null | now()             | plain    |             |              |
+ deactivated_at | timestamp with time zone |           |          |                   | plain    |             |              |
+Indexes:
+    "actors_pkey" PRIMARY KEY, btree (id)
+    "actors_name_active_uniq" UNIQUE, btree (name) WHERE deactivated_at IS NULL
+Check constraints:
+    "actors_kind_check" CHECK (kind = ANY (ARRAY['human'::text, 'agent'::text, 'script'::text, 'routine'::text]))
+Referenced by:
+    TABLE "api_keys" CONSTRAINT "api_keys_actor_id_fkey" FOREIGN KEY (actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    TABLE "api_keys" CONSTRAINT "api_keys_revoked_by_actor_id_fkey" FOREIGN KEY (revoked_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    TABLE "audit_log" CONSTRAINT "audit_log_authenticated_actor_id_fkey" FOREIGN KEY (authenticated_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+Access method: heap
+
+
+COMMAND: docker compose exec -T db psql -U aq -d aq2 -c "\d+ api_keys"
+                                                             Table "public.api_keys"
+       Column        |           Type           | Collation | Nullable |      Default      | Storage  | Compression | Stats target | Description
+---------------------+--------------------------+-----------+----------+-------------------+----------+-------------+--------------+-------------
+ id                  | uuid                     |           | not null | gen_random_uuid() | plain    |             |              |
+ actor_id            | uuid                     |           | not null |                   | plain    |             |              |
+ name                | text                     |           | not null |                   | extended |             |              |
+ key_hash            | text                     |           | not null |                   | extended |             |              |
+ prefix              | text                     |           | not null |                   | extended |             |              |
+ created_at          | timestamp with time zone |           | not null | now()             | plain    |             |              |
+ revoked_at          | timestamp with time zone |           |          |                   | plain    |             |              |
+ revoked_by_actor_id | uuid                     |           |          |                   | plain    |             |              |
+Indexes:
+    "api_keys_pkey" PRIMARY KEY, btree (id)
+    "api_keys_actor_active_idx" btree (actor_id) WHERE revoked_at IS NULL
+    "api_keys_prefix_idx" btree (prefix)
+Check constraints:
+    "api_keys_revoked_fields_check" CHECK ((revoked_at IS NULL) = (revoked_by_actor_id IS NULL))
+Foreign-key constraints:
+    "api_keys_actor_id_fkey" FOREIGN KEY (actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    "api_keys_revoked_by_actor_id_fkey" FOREIGN KEY (revoked_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+Access method: heap
+
+
+COMMAND: docker compose exec -T db psql -U aq -d aq2 -c "\d+ audit_log"
+                                                              Table "public.audit_log"
+         Column         |           Type           | Collation | Nullable |      Default      | Storage  | Compression | Stats target | Description
+------------------------+--------------------------+-----------+----------+-------------------+----------+-------------+--------------+-------------
+ id                     | uuid                     |           | not null | gen_random_uuid() | plain    |             |              |
+ ts                     | timestamp with time zone |           | not null | now()             | plain    |             |              |
+ op                     | text                     |           | not null |                   | extended |             |              |
+ authenticated_actor_id | uuid                     |           | not null |                   | plain    |             |              |
+ claimed_actor_identity | text                     |           |          |                   | extended |             |              |
+ target_kind            | text                     |           |          |                   | extended |             |              |
+ target_id              | uuid                     |           |          |                   | plain    |             |              |
+ request_payload        | jsonb                    |           | not null | '{}'::jsonb       | extended |             |              |
+ response_payload       | jsonb                    |           |          |                   | extended |             |              |
+ error_code             | text                     |           |          |                   | extended |             |              |
+Indexes:
+    "audit_log_pkey" PRIMARY KEY, btree (id)
+    "audit_log_actor_ts_idx" btree (authenticated_actor_id, ts DESC)
+    "audit_log_op_ts_idx" btree (op, ts DESC)
+    "audit_log_target_idx" btree (target_kind, target_id) WHERE target_id IS NOT NULL
+    "audit_log_ts_idx" btree (ts DESC)
+Foreign-key constraints:
+    "audit_log_authenticated_actor_id_fkey" FOREIGN KEY (authenticated_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+Access method: heap
+
+
+COMMAND: list explicit indexes
+ tablename |         indexname         |                                                         indexdef
+-----------+---------------------------+--------------------------------------------------------------------------------------------------------------------------
+ actors    | actors_name_active_uniq   | CREATE UNIQUE INDEX actors_name_active_uniq ON public.actors USING btree (name) WHERE (deactivated_at IS NULL)
+ actors    | actors_pkey               | CREATE UNIQUE INDEX actors_pkey ON public.actors USING btree (id)
+ api_keys  | api_keys_actor_active_idx | CREATE INDEX api_keys_actor_active_idx ON public.api_keys USING btree (actor_id) WHERE (revoked_at IS NULL)
+ api_keys  | api_keys_pkey             | CREATE UNIQUE INDEX api_keys_pkey ON public.api_keys USING btree (id)
+ api_keys  | api_keys_prefix_idx       | CREATE INDEX api_keys_prefix_idx ON public.api_keys USING btree (prefix)
+ audit_log | audit_log_actor_ts_idx    | CREATE INDEX audit_log_actor_ts_idx ON public.audit_log USING btree (authenticated_actor_id, ts DESC)
+ audit_log | audit_log_op_ts_idx       | CREATE INDEX audit_log_op_ts_idx ON public.audit_log USING btree (op, ts DESC)
+ audit_log | audit_log_pkey            | CREATE UNIQUE INDEX audit_log_pkey ON public.audit_log USING btree (id)
+ audit_log | audit_log_target_idx      | CREATE INDEX audit_log_target_idx ON public.audit_log USING btree (target_kind, target_id) WHERE (target_id IS NOT NULL)
+ audit_log | audit_log_ts_idx          | CREATE INDEX audit_log_ts_idx ON public.audit_log USING btree (ts DESC)
+(10 rows)
+
+
+COMMAND: list checks and foreign keys
+ table_name |                conname                | contype |                                         definition
+------------+---------------------------------------+---------+---------------------------------------------------------------------------------------------
+ actors     | actors_kind_check                     | c       | CHECK ((kind = ANY (ARRAY['human'::text, 'agent'::text, 'script'::text, 'routine'::text])))
+ actors     | actors_pkey                           | p       | PRIMARY KEY (id)
+ api_keys   | api_keys_actor_id_fkey                | f       | FOREIGN KEY (actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+ api_keys   | api_keys_pkey                         | p       | PRIMARY KEY (id)
+ api_keys   | api_keys_revoked_by_actor_id_fkey     | f       | FOREIGN KEY (revoked_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+ api_keys   | api_keys_revoked_fields_check         | c       | CHECK (((revoked_at IS NULL) = (revoked_by_actor_id IS NULL)))
+ audit_log  | audit_log_authenticated_actor_id_fkey | f       | FOREIGN KEY (authenticated_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+ audit_log  | audit_log_pkey                        | p       | PRIMARY KEY (id)
+(8 rows)
