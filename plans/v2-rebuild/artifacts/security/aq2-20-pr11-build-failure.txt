@@ -1,0 +1,9 @@
+build	Run docker compose build	2026-04-26T22:35:47.0807144Z #30 5.138 ▲ Next.js 16.2.4 (Turbopack)
+build	Run docker compose build	2026-04-26T22:35:51.3168688Z #30 9.363 Error: It looks like you're trying to use `tailwindcss` directly as a PostCSS plugin. The PostCSS plugin has moved to a separate package, so to continue using Tailwind CSS with PostCSS you'll need to install `@tailwindcss/postcss` and update your PostCSS configuration.
+build	Run docker compose build	2026-04-26T22:35:51.3171083Z #30 9.363     [at ft (/app/node_modules/.pnpm/tailwindcss@4.2.4/node_modules/tailwindcss/dist/lib.js:38:1643)]
+build	Run docker compose build	2026-04-26T22:35:51.3172529Z #30 9.363     at pluginFactory (turbopack:///[turbopack-node]/transforms/postcss.ts:56:14) [/app/apps/web/.next/build/chunks/[root-of-the-server]__0p1-035._.js:165:20]
+build	Run docker compose build	2026-04-26T22:35:51.3174983Z #30 9.363     at map (turbopack:///[turbopack-node]/transforms/postcss.ts:43:33) [/app/apps/web/.next/build/chunks/[root-of-the-server]__0p1-035._.js:155:35]
+build	Run docker compose build	2026-04-26T22:35:51.3182519Z #30 9.363     at pluginFactory (turbopack:///[turbopack-node]/transforms/postcss.ts:56:14) [/app/apps/web/.next/build/chunks/[root-of-the-server]__0p1-035._.js:165:20])
+build	Run docker compose build	2026-04-26T22:35:51.3184714Z #30 9.363     at map (turbopack:///[turbopack-node]/transforms/postcss.ts:43:33) [/app/apps/web/.next/build/chunks/[root-of-the-server]__0p1-035._.js:155:35])
+build	Run docker compose build	2026-04-26T22:35:51.3685202Z 9.363     at pluginFactory (turbopack:///[turbopack-node]/transforms/postcss.ts:56:14) [/app/apps/web/.next/build/chunks/[root-of-the-server]__0p1-035._.js:165:20])
+build	Run docker compose build	2026-04-26T22:35:51.3687128Z 9.363     at map (turbopack:///[turbopack-node]/transforms/postcss.ts:43:33) [/app/apps/web/.next/build/chunks/[root-of-the-server]__0p1-035._.js:155:35])

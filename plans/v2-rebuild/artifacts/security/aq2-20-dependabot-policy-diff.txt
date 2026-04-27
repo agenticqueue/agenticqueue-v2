@@ -1,0 +1,35 @@
+diff --git a/.github/dependabot.yml b/.github/dependabot.yml
+index 24429bd..f41839f 100644
+--- a/.github/dependabot.yml
++++ b/.github/dependabot.yml
+@@ -11,14 +11,30 @@ updates:
+           - "*"
+   - package-ecosystem: npm
+-    directory: /
++    directory: /apps/web
+     schedule:
+       interval: weekly
+       day: monday
+     groups:
+-      web-dependencies:
++      web-deps:
+         patterns:
+           - "*"
++    ignore:
++      - dependency-name: tailwindcss
++        update-types:
++          - version-update:semver-major
++      - dependency-name: eslint
++        update-types:
++          - version-update:semver-major
++      - dependency-name: next
++        update-types:
++          - version-update:semver-major
++      - dependency-name: react
++        update-types:
++          - version-update:semver-major
++      - dependency-name: react-dom
++        update-types:
++          - version-update:semver-major
+   - package-ecosystem: github-actions
+     directory: /
