@@ -1,0 +1,23 @@
+# Alembic round-trip
+
+$ docker compose exec -T api uv run alembic -c apps/api/alembic.ini upgrade head
+Downloading mypy (14.1MiB)
+Downloading ruff (10.8MiB)
+ Downloading ruff
+ Downloading mypy
+Installed 9 packages in 89ms
+Bytecode compiled 4121 files in 361ms
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+
+$ docker compose exec -T api uv run alembic -c apps/api/alembic.ini downgrade -1
+Bytecode compiled 4121 files in 224ms
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running downgrade 0004_cap03_entities -> 0003_api_key_lookup_id, Create cap #3 entity tables, indexes, and seed rows.
+
+$ docker compose exec -T api uv run alembic -c apps/api/alembic.ini upgrade head
+Bytecode compiled 4121 files in 133ms
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade 0003_api_key_lookup_id -> 0004_cap03_entities, Create cap #3 entity tables, indexes, and seed rows.

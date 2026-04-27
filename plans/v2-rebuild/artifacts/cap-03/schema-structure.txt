@@ -1,0 +1,81 @@
+# Schema structure
+
+$ docker compose exec -T db psql -U aq -d aq2 -c '\dt'
+             List of relations
+ Schema |       Name        | Type  | Owner
+--------+-------------------+-------+-------
+ public | actors            | table | aq
+ public | alembic_version   | table | aq
+ public | api_keys          | table | aq
+ public | audit_log         | table | aq
+ public | contract_profiles | table | aq
+ public | job_comments      | table | aq
+ public | job_edges         | table | aq
+ public | jobs              | table | aq
+ public | labels            | table | aq
+ public | pipelines         | table | aq
+ public | projects          | table | aq
+ public | workflow_steps    | table | aq
+ public | workflows         | table | aq
+(13 rows)
+
+
+$ docker compose exec -T db psql -U aq -d aq2 -c '\d+ jobs'
+                                                                  Table "public.jobs"
+          Column           |           Type           | Collation | Nullable |      Default      | Storage  | Compression | Stats target | Description
+---------------------------+--------------------------+-----------+----------+-------------------+----------+-------------+--------------+-------------
+ id                        | uuid                     |           | not null | gen_random_uuid() | plain    |             |              |
+ pipeline_id               | uuid                     |           | not null |                   | plain    |             |              |
+ project_id                | uuid                     |           | not null |                   | plain    |             |              |
+ state                     | text                     |           | not null |                   | extended |             |              |
+ title                     | text                     |           | not null |                   | extended |             |              |
+ description               | text                     |           |          |                   | extended |             |              |
+ contract_profile_id       | uuid                     |           | not null |                   | plain    |             |              |
+ instantiated_from_step_id | uuid                     |           |          |                   | plain    |             |              |
+ labels                    | text[]                   |           | not null | '{}'::text[]      | extended |             |              |
+ claimed_by_actor_id       | uuid                     |           |          |                   | plain    |             |              |
+ claimed_at                | timestamp with time zone |           |          |                   | plain    |             |              |
+ claim_heartbeat_at        | timestamp with time zone |           |          |                   | plain    |             |              |
+ created_at                | timestamp with time zone |           | not null | now()             | plain    |             |              |
+ created_by_actor_id       | uuid                     |           |          |                   | plain    |             |              |
+Indexes:
+    "jobs_pkey" PRIMARY KEY, btree (id)
+    "idx_jobs_labels_gin" gin (labels)
+    "idx_jobs_state_project_created" btree (state, project_id, created_at) WHERE state = 'ready'::text
+Check constraints:
+    "jobs_state_check" CHECK (state = ANY (ARRAY['draft'::text, 'ready'::text, 'in_progress'::text, 'done'::text, 'failed'::text, 'blocked'::text, 'pending_review'::text, 'cancelled'::text]))
+Foreign-key constraints:
+    "jobs_claimed_by_actor_id_fkey" FOREIGN KEY (claimed_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    "jobs_contract_profile_id_fkey" FOREIGN KEY (contract_profile_id) REFERENCES contract_profiles(id) ON DELETE RESTRICT
+    "jobs_created_by_actor_id_fkey" FOREIGN KEY (created_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    "jobs_instantiated_from_step_id_fkey" FOREIGN KEY (instantiated_from_step_id) REFERENCES workflow_steps(id) ON DELETE RESTRICT
+    "jobs_pipeline_id_project_id_fkey" FOREIGN KEY (pipeline_id, project_id) REFERENCES pipelines(id, project_id) ON DELETE RESTRICT
+    "jobs_project_id_fkey" FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE RESTRICT
+Referenced by:
+    TABLE "job_comments" CONSTRAINT "job_comments_job_id_fkey" FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+    TABLE "job_edges" CONSTRAINT "job_edges_from_job_id_fkey" FOREIGN KEY (from_job_id) REFERENCES jobs(id) ON DELETE CASCADE
+    TABLE "job_edges" CONSTRAINT "job_edges_to_job_id_fkey" FOREIGN KEY (to_job_id) REFERENCES jobs(id) ON DELETE CASCADE
+Access method: heap
+
+
+$ docker compose exec -T db psql -U aq -d aq2 -c '\d+ pipelines'
+                                                                    Table "public.pipelines"
+               Column               |           Type           | Collation | Nullable |      Default      | Storage  | Compression | Stats target | Description
+------------------------------------+--------------------------+-----------+----------+-------------------+----------+-------------+--------------+-------------
+ id                                 | uuid                     |           | not null | gen_random_uuid() | plain    |             |              |
+ project_id                         | uuid                     |           | not null |                   | plain    |             |              |
+ name                               | text                     |           | not null |                   | extended |             |              |
+ instantiated_from_workflow_id      | uuid                     |           |          |                   | plain    |             |              |
+ instantiated_from_workflow_version | integer                  |           |          |                   | plain    |             |              |
+ created_at                         | timestamp with time zone |           | not null | now()             | plain    |             |              |
+ created_by_actor_id                | uuid                     |           |          |                   | plain    |             |              |
+Indexes:
+    "pipelines_pkey" PRIMARY KEY, btree (id)
+    "pipelines_id_project_id_uniq" UNIQUE CONSTRAINT, btree (id, project_id)
+Foreign-key constraints:
+    "pipelines_created_by_actor_id_fkey" FOREIGN KEY (created_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    "[TOKEN_REDACTED]" FOREIGN KEY (instantiated_from_workflow_id) REFERENCES workflows(id) ON DELETE RESTRICT
+    "pipelines_project_id_fkey" FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE RESTRICT
+Referenced by:
+    TABLE "jobs" CONSTRAINT "jobs_pipeline_id_project_id_fkey" FOREIGN KEY (pipeline_id, project_id) REFERENCES pipelines(id, project_id) ON DELETE RESTRICT
+Access method: heap

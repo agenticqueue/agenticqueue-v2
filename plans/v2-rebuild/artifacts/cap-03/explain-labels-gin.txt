@@ -1,0 +1,11 @@
+# Explain labels GIN
+
+$ docker compose exec -T db psql -U aq -d aq2 -c "SET enable_seqscan = off; EXPLAIN SELECT id FROM jobs WHERE labels @> ARRAY['area:web'];"
+SET
+                                    QUERY PLAN
+----------------------------------------------------------------------------------
+ Bitmap Heap Scan on jobs  (cost=8.56..12.57 rows=1 width=16)
+   Recheck Cond: (labels @> '{area:web}'::text[])
+   ->  Bitmap Index Scan on idx_jobs_labels_gin  (cost=0.00..8.56 rows=1 width=0)
+         Index Cond: (labels @> '{area:web}'::text[])
+(4 rows)
