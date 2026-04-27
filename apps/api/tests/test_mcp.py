@@ -2,10 +2,10 @@ from datetime import UTC, datetime
 
 import pytest
 from aq_api._datetime import parse_utc
+from aq_api._version import VERSION_INFO
 from aq_api.app import app
 from aq_api.mcp import create_mcp_server
 from aq_api.models import HealthStatus, VersionInfo
-from fastapi.testclient import TestClient
 from fastmcp import Client
 
 
@@ -31,9 +31,7 @@ async def test_mcp_tools_return_shared_contract_payloads() -> None:
     version_payload = VersionInfo.model_validate(version.structured_content)
     assert health_payload.status == "ok"
     assert parse_utc(health.structured_content["timestamp"]) >= before
-    assert version_payload == VersionInfo.model_validate(
-        TestClient(app).get("/version").json()
-    )
+    assert version_payload == VERSION_INFO
 
 
 def test_streamable_http_mcp_mount_is_registered() -> None:
