@@ -102,24 +102,44 @@ v1 seeded profiles: `coding-task`, `bug-fix`, `docs-task`, `research-decision`.
 
 **Why this is here:** The auth and audit foundation. Codex correction #7 (sharper auth language) and #8 (audit same-transaction) demand this be solid before any workgraph mutation. Per the locked Pact, API keys are the only identity model and audit attribution is the only "permission" enforcement.
 
+**Why this matters (human outcome):** After cap #2 ships, AQ 2.0 stops being an unauthenticated hello-world toy. Every byte of state from this point forward attributes to a named Actor. "Who did this?" has an answer for every mutation, every time. A leaked key can be killed. Trust in the queue is mechanical, not aspirational. AQ 2.0 becomes safe enough to put real work through.
+
 **Depends on:** #1 (the four surfaces must exist).
 
 **Scope guardrails (NOT in this capability):**
-- No `create_api_key` on CLI/MCP/REST — that's UI-only and lives in capability #11.
+- No standalone `create_api_key` on CLI/MCP/REST — UI-only, lives in capability #11. (Cap #2 lets `create_actor` mint a one-shot plaintext key in `CreateActorResponse` because there is no UI yet — declared deviation.)
 - No domain entities yet (those land in #3).
 - No claim binding logic (that's #4).
-- The audit log is a queryable table with one row per mutation; it does not yet contain workgraph mutations because no workgraph ops exist.
-- No `rotate_own_key` — users do `create_api_key` (UI) plus `revoke_api_key` (any surface, own key only) separately.
+- The audit log is a queryable table with one row per **mutation** (success OR business-rule denial). Reads (`whoami`, `list_actors`, `query_audit_log`, `health_check`, `get_version`) are NOT audited.
+- `setup` is auditless — the founder Actor row's `created_at` IS the bootstrap evidence.
+- No Web `/actors` view; no Web `/audit` view. Cap #11 owns the four read-only views (Pipelines, Workflows, ADRs, Learnings) and explicitly forbids an audit-log browser. Cap #2 Web ships only `/login`, `/logout`, and a `/whoami` panel as auth scaffolding cap #11 builds on.
+- No `rotate_own_key` — users do `create_actor` (mint) plus `revoke_api_key` separately.
+- No mTLS / JWT / OAuth — Bearer + plaintext-equivalent keys per single-instance trusted Pact.
+
+**Auth model (locked, corrected from rev 1):**
+- **MCP HTTP `/mcp` requires the caller's own Bearer**, identical to REST. There is no "claude-mcp-bridge" Actor. (The original AQ2-18 model proposed a bridge actor; Codex's audit caught it as a security hole — anyone reaching `/mcp` could mutate as the bridge with self-asserted identity. Dropped.)
+- **MCP stdio (`aq-mcp` binary)** reads `~/.aq/config.toml` and forwards the operator's API key as Bearer to the local FastAPI process.
+- **`agent_identity`** is an optional INFORMATIONAL field on every MCP tool's input schema. When provided, populates `audit_log.claimed_actor_identity` for the audit trail. Never affects authentication. Required only when an MCP host is calling on behalf of a named identity (e.g. Claude Code calling on behalf of `claude-opus-4-7`).
+- **In-process service layer.** Both REST and MCP handlers call the same Python service functions. No HTTP delegation between surfaces inside the API process — that's how `claimed_actor_identity` ContextVar propagates safely.
+- **All handlers `async def`.** Never sync. ContextVar safety guaranteed at the asyncio task level.
 
 **Implements ops:**
-- `setup` — `POST /setup` and `aq setup`; first-run only; creates the first Actor and a host-local API key. Disabled after first successful run.
-- `whoami` — `GET /actors/me`, `aq whoami`, MCP `get_self`
-- `create_actor` — `POST /actors`, `aq actor create`, MCP `create_actor`
-- `list_actors` — `GET /actors`, `aq actor list`, MCP `list_actors`
-- `revoke_api_key` — `DELETE /api-keys/{id}`, `aq key revoke`, MCP `revoke_api_key`. CLI/MCP/REST: own key only. UI variant ships in capability #11 with broader scope.
-- `query_audit_log` — `GET /audit?actor=...&op=...&since=...`, `aq audit`, MCP `query_audit_log`
+- `setup` — `POST /setup` and `aq setup`; first-run only (advisory-locked); creates the founder Actor and a host-local API key. Auditless. Disabled after first successful run.
+- `whoami` — `GET /actors/me`, `aq whoami`, MCP `get_self`. Read; not audited.
+- `create_actor` — `POST /actors`, `aq actor create`, MCP `create_actor`. Mints one-shot plaintext key in response. Audited; redacted payloads.
+- `list_actors` — `GET /actors`, `aq actor list`, MCP `list_actors`. Read; not audited (default scope). `?include_deactivated=true` IS audited.
+- `revoke_api_key` — `DELETE /api-keys/{id}`, `aq key revoke`, MCP `revoke_api_key`. CLI/MCP/REST: own key only (403 on cross-actor; 409 on last-active-key; row-locked for race safety). Audited (success AND business-rule denial). UI variant ships in capability #11 with broader scope.
+- `query_audit_log` — `GET /audit?actor=...&op=...&since=...&until=...&limit=&cursor=`, `aq audit`, MCP `query_audit_log`. Paginated; opaque cursor; SQL-injection-safe via bound parameters. Read; not audited.
 
-**Validation summary:** Run `aq setup` against an empty DB; the bootstrap returns an actor and a key. Hit `aq whoami` with the key — returns the Actor row. Create a second Actor; revoke the first key; `whoami` with the revoked key returns 401. Query the audit log — every mutation above appears with the correct `actor_id` and timestamp. Force a transactional failure (mock SQL error after the domain insert but before the audit insert) — confirm both rows roll back together.
+**Audit semantics:**
+- Reads (`whoami`, `list_actors`, `query_audit_log`, `health_check`, `get_version`) write zero audit rows.
+- Mutations on success → commit domain row + audit row in one transaction.
+- Mutations on business-rule denial (403, 409) → commit audit-only row with `error_code` set; no domain change.
+- Mutations on unexpected exception (5xx) → roll back fully; no audit row.
+- Validation errors (422) → no audit row; mutation never started.
+- Setup is exempt: zero audit rows; founder row's `created_at` is the bootstrap evidence.
+
+**Validation summary:** Run `aq setup` against an empty DB; the bootstrap returns the founder Actor + plaintext API key. Hit `aq whoami` with the key — returns the Actor row. Create a second Actor; revoke the first key — `whoami` with revoked key returns 401. Cross-actor revoke attempt returns 403 with audit row recording the denial. Query the audit log — every mutation appears, with NULL `claimed_actor_identity` for REST/CLI calls and populated values for MCP calls that carried `agent_identity`. Force a transactional failure (mock SQL error after the domain insert but before the audit insert) — confirm both rows roll back together. Validate web `/login` flow: paste API key, get redirected to `/whoami`, panel renders the Actor name; cookie is httpOnly; `document.cookie` cannot read it.
 
 **Status:** `[ ]`
 
