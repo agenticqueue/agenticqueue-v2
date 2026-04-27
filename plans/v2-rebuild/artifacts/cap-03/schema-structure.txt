@@ -20,6 +20,212 @@ $ docker compose exec -T db psql -U aq -d aq2 -c '\dt'
 (13 rows)
 
 
+$ docker compose exec -T db psql -U aq -d aq2 -c '\d+ actors'
+                                                           Table "public.actors"
+     Column     |           Type           | Collation | Nullable |      Default      | Storage  | Compression | Stats target | Description
+----------------+--------------------------+-----------+----------+-------------------+----------+-------------+--------------+-------------
+ id             | uuid                     |           | not null | gen_random_uuid() | plain    |             |              |
+ name           | text                     |           | not null |                   | extended |             |              |
+ kind           | text                     |           | not null |                   | extended |             |              |
+ created_at     | timestamp with time zone |           | not null | now()             | plain    |             |              |
+ deactivated_at | timestamp with time zone |           |          |                   | plain    |             |              |
+Indexes:
+    "actors_pkey" PRIMARY KEY, btree (id)
+    "actors_name_active_uniq" UNIQUE, btree (name) WHERE deactivated_at IS NULL
+Check constraints:
+    "actors_kind_check" CHECK (kind = ANY (ARRAY['human'::text, 'agent'::text, 'script'::text, 'routine'::text]))
+Referenced by:
+    TABLE "api_keys" CONSTRAINT "api_keys_actor_id_fkey" FOREIGN KEY (actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    TABLE "api_keys" CONSTRAINT "api_keys_revoked_by_actor_id_fkey" FOREIGN KEY (revoked_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    TABLE "audit_log" CONSTRAINT "audit_log_authenticated_actor_id_fkey" FOREIGN KEY (authenticated_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    TABLE "job_comments" CONSTRAINT "job_comments_author_actor_id_fkey" FOREIGN KEY (author_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    TABLE "jobs" CONSTRAINT "jobs_claimed_by_actor_id_fkey" FOREIGN KEY (claimed_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    TABLE "jobs" CONSTRAINT "jobs_created_by_actor_id_fkey" FOREIGN KEY (created_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    TABLE "pipelines" CONSTRAINT "pipelines_created_by_actor_id_fkey" FOREIGN KEY (created_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    TABLE "projects" CONSTRAINT "projects_created_by_actor_id_fkey" FOREIGN KEY (created_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    TABLE "workflows" CONSTRAINT "workflows_created_by_actor_id_fkey" FOREIGN KEY (created_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+Access method: heap
+
+
+$ docker compose exec -T db psql -U aq -d aq2 -c '\d+ api_keys'
+                                                             Table "public.api_keys"
+       Column        |           Type           | Collation | Nullable |      Default      | Storage  | Compression | Stats target | Description
+---------------------+--------------------------+-----------+----------+-------------------+----------+-------------+--------------+-------------
+ id                  | uuid                     |           | not null | gen_random_uuid() | plain    |             |              |
+ actor_id            | uuid                     |           | not null |                   | plain    |             |              |
+ name                | text                     |           | not null |                   | extended |             |              |
+ key_hash            | text                     |           | not null |                   | extended |             |              |
+ prefix              | text                     |           | not null |                   | extended |             |              |
+ created_at          | timestamp with time zone |           | not null | now()             | plain    |             |              |
+ revoked_at          | timestamp with time zone |           |          |                   | plain    |             |              |
+ revoked_by_actor_id | uuid                     |           |          |                   | plain    |             |              |
+ lookup_id           | bytea                    |           | not null |                   | extended |             |              |
+Indexes:
+    "api_keys_pkey" PRIMARY KEY, btree (id)
+    "api_keys_actor_active_idx" btree (actor_id) WHERE revoked_at IS NULL
+    "api_keys_lookup_id_uniq" UNIQUE, btree (lookup_id)
+Check constraints:
+    "api_keys_revoked_fields_check" CHECK ((revoked_at IS NULL) = (revoked_by_actor_id IS NULL))
+Foreign-key constraints:
+    "api_keys_actor_id_fkey" FOREIGN KEY (actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    "api_keys_revoked_by_actor_id_fkey" FOREIGN KEY (revoked_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+Access method: heap
+
+
+$ docker compose exec -T db psql -U aq -d aq2 -c '\d+ audit_log'
+                                                              Table "public.audit_log"
+         Column         |           Type           | Collation | Nullable |      Default      | Storage  | Compression | Stats target | Description
+------------------------+--------------------------+-----------+----------+-------------------+----------+-------------+--------------+-------------
+ id                     | uuid                     |           | not null | gen_random_uuid() | plain    |             |              |
+ ts                     | timestamp with time zone |           | not null | now()             | plain    |             |              |
+ op                     | text                     |           | not null |                   | extended |             |              |
+ authenticated_actor_id | uuid                     |           | not null |                   | plain    |             |              |
+ claimed_actor_identity | text                     |           |          |                   | extended |             |              |
+ target_kind            | text                     |           |          |                   | extended |             |              |
+ target_id              | uuid                     |           |          |                   | plain    |             |              |
+ request_payload        | jsonb                    |           | not null | '{}'::jsonb       | extended |             |              |
+ response_payload       | jsonb                    |           |          |                   | extended |             |              |
+ error_code             | text                     |           |          |                   | extended |             |              |
+Indexes:
+    "audit_log_pkey" PRIMARY KEY, btree (id)
+    "audit_log_actor_ts_idx" btree (authenticated_actor_id, ts DESC)
+    "audit_log_op_ts_idx" btree (op, ts DESC)
+    "audit_log_target_idx" btree (target_kind, target_id) WHERE target_id IS NOT NULL
+    "audit_log_ts_idx" btree (ts DESC)
+Foreign-key constraints:
+    "audit_log_authenticated_actor_id_fkey" FOREIGN KEY (authenticated_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+Access method: heap
+
+
+$ docker compose exec -T db psql -U aq -d aq2 -c '\d+ projects'
+                                                             Table "public.projects"
+       Column        |           Type           | Collation | Nullable |      Default      | Storage  | Compression | Stats target | Description
+---------------------+--------------------------+-----------+----------+-------------------+----------+-------------+--------------+-------------
+ id                  | uuid                     |           | not null | gen_random_uuid() | plain    |             |              |
+ name                | text                     |           | not null |                   | extended |             |              |
+ slug                | text                     |           | not null |                   | extended |             |              |
+ description         | text                     |           |          |                   | extended |             |              |
+ archived_at         | timestamp with time zone |           |          |                   | plain    |             |              |
+ created_at          | timestamp with time zone |           | not null | now()             | plain    |             |              |
+ created_by_actor_id | uuid                     |           |          |                   | plain    |             |              |
+Indexes:
+    "projects_pkey" PRIMARY KEY, btree (id)
+    "projects_slug_key" UNIQUE CONSTRAINT, btree (slug)
+Foreign-key constraints:
+    "projects_created_by_actor_id_fkey" FOREIGN KEY (created_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+Referenced by:
+    TABLE "jobs" CONSTRAINT "jobs_project_id_fkey" FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE RESTRICT
+    TABLE "labels" CONSTRAINT "labels_project_id_fkey" FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE RESTRICT
+    TABLE "pipelines" CONSTRAINT "pipelines_project_id_fkey" FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE RESTRICT
+Access method: heap
+
+
+$ docker compose exec -T db psql -U aq -d aq2 -c '\d+ labels'
+                                                          Table "public.labels"
+   Column    |           Type           | Collation | Nullable |      Default      | Storage  | Compression | Stats target | Description
+-------------+--------------------------+-----------+----------+-------------------+----------+-------------+--------------+-------------
+ id          | uuid                     |           | not null | gen_random_uuid() | plain    |             |              |
+ project_id  | uuid                     |           | not null |                   | plain    |             |              |
+ name        | text                     |           | not null |                   | extended |             |              |
+ color       | text                     |           |          |                   | extended |             |              |
+ created_at  | timestamp with time zone |           | not null | now()             | plain    |             |              |
+ archived_at | timestamp with time zone |           |          |                   | plain    |             |              |
+Indexes:
+    "labels_pkey" PRIMARY KEY, btree (id)
+    "labels_project_name_active_uniq" UNIQUE, btree (project_id, name) WHERE archived_at IS NULL
+Foreign-key constraints:
+    "labels_project_id_fkey" FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE RESTRICT
+Access method: heap
+
+
+$ docker compose exec -T db psql -U aq -d aq2 -c '\d+ workflows'
+                                                              Table "public.workflows"
+         Column         |           Type           | Collation | Nullable |      Default      | Storage  | Compression | Stats target | Description
+------------------------+--------------------------+-----------+----------+-------------------+----------+-------------+--------------+-------------
+ id                     | uuid                     |           | not null | gen_random_uuid() | plain    |             |              |
+ slug                   | text                     |           | not null |                   | extended |             |              |
+ name                   | text                     |           | not null |                   | extended |             |              |
+ version                | integer                  |           | not null |                   | plain    |             |              |
+ is_archived            | boolean                  |           | not null | false             | plain    |             |              |
+ created_at             | timestamp with time zone |           | not null | now()             | plain    |             |              |
+ created_by_actor_id    | uuid                     |           |          |                   | plain    |             |              |
+ supersedes_workflow_id | uuid                     |           |          |                   | plain    |             |              |
+Indexes:
+    "workflows_pkey" PRIMARY KEY, btree (id)
+    "workflows_slug_version_key" UNIQUE CONSTRAINT, btree (slug, version)
+Foreign-key constraints:
+    "workflows_created_by_actor_id_fkey" FOREIGN KEY (created_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    "workflows_supersedes_workflow_id_fkey" FOREIGN KEY (supersedes_workflow_id) REFERENCES workflows(id) ON DELETE RESTRICT
+Referenced by:
+    TABLE "pipelines" CONSTRAINT "[TOKEN_REDACTED]" FOREIGN KEY (instantiated_from_workflow_id) REFERENCES workflows(id) ON DELETE RESTRICT
+    TABLE "workflow_steps" CONSTRAINT "workflow_steps_workflow_id_fkey" FOREIGN KEY (workflow_id) REFERENCES workflows(id) ON DELETE CASCADE
+    TABLE "workflows" CONSTRAINT "workflows_supersedes_workflow_id_fkey" FOREIGN KEY (supersedes_workflow_id) REFERENCES workflows(id) ON DELETE RESTRICT
+Access method: heap
+
+
+$ docker compose exec -T db psql -U aq -d aq2 -c '\d+ workflow_steps'
+                                                     Table "public.workflow_steps"
+           Column            |  Type   | Collation | Nullable |      Default      | Storage  | Compression | Stats target | Description
+-----------------------------+---------+-----------+----------+-------------------+----------+-------------+--------------+-------------
+ id                          | uuid    |           | not null | gen_random_uuid() | plain    |             |              |
+ workflow_id                 | uuid    |           | not null |                   | plain    |             |              |
+ name                        | text    |           | not null |                   | extended |             |              |
+ ordinal                     | integer |           | not null |                   | plain    |             |              |
+ default_contract_profile_id | uuid    |           | not null |                   | plain    |             |              |
+ step_edges                  | jsonb   |           | not null | '{}'::jsonb       | extended |             |              |
+Indexes:
+    "workflow_steps_pkey" PRIMARY KEY, btree (id)
+    "workflow_steps_workflow_ordinal_key" UNIQUE CONSTRAINT, btree (workflow_id, ordinal)
+Foreign-key constraints:
+    "[TOKEN_REDACTED]" FOREIGN KEY (default_contract_profile_id) REFERENCES contract_profiles(id) ON DELETE RESTRICT
+    "workflow_steps_workflow_id_fkey" FOREIGN KEY (workflow_id) REFERENCES workflows(id) ON DELETE CASCADE
+Referenced by:
+    TABLE "jobs" CONSTRAINT "jobs_instantiated_from_step_id_fkey" FOREIGN KEY (instantiated_from_step_id) REFERENCES workflow_steps(id) ON DELETE RESTRICT
+Access method: heap
+
+
+$ docker compose exec -T db psql -U aq -d aq2 -c '\d+ contract_profiles'
+                                           Table "public.contract_profiles"
+      Column      |  Type   | Collation | Nullable |   Default   | Storage  | Compression | Stats target | Description
+------------------+---------+-----------+----------+-------------+----------+-------------+--------------+-------------
+ id               | uuid    |           | not null |             | plain    |             |              |
+ name             | text    |           | not null |             | extended |             |              |
+ version          | integer |           | not null |             | plain    |             |              |
+ description      | text    |           |          |             | extended |             |              |
+ required_dod_ids | jsonb   |           | not null | '[]'::jsonb | extended |             |              |
+ schema           | jsonb   |           | not null | '{}'::jsonb | extended |             |              |
+Indexes:
+    "contract_profiles_pkey" PRIMARY KEY, btree (id)
+    "contract_profiles_name_version_key" UNIQUE CONSTRAINT, btree (name, version)
+Referenced by:
+    TABLE "jobs" CONSTRAINT "jobs_contract_profile_id_fkey" FOREIGN KEY (contract_profile_id) REFERENCES contract_profiles(id) ON DELETE RESTRICT
+    TABLE "workflow_steps" CONSTRAINT "[TOKEN_REDACTED]" FOREIGN KEY (default_contract_profile_id) REFERENCES contract_profiles(id) ON DELETE RESTRICT
+Access method: heap
+
+
+$ docker compose exec -T db psql -U aq -d aq2 -c '\d+ pipelines'
+                                                                    Table "public.pipelines"
+               Column               |           Type           | Collation | Nullable |      Default      | Storage  | Compression | Stats target | Description
+------------------------------------+--------------------------+-----------+----------+-------------------+----------+-------------+--------------+-------------
+ id                                 | uuid                     |           | not null | gen_random_uuid() | plain    |             |              |
+ project_id                         | uuid                     |           | not null |                   | plain    |             |              |
+ name                               | text                     |           | not null |                   | extended |             |              |
+ instantiated_from_workflow_id      | uuid                     |           |          |                   | plain    |             |              |
+ instantiated_from_workflow_version | integer                  |           |          |                   | plain    |             |              |
+ created_at                         | timestamp with time zone |           | not null | now()             | plain    |             |              |
+ created_by_actor_id                | uuid                     |           |          |                   | plain    |             |              |
+Indexes:
+    "pipelines_pkey" PRIMARY KEY, btree (id)
+    "pipelines_id_project_id_uniq" UNIQUE CONSTRAINT, btree (id, project_id)
+Foreign-key constraints:
+    "pipelines_created_by_actor_id_fkey" FOREIGN KEY (created_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    "[TOKEN_REDACTED]" FOREIGN KEY (instantiated_from_workflow_id) REFERENCES workflows(id) ON DELETE RESTRICT
+    "pipelines_project_id_fkey" FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE RESTRICT
+Referenced by:
+    TABLE "jobs" CONSTRAINT "jobs_pipeline_id_project_id_fkey" FOREIGN KEY (pipeline_id, project_id) REFERENCES pipelines(id, project_id) ON DELETE RESTRICT
+Access method: heap
+
+
 $ docker compose exec -T db psql -U aq -d aq2 -c '\d+ jobs'
                                                                   Table "public.jobs"
           Column           |           Type           | Collation | Nullable |      Default      | Storage  | Compression | Stats target | Description
@@ -58,24 +264,35 @@ Referenced by:
 Access method: heap
 
 
-$ docker compose exec -T db psql -U aq -d aq2 -c '\d+ pipelines'
-                                                                    Table "public.pipelines"
-               Column               |           Type           | Collation | Nullable |      Default      | Storage  | Compression | Stats target | Description
-------------------------------------+--------------------------+-----------+----------+-------------------+----------+-------------+--------------+-------------
- id                                 | uuid                     |           | not null | gen_random_uuid() | plain    |             |              |
- project_id                         | uuid                     |           | not null |                   | plain    |             |              |
- name                               | text                     |           | not null |                   | extended |             |              |
- instantiated_from_workflow_id      | uuid                     |           |          |                   | plain    |             |              |
- instantiated_from_workflow_version | integer                  |           |          |                   | plain    |             |              |
- created_at                         | timestamp with time zone |           | not null | now()             | plain    |             |              |
- created_by_actor_id                | uuid                     |           |          |                   | plain    |             |              |
+$ docker compose exec -T db psql -U aq -d aq2 -c '\d+ job_edges'
+                                         Table "public.job_edges"
+   Column    | Type | Collation | Nullable | Default | Storage  | Compression | Stats target | Description
+-------------+------+-----------+----------+---------+----------+-------------+--------------+-------------
+ from_job_id | uuid |           | not null |         | plain    |             |              |
+ to_job_id   | uuid |           | not null |         | plain    |             |              |
+ edge_type   | text |           | not null |         | extended |             |              |
 Indexes:
-    "pipelines_pkey" PRIMARY KEY, btree (id)
-    "pipelines_id_project_id_uniq" UNIQUE CONSTRAINT, btree (id, project_id)
+    "job_edges_pkey" PRIMARY KEY, btree (from_job_id, to_job_id, edge_type)
+Check constraints:
+    "job_edges_edge_type_check" CHECK (edge_type = ANY (ARRAY['gated_on'::text, 'parent_of'::text, 'sequence_next'::text]))
 Foreign-key constraints:
-    "pipelines_created_by_actor_id_fkey" FOREIGN KEY (created_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
-    "[TOKEN_REDACTED]" FOREIGN KEY (instantiated_from_workflow_id) REFERENCES workflows(id) ON DELETE RESTRICT
-    "pipelines_project_id_fkey" FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE RESTRICT
-Referenced by:
-    TABLE "jobs" CONSTRAINT "jobs_pipeline_id_project_id_fkey" FOREIGN KEY (pipeline_id, project_id) REFERENCES pipelines(id, project_id) ON DELETE RESTRICT
+    "job_edges_from_job_id_fkey" FOREIGN KEY (from_job_id) REFERENCES jobs(id) ON DELETE CASCADE
+    "job_edges_to_job_id_fkey" FOREIGN KEY (to_job_id) REFERENCES jobs(id) ON DELETE CASCADE
+Access method: heap
+
+
+$ docker compose exec -T db psql -U aq -d aq2 -c '\d+ job_comments'
+                                                         Table "public.job_comments"
+     Column      |           Type           | Collation | Nullable |      Default      | Storage  | Compression | Stats target | Description
+-----------------+--------------------------+-----------+----------+-------------------+----------+-------------+--------------+-------------
+ id              | uuid                     |           | not null | gen_random_uuid() | plain    |             |              |
+ job_id          | uuid                     |           | not null |                   | plain    |             |              |
+ author_actor_id | uuid                     |           | not null |                   | plain    |             |              |
+ body            | text                     |           | not null |                   | extended |             |              |
+ created_at      | timestamp with time zone |           | not null | now()             | plain    |             |              |
+Indexes:
+    "job_comments_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "job_comments_author_actor_id_fkey" FOREIGN KEY (author_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    "job_comments_job_id_fkey" FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
 Access method: heap
