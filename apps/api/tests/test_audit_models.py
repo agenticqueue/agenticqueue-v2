@@ -48,12 +48,19 @@ def test_audit_query_rejects_naive_datetime_window() -> None:
         AuditQueryParams(until=datetime(2026, 4, 27, 1, 0))
 
 
-def test_audit_query_limits_are_clamped_by_contract() -> None:
+def test_audit_query_accepts_limits_for_service_clamp() -> None:
     assert AuditQueryParams().limit == 50
     assert AuditQueryParams(limit=200).limit == 200
+    assert AuditQueryParams(limit=10000).limit == 10000
 
     with pytest.raises(ValidationError):
-        AuditQueryParams(limit=201)
+        AuditQueryParams(limit=0)
+
+
+def test_audit_query_accepts_actor_probe_string() -> None:
+    params = AuditQueryParams(actor="foo' OR '1'='1")
+
+    assert params.actor == "foo' OR '1'='1"
 
 
 def test_audit_models_forbid_extra_fields() -> None:

@@ -1,0 +1,5 @@
+COMMAND live REST audit SQL-injection probes return zero rows
+actor_or_true: status=200 entries=0
+actor_uuid_suffix: status=200 entries=0
+op_semicolon_comment: status=200 entries=0
+op_or_true: status=200 entries=0

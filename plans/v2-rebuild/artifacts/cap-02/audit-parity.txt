@@ -1,0 +1,5 @@
+COMMAND live audit query parity across REST, CLI, and MCP HTTP
+REST_COUNT=3
+CLI_MATCHES_REST=True
+MCP_MATCHES_REST=True
+OPS=create_actor,revoke_api_key,create_actor

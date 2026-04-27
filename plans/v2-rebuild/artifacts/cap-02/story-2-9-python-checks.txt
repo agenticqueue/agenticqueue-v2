@@ -1,0 +1,35 @@
+Story 2.9 Python checks
+
+COMMAND uv run ruff check .
+All checks passed!
+
+COMMAND uv run mypy --strict apps/api/src/aq_api/ apps/cli/src/aq_cli/
+Success: no issues found in 30 source files
+
+COMMAND uv run pytest -q apps/api/tests/test_audit_query.py apps/api/tests/test_audit_models.py apps/api/tests/test_mcp.py apps/cli/tests/test_main.py
+ssss...................                                                  [100%]
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastmcp\server\auth\providers\jwt.py:10
+  D:\mmmmm\mmmmm-aq2.0\.venv\Lib\site-packages\fastmcp\server\auth\providers\jwt.py:10: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+  It will be compatible before version 2.0.0.
+    from authlib.jose import JsonWebKey, JsonWebToken
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+19 passed, 4 skipped, 1 warning in 2.02s
+
+COMMAND docker compose exec -T api uv run pytest -q apps/api/tests apps/cli/tests
+Downloading ruff (10.8MiB)
+Downloading mypy (14.1MiB)
+ Downloading ruff
+ Downloading mypy
+Installed 9 packages in 180ms
+Bytecode compiled 4120 files in 618ms
+.......................................................................  [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/fastmcp/server/auth/providers/jwt.py:10
+  /app/.venv/lib/python3.12/site-packages/fastmcp/server/auth/providers/jwt.py:10: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+  It will be compatible before version 2.0.0.
+    from authlib.jose import JsonWebKey, JsonWebToken
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+71 passed, 1 warning in 23.31s

@@ -7,6 +7,8 @@ from aq_api._request_context import get_authenticated_actor_id
 from aq_api._version import VERSION_INFO
 from aq_api.models import (
     ActorKind,
+    AuditLogPage,
+    AuditQueryParams,
     CreateActorRequest,
     CreateActorResponse,
     HealthStatus,
@@ -19,6 +21,7 @@ from aq_api.services.actors import create_actor as create_actor_service
 from aq_api.services.actors import get_self_by_id
 from aq_api.services.actors import list_actors as list_actor_service
 from aq_api.services.api_keys import revoke_api_key as revoke_api_key_service
+from aq_api.services.audit import query_audit_log as query_audit_log_service
 
 MCP_NAME = "AgenticQueue 2.0 MCP"
 MCP_HTTP_PATH = "/mcp"
@@ -124,6 +127,37 @@ def create_mcp_server() -> FastMCP:
                 actor_id=actor_id,
                 api_key_id=api_key_id,
             )
+
+    @server.tool(
+        description=(
+            "Query the append-only audit log with actor, operation, time-window, "
+            "limit, and opaque cursor filters. Read-only and unaudited."
+        ),
+        annotations={"readOnlyHint": True},
+    )
+    async def query_audit_log(
+        actor: str | None = None,
+        op: str | None = None,
+        since: str | None = None,
+        until: str | None = None,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> AuditLogPage:
+        from aq_api._db import SessionLocal
+
+        _authenticated_actor_id()
+        params = AuditQueryParams.model_validate(
+            {
+                "actor": actor,
+                "op": op,
+                "since": since,
+                "until": until,
+                "limit": limit,
+                "cursor": cursor,
+            }
+        )
+        async with SessionLocal() as session:
+            return await query_audit_log_service(session, params)
 
     return server
 

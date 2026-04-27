@@ -276,6 +276,38 @@ def whoami(
     typer.echo(_get_auth("/actors/me", timeout, config))
 
 
+@app.command()
+def audit(
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+    actor: Annotated[str | None, typer.Option("--actor")] = None,
+    op: Annotated[str | None, typer.Option("--op")] = None,
+    since: Annotated[str | None, typer.Option("--since")] = None,
+    until: Annotated[str | None, typer.Option("--until")] = None,
+    limit: Annotated[int, typer.Option("--limit", min=1)] = 50,
+    cursor: Annotated[str | None, typer.Option("--cursor")] = None,
+    json_output: Annotated[
+        bool,
+        typer.Option("--json", help="Print raw JSON; this is the default."),
+    ] = False,
+) -> None:
+    """Print the filtered AuditLogPage JSON payload."""
+    params: QueryParams = {"limit": limit}
+    if actor is not None:
+        params["actor"] = actor
+    if op is not None:
+        params["op"] = op
+    if since is not None:
+        params["since"] = since
+    if until is not None:
+        params["until"] = until
+    if cursor is not None:
+        params["cursor"] = cursor
+    # JSON is the only output mode; --json is accepted for script compatibility.
+    _ = json_output
+    typer.echo(_get_auth("/audit", timeout, config, params=params))
+
+
 @actor_app.command("list")
 def actor_list(
     timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,

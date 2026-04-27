@@ -331,3 +331,59 @@ def test_key_revoke_deletes_with_bearer_and_prints_raw_json(
             5.0,
         )
     ]
+
+
+def test_audit_sends_filter_query_params(monkeypatch: MonkeyPatch) -> None:
+    body = '{"entries":[],"next_cursor":null}'
+    calls: list[tuple[str, dict[str, str], dict[str, object], float]] = []
+
+    def fake_get(
+        url: str,
+        *,
+        headers: dict[str, str],
+        params: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        calls.append((url, headers, params, timeout))
+        return _json_response(url, body)
+
+    monkeypatch.setattr("aq_cli.main.httpx.get", fake_get)
+
+    result = runner.invoke(
+        app,
+        [
+            "audit",
+            "--actor",
+            "11111111-1111-4111-8111-111111111111",
+            "--op",
+            "create_actor",
+            "--since",
+            "2026-04-27T00:00:00Z",
+            "--until",
+            "2026-04-27T23:59:59Z",
+            "--limit",
+            "10000",
+            "--cursor",
+            "cursor-1",
+            "--json",
+        ],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert result.exit_code == 0
+    assert result.stdout == f"{body}\n"
+    assert calls == [
+        (
+            "http://api.test/audit",
+            {"Authorization": "Bearer aq2_cli_contract_key"},
+            {
+                "limit": 10000,
+                "actor": "11111111-1111-4111-8111-111111111111",
+                "op": "create_actor",
+                "since": "2026-04-27T00:00:00Z",
+                "until": "2026-04-27T23:59:59Z",
+                "cursor": "cursor-1",
+            },
+            5.0,
+        )
+    ]

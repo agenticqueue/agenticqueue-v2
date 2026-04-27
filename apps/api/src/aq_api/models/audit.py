@@ -29,11 +29,11 @@ class AuditLogEntry(AQModel):
 
 
 class AuditQueryParams(AQModel):
-    actor: UUID | None = None
+    actor: str | None = None
     op: str | None = None
     since: datetime | None = None
     until: datetime | None = None
-    limit: int = Field(default=50, ge=1, le=200)
+    limit: int = Field(default=50, ge=1)
     cursor: str | None = None
 
     @field_validator("since", "until", mode="before")
