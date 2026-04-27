@@ -1,0 +1,3 @@
+DEPENDABOT_POLICY_OK
+npm_directory=/apps/web
+ignored=tailwindcss,eslint,next,react,react-dom
