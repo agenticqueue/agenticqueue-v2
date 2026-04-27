@@ -1,0 +1,4 @@
+Bytecode compiled 4120 files in 139ms
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+

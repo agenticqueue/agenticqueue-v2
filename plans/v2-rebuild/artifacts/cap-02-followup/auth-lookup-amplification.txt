@@ -1,0 +1,5 @@
+Bytecode compiled 4120 files in 143ms
+...                                                                      [100%]
+------------ generated xml file: /tmp/auth-lookup-amplification.xml ------------
+3 passed in 11.73s
+

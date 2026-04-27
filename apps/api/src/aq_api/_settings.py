@@ -14,6 +14,10 @@ class Settings(BaseSettings):
         min_length=1,
         validation_alias="POSTGRES_PASSWORD",
     )
+    key_lookup_secret: str = Field(
+        min_length=1,
+        validation_alias="AQ_KEY_LOOKUP_SECRET",
+    )
 
 
 try:
@@ -21,5 +25,5 @@ try:
 except ValidationError as exc:
     raise RuntimeError(
         "Missing required database environment. Set DATABASE_URL, "
-        "DATABASE_URL_SYNC, and POSTGRES_PASSWORD."
+        "DATABASE_URL_SYNC, POSTGRES_PASSWORD, and AQ_KEY_LOOKUP_SECRET."
     ) from exc

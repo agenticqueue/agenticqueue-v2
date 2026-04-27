@@ -1,0 +1,20 @@
+COMMAND uv run ruff check apps/api apps/cli
+All checks passed!
+
+COMMAND uv run mypy --strict apps/api/src/aq_api/
+Success: no issues found in 22 source files
+
+COMMAND docker compose exec -T api uv run ruff check apps/api
+Downloading ruff (10.8MiB)
+Downloading mypy (14.1MiB)
+ Downloading ruff
+ Downloading mypy
+Installed 9 packages in 133ms
+Bytecode compiled 4120 files in 492ms
+All checks passed!
+
+COMMAND docker compose exec -T api uv run mypy --strict apps/api/src/aq_api/
+Bytecode compiled 4120 files in 213ms
+Success: no issues found in 22 source files
+
+

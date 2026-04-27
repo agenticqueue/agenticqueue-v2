@@ -81,7 +81,7 @@ def test_schema_contains_required_tables_indexes_and_checks(
     assert {
         "actors_name_active_uniq",
         "api_keys_actor_active_idx",
-        "api_keys_prefix_idx",
+        "api_keys_lookup_id_uniq",
         "audit_log_ts_idx",
         "audit_log_actor_ts_idx",
         "audit_log_op_ts_idx",
@@ -119,11 +119,11 @@ def test_api_keys_reject_half_revoked_rows(
             cursor.execute(
                 """
                 INSERT INTO api_keys
-                    (actor_id, name, key_hash, prefix, revoked_at)
+                    (actor_id, name, key_hash, prefix, lookup_id, revoked_at)
                 VALUES
-                    (%s, 'test key', 'schema-test-hash', 'abcdefgh', now())
+                    (%s, 'test key', 'schema-test-hash', 'abcdefgh', %s, now())
                 """,
-                (actor_id,),
+                (actor_id, b"schema-lookup-01"),
             )
 
     with pytest.raises(CheckViolation):
@@ -131,9 +131,10 @@ def test_api_keys_reject_half_revoked_rows(
             cursor.execute(
                 """
                 INSERT INTO api_keys
-                    (actor_id, name, key_hash, prefix, revoked_by_actor_id)
+                    (actor_id, name, key_hash, prefix, lookup_id,
+                     revoked_by_actor_id)
                 VALUES
-                    (%s, 'test key', 'schema-test-hash', 'abcdefgh', %s)
+                    (%s, 'test key', 'schema-test-hash', 'abcdefgh', %s, %s)
                 """,
-                (actor_id, actor_id),
+                (actor_id, b"schema-lookup-02", actor_id),
             )

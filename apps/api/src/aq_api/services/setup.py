@@ -6,7 +6,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from aq_api.models import SetupResponse
 from aq_api.models.db import Actor as DbActor
 from aq_api.models.db import ApiKey as DbApiKey
-from aq_api.services.auth import PASSWORD_HASHER, key_prefix
+from aq_api.services.auth import (
+    DISPLAY_PREFIX_LENGTH,
+    PASSWORD_HASHER,
+    lookup_id_for_key,
+)
 
 SETUP_LOCK_KEY = "aq:setup-singleton"
 SETUP_LOCK_SQL = "SELECT pg_advisory_xact_lock(hashtext('aq:setup-singleton'))"
@@ -48,7 +52,8 @@ async def run_setup(session: AsyncSession) -> SetupResponse:
                 actor_id=founder.id,
                 name=FOUNDER_KEY_NAME,
                 key_hash=PASSWORD_HASHER.hash(founder_key),
-                prefix=key_prefix(founder_key),
+                prefix=founder_key[:DISPLAY_PREFIX_LENGTH],
+                lookup_id=lookup_id_for_key(founder_key),
             )
         )
         await session.flush()

@@ -31,6 +31,7 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       DATABASE_URL_SYNC: ${DATABASE_URL_SYNC}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      AQ_KEY_LOOKUP_SECRET: ${AQ_KEY_LOOKUP_SECRET}
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/healthz || exit 1"]
       interval: 5s

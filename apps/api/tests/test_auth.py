@@ -9,7 +9,11 @@ import psycopg
 import pytest
 from aq_api.app import app
 from aq_api.models import VersionInfo
-from aq_api.services.auth import PASSWORD_HASHER
+from aq_api.services.auth import (
+    DISPLAY_PREFIX_LENGTH,
+    PASSWORD_HASHER,
+    lookup_id_for_key,
+)
 from fastapi.testclient import TestClient
 from httpx import Response
 from psycopg import Connection
@@ -74,15 +78,17 @@ def _insert_actor_with_key(
         cursor.execute(
             """
             INSERT INTO api_keys
-                (actor_id, name, key_hash, prefix, revoked_at, revoked_by_actor_id)
+                (actor_id, name, key_hash, prefix, lookup_id, revoked_at,
+                 revoked_by_actor_id)
             VALUES
-                (%s, %s, %s, %s, %s, %s)
+                (%s, %s, %s, %s, %s, %s, %s)
             """,
             (
                 actor_id,
                 key_name,
                 PASSWORD_HASHER.hash(key),
-                key[:8],
+                key[:DISPLAY_PREFIX_LENGTH],
+                lookup_id_for_key(key),
                 revoked_at,
                 actor_id if revoked else None,
             ),

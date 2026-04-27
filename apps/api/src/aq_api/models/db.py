@@ -1,7 +1,15 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Text, text
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    LargeBinary,
+    Text,
+    text,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -55,7 +63,7 @@ class ApiKey(Base):
             "actor_id",
             postgresql_where=text("revoked_at IS NULL"),
         ),
-        Index("api_keys_prefix_idx", "prefix"),
+        Index("api_keys_lookup_id_uniq", "lookup_id", unique=True),
     )
 
     id: Mapped[UUID] = mapped_column(
@@ -71,6 +79,7 @@ class ApiKey(Base):
     name: Mapped[str] = mapped_column(Text, nullable=False)
     key_hash: Mapped[str] = mapped_column(Text, nullable=False)
     prefix: Mapped[str] = mapped_column(Text, nullable=False)
+    lookup_id: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
