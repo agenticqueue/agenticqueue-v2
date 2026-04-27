@@ -1,0 +1,12 @@
+title = "AgenticQueue gitleaks configuration"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Allow UUID identifiers in committed ADR evidence artifacts."
+condition = "AND"
+paths = ['''^plans/v2-rebuild/artifacts/.*$''']
+regexes = [
+  '''(?i)^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$''',
+]
