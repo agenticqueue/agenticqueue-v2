@@ -1,0 +1,23 @@
+COMMAND: gh api repos/gitleaks/gitleaks/releases/latest --jq .tag_name
+v8.30.1
+
+COMMAND: Select-String approved CLI workflow fields
+D:\mmmmm\mmmmm-aq2.0\.github\workflows\secret-scan.yml:1:# If this finds a real secret in history: rotate the secret, remove it with
+D:\mmmmm\mmmmm-aq2.0\.github\workflows\secret-scan.yml:2:# git filter-repo, force-push only after coordination, and notify GitHub
+D:\mmmmm\mmmmm-aq2.0\.github\workflows\secret-scan.yml:7:  pull_request:
+D:\mmmmm\mmmmm-aq2.0\.github\workflows\secret-scan.yml:8:  push:
+D:\mmmmm\mmmmm-aq2.0\.github\workflows\secret-scan.yml:9:    branches:
+D:\mmmmm\mmmmm-aq2.0\.github\workflows\secret-scan.yml:10:      - main
+D:\mmmmm\mmmmm-aq2.0\.github\workflows\secret-scan.yml:13:  contents: read
+D:\mmmmm\mmmmm-aq2.0\.github\workflows\secret-scan.yml:26:          fetch-depth: 0
+D:\mmmmm\mmmmm-aq2.0\.github\workflows\secret-scan.yml:28:      - name: Install gitleaks CLI
+D:\mmmmm\mmmmm-aq2.0\.github\workflows\secret-scan.yml:30:          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz" \
+D:\mmmmm\mmmmm-aq2.0\.github\workflows\secret-scan.yml:34:        run: gitleaks detect --source . --no-banner --redact --exit-code 1 --report-format sarif --report-path gitleaks.sarif
+D:\mmmmm\mmmmm-aq2.0\.github\workflows\secret-scan.yml:38:        uses: actions/upload-artifact@v4
+D:\mmmmm\mmmmm-aq2.0\.github\workflows\secret-scan.yml:40:          name: gitleaks-sarif
+
+COMMAND: Select-String gitleaks action removed
+NO_GITLEAKS_ACTION_REFERENCE
+
+COMMAND: uv run python secret-scan workflow assertions
+SECRET_SCAN_CLI_WORKFLOW_OK
