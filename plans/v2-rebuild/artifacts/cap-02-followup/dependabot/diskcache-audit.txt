@@ -1,0 +1,21 @@
+===== uv tree parent path =====
+COMMAND: uv tree | grep -B2 diskcache
+│   │   │   ├── beartype v0.22.9
+│   │   │   └── typing-extensions v4.15.0
+│   │   ├── diskcache v5.6.3 (extra: disk)
+EXIT_CODE: 0
+===== source grep =====
+COMMAND: grep -rn "diskcache\|Cache(" apps/ tests/ scripts/ --include="*.py"
+EXIT_CODE: 1
+===== uv tree inverted diskcache path =====
+COMMAND: uv tree --invert --package diskcache
+diskcache v5.6.3
+Resolved 111 packages in 2ms
+└── py-key-value-aio v0.3.0 (extra: disk)
+    ├── fastmcp[disk, keyring, memory] v2.14.7
+    │   └── aq-api v0.1.0
+    │       └── agenticqueue-v2 v0.1.0
+    └── pydocket[memory, redis] v0.18.2
+        └── fastmcp v2.14.7 (*)
+(*) Package tree already displayed
+EXIT_CODE: 0
