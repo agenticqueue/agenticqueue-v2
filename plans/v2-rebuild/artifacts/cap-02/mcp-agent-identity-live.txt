@@ -1,0 +1,6 @@
+COMMAND live MCP agent_identity audit behavior
+CREATE_ACTOR_AUDIT_ROWS=name|claimed_actor_identity|authenticated_is_bearer
+live-mcp-agent-identity|claude-opus-4-7|true
+live-rest-null-identity|NULL|true
+INVALID_REJECTED=True
+AUDIT_COUNT_UNCHANGED_AFTER_INVALID=True

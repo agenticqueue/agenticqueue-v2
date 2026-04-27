@@ -40,6 +40,11 @@ async def test_mcp_tools_return_shared_contract_payloads() -> None:
         assert tool_by_name["revoke_api_key"].annotations.destructiveHint is True
         assert tool_by_name["query_audit_log"].annotations is not None
         assert tool_by_name["query_audit_log"].annotations.readOnlyHint is True
+        for tool in tool_by_name.values():
+            agent_schema = tool.inputSchema["properties"]["agent_identity"]
+            assert agent_schema["default"] is None
+            assert agent_schema["anyOf"][0]["maxLength"] == 200
+            assert agent_schema["anyOf"][0]["pattern"] == "^$|^[A-Za-z0-9_./:-]+$"
 
         health = await client.call_tool("health_check", {})
         version = await client.call_tool("get_version", {})
