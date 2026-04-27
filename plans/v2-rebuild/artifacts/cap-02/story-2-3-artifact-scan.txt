@@ -1,0 +1,10 @@
+COMMAND: scripts/redact-evidence.sh Story 2.3 artifact files
+REDACTOR_EXIT=0
+
+COMMAND: Select-String cap-02 artifact secret-pattern scan
+NO_SECRET_PATTERNS_FOUND
+
+COMMAND: gitleaks artifact scan
+9:03PM INF scanned ~43819 bytes (43.82 KB) in 16.4ms
+9:03PM INF no leaks found
+GITLEAKS_EXIT=0
