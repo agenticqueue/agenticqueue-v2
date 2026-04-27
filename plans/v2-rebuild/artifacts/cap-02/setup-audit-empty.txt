@@ -1,0 +1,6 @@
+COMMAND reset DB; count audit_log before/after first-run setup and 409 rerun
+AUDIT_BEFORE=0
+FIRST_STATUS=200
+SECOND_STATUS=409
+AUDIT_AFTER=0
+AUDIT_UNCHANGED_ZERO=True

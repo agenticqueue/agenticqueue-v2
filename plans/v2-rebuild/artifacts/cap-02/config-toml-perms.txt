@@ -1,0 +1,5 @@
+Bytecode compiled 4120 files in 151ms
+PATH=/tmp/aq-config/config.toml
+MODE=0o600
+CONFIG_KEYS=actor_id,api_key,api_url
+

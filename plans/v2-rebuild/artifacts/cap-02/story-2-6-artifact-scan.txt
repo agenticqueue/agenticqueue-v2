@@ -1,0 +1,65 @@
+COMMAND redact-evidence.sh Story 2.6 artifacts
+redact-evidence exit 0
+
+COMMAND gitleaks detect targeted changed paths
+TARGET apps/api/src/aq_api/app.py
+9:19AM INF scanned ~1952 bytes (1.95 KB) in 683ms
+9:19AM INF no leaks found
+
+TARGET apps/api/src/aq_api/routes
+9:19AM INF scanned ~2705 bytes (2.70 KB) in 195ms
+9:19AM INF no leaks found
+
+TARGET apps/api/src/aq_api/services/setup.py
+9:19AM INF scanned ~1632 bytes (1.63 KB) in 161ms
+9:19AM INF no leaks found
+
+TARGET apps/api/tests/test_setup.py
+9:19AM INF scanned ~6077 bytes (6.08 KB) in 190ms
+9:19AM INF no leaks found
+
+TARGET apps/cli/src/aq_cli
+9:19AM INF scanned ~17804 bytes (17.80 KB) in 115ms
+9:19AM INF no leaks found
+
+TARGET apps/cli/tests/test_main.py
+9:19AM INF scanned ~4926 bytes (4.93 KB) in 104ms
+9:19AM INF no leaks found
+
+TARGET plans/v2-rebuild/artifacts/cap-02/story-2-6-python-checks.txt
+9:19AM INF scanned ~1710 bytes (1.71 KB) in 107ms
+9:19AM INF no leaks found
+
+TARGET plans/v2-rebuild/artifacts/cap-02/setup-test.xml
+9:19AM INF scanned ~831 bytes (831 bytes) in 152ms
+9:19AM INF no leaks found
+
+TARGET plans/v2-rebuild/artifacts/cap-02/setup-race-test.xml
+9:19AM INF scanned ~364 bytes (364 bytes) in 98ms
+9:19AM INF no leaks found
+
+TARGET plans/v2-rebuild/artifacts/cap-02/setup-concurrency.txt
+9:19AM INF scanned ~741 bytes (741 bytes) in 96ms
+9:19AM INF no leaks found
+
+TARGET plans/v2-rebuild/artifacts/cap-02/setup-idempotency.txt
+9:19AM INF scanned ~231 bytes (231 bytes) in 94ms
+9:19AM INF no leaks found
+
+TARGET plans/v2-rebuild/artifacts/cap-02/setup-rerun-409.txt
+9:19AM INF scanned ~231 bytes (231 bytes) in 84.4ms
+9:19AM INF no leaks found
+
+TARGET plans/v2-rebuild/artifacts/cap-02/setup-audit-empty.txt
+9:19AM INF scanned ~173 bytes (173 bytes) in 357ms
+9:19AM INF no leaks found
+
+TARGET plans/v2-rebuild/artifacts/cap-02/config-toml-perms.txt
+9:19AM INF scanned ~122 bytes (122 bytes) in 80.5ms
+9:19AM INF no leaks found
+
+TARGET plans/v2-rebuild/artifacts/cap-02/evidence-redaction.txt
+9:19AM INF scanned ~190 bytes (190 bytes) in 91.8ms
+9:19AM INF no leaks found
+
+

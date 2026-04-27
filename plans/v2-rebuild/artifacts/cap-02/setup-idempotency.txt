@@ -1,0 +1,6 @@
+COMMAND reset DB; POST /setup twice; assert second body byte-equal to {"error":"already_setup"}
+FIRST_STATUS=200
+SECOND_STATUS=409
+SECOND_BODY={"error":"already_setup"}
+EXPECTED_BODY={"error":"already_setup"}
+BYTE_EQUAL=True

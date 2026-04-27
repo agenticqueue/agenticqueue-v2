@@ -13,6 +13,7 @@ from aq_api._health import current_health_status
 from aq_api._version import OPENAPI_VERSION, VERSION_INFO
 from aq_api.mcp import mcp_http_app
 from aq_api.models import HealthStatus, VersionInfo
+from aq_api.routes.setup import router as setup_router
 
 # OpenAPI uses the same env-driven version path as the runtime `/version` surface.
 app = FastAPI(
@@ -59,6 +60,9 @@ async def healthz() -> HealthStatus:
 )
 async def get_version() -> VersionInfo:
     return VERSION_INFO
+
+
+app.include_router(setup_router)
 
 
 # app.mount("/mcp", mcp.http_app(path="/")) redirects POST /mcp to /mcp/.
