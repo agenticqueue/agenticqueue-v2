@@ -1,6 +1,6 @@
 COMMAND live REST cross-actor revoke returns 403 and writes audit row
 HTTP_STATUS=403
 BODY={"error":"forbidden"}
-TARGET_KEY_ID=165ede8c-f519-4547-ae28-9bec90d2df40
+TARGET_KEY_ID=[UUID_REDACTED]
 TARGET_REVOKED=f
-AUDIT_LATEST=revoke_api_key|forbidden|165ede8c-f519-4547-ae28-9bec90d2df40
+AUDIT_LATEST=revoke_api_key|forbidden|[UUID_REDACTED]

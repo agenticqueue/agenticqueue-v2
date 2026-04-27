@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="0.225" timestamp="2026-04-27T11:46:25.671875-05:00" hostname="Dev-Station"><testcase classname="tests.parity.test_redactor" name="[TOKEN_REDACTED]" time="0.203" /></testsuite></testsuites>

@@ -27,5 +27,3 @@ Bytecode compiled 4120 files in 172ms
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 ------------------- generated xml file: /tmp/setup-test.xml --------------------
 5 passed, 1 warning in 1.94s
-
-

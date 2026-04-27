@@ -1,0 +1,4 @@
+NAME             IMAGE                COMMAND                  SERVICE   CREATED          STATUS                    PORTS
+aq2cap02-api-1   aq2cap02-api         "sh -c 'echo 'Runnin…"   api       18 seconds ago   Up 11 seconds (healthy)   0.0.0.0:8001->8000/tcp, [::]:8001->8000/tcp
+aq2cap02-db-1    postgres:16-alpine   "docker-entrypoint.s…"   db        19 seconds ago   Up 17 seconds (healthy)   5432/tcp
+aq2cap02-web-1   aq2cap02-web         "docker-entrypoint.s…"   web       18 seconds ago   Up 5 seconds (healthy)    0.0.0.0:3002->3000/tcp, [::]:3002->3000/tcp

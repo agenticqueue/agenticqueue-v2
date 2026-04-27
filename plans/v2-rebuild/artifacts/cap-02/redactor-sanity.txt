@@ -1,0 +1,3 @@
+founder_key=[TOKEN_REDACTED]
+key_hash=[ARGON2_REDACTED]
+secret=[TOKEN_REDACTED]

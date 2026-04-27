@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import Depends, Header, Request
@@ -66,6 +67,7 @@ async def current_actor(
         reset_authenticated_actor_id(context_token)
 
 
+@asynccontextmanager
 async def authenticate_request_context(request: Request) -> AsyncIterator[DbActor]:
     from aq_api._db import SessionLocal
 

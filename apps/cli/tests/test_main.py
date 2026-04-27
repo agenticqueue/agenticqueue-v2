@@ -49,10 +49,15 @@ def test_health_prints_raw_json(monkeypatch: MonkeyPatch) -> None:
 
 def test_version_prints_raw_json_with_timeout(monkeypatch: MonkeyPatch) -> None:
     body = '{"version":"0.1.0","commit":"abcdef0","built_at":"2026-04-26T18:00:00Z"}'
-    calls: list[tuple[str, float]] = []
+    calls: list[tuple[str, dict[str, str], float]] = []
 
-    def fake_get(url: str, *, timeout: float) -> httpx.Response:
-        calls.append((url, timeout))
+    def fake_get(
+        url: str,
+        *,
+        headers: dict[str, str],
+        timeout: float,
+    ) -> httpx.Response:
+        calls.append((url, headers, timeout))
         return _json_response(url, body)
 
     monkeypatch.setattr("aq_cli.main.httpx.get", fake_get)
@@ -60,12 +65,18 @@ def test_version_prints_raw_json_with_timeout(monkeypatch: MonkeyPatch) -> None:
     result = runner.invoke(
         app,
         ["version", "--timeout", "1.25"],
-        env={API_URL_ENV: "http://api.test"},
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
     )
 
     assert result.exit_code == 0
     assert result.stdout == f"{body}\n"
-    assert calls == [("http://api.test/version", 1.25)]
+    assert calls == [
+        (
+            "http://api.test/version",
+            {"Authorization": "Bearer aq2_cli_contract_key"},
+            1.25,
+        )
+    ]
     assert {"version", "commit", "built_at"} <= json.loads(result.stdout).keys()
 
 

@@ -1,31 +1,37 @@
-REST /actors/me == CLI aq whoami == MCP get_self
 {
+  "rest": {
+    "actor": {
+      "id": "[UUID_REDACTED]",
+      "name": "founder",
+      "kind": "human",
+      "created_at": "2026-04-27T16:46:17.913165Z",
+      "deactivated_at": null
+    }
+  },
   "cli": {
     "actor": {
-      "created_at": "2026-04-27T15:00:45.456829Z",
-      "deactivated_at": null,
-      "id": "10062575-6a16-44e9-8759-da7a3e63d097",
+      "id": "[UUID_REDACTED]",
+      "name": "founder",
       "kind": "human",
-      "name": "founder"
+      "created_at": "2026-04-27T16:46:17.913165Z",
+      "deactivated_at": null
     }
   },
   "mcp": {
     "actor": {
-      "created_at": "2026-04-27T15:00:45.456829Z",
-      "deactivated_at": null,
-      "id": "10062575-6a16-44e9-8759-da7a3e63d097",
+      "id": "[UUID_REDACTED]",
+      "name": "founder",
       "kind": "human",
-      "name": "founder"
+      "created_at": "2026-04-27T16:46:17.913165Z",
+      "deactivated_at": null
     }
   },
-  "parity": true,
-  "rest": {
-    "actor": {
-      "created_at": "2026-04-27T15:00:45.456829Z",
-      "deactivated_at": null,
-      "id": "10062575-6a16-44e9-8759-da7a3e63d097",
-      "kind": "human",
-      "name": "founder"
-    }
+  "audit_before": {
+    "entries": [],
+    "next_cursor": null
+  },
+  "audit_after": {
+    "entries": [],
+    "next_cursor": null
   }
 }

@@ -1,5 +1,99 @@
-COMMAND live audit query parity across REST, CLI, and MCP HTTP
-REST_COUNT=3
-CLI_MATCHES_REST=True
-MCP_MATCHES_REST=True
-OPS=create_actor,revoke_api_key,create_actor
+{
+  "rest": {
+    "entries": [
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-27T16:46:21.156298Z",
+        "op": "create_actor",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "actor",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "kind": "agent",
+          "name": "parity-created-actor",
+          "key_name": "[REDACTED]"
+        },
+        "response_payload": {
+          "key": "[REDACTED]",
+          "actor": {
+            "id": "[UUID_REDACTED]",
+            "kind": "agent",
+            "name": "parity-created-actor",
+            "created_at": "2026-04-27T16:46:21.156298Z",
+            "deactivated_at": null
+          },
+          "api_key": "[REDACTED]"
+        },
+        "error_code": null
+      }
+    ],
+    "next_cursor": null
+  },
+  "cli": {
+    "entries": [
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-27T16:46:21.156298Z",
+        "op": "create_actor",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "actor",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "kind": "agent",
+          "name": "parity-created-actor",
+          "key_name": "[REDACTED]"
+        },
+        "response_payload": {
+          "key": "[REDACTED]",
+          "actor": {
+            "id": "[UUID_REDACTED]",
+            "kind": "agent",
+            "name": "parity-created-actor",
+            "created_at": "2026-04-27T16:46:21.156298Z",
+            "deactivated_at": null
+          },
+          "api_key": "[REDACTED]"
+        },
+        "error_code": null
+      }
+    ],
+    "next_cursor": null
+  },
+  "mcp": {
+    "entries": [
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-27T16:46:21.156298Z",
+        "op": "create_actor",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "actor",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "kind": "agent",
+          "name": "parity-created-actor",
+          "key_name": "[REDACTED]"
+        },
+        "response_payload": {
+          "key": "[REDACTED]",
+          "actor": {
+            "id": "[UUID_REDACTED]",
+            "kind": "agent",
+            "name": "parity-created-actor",
+            "created_at": "2026-04-27T16:46:21.156298Z",
+            "deactivated_at": null
+          },
+          "api_key": "[REDACTED]"
+        },
+        "error_code": null
+      }
+    ],
+    "next_cursor": null
+  },
+  "injection": {
+    "entries": [],
+    "next_cursor": null
+  }
+}

@@ -222,9 +222,12 @@ def health(timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS) -> None:
 
 
 @app.command()
-def version(timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS) -> None:
+def version(
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
     """Print the VersionInfo JSON payload."""
-    typer.echo(_get("/version", timeout))
+    typer.echo(_get_auth("/version", timeout, config))
 
 
 @app.command()

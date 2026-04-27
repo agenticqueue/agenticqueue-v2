@@ -43,7 +43,7 @@ async def require_mcp_bearer(
         return await call_next(request)
 
     try:
-        async for _actor in authenticate_request_context(request):
+        async with authenticate_request_context(request):
             return await call_next(request)
     except UnauthenticatedError:
         return unauthenticated_response()

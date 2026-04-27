@@ -1,0 +1,9 @@
+
+Running 5 tests using 2 workers
+
+[1A[2K[1/5] [chromium] › e2e\health.spec.ts:15:5 › public health proxy works and root routes to login
+[1A[2K[2/5] [chromium] › e2e\auth.spec.ts:41:5 › cookie is httpOnly and whoami renders the authenticated actor
+[1A[2K[3/5] [chromium] › e2e\auth.spec.ts:94:5 › invalid-key login response is byte-equal to no-key login response
+[1A[2K[4/5] [chromium] › e2e\auth.spec.ts:107:5 › api actors me rejects requests without a session cookie
+[1A[2K[5/5] [chromium] › e2e\auth.spec.ts:113:5 › logout clears the session cookie
+[1A[2K  5 passed (2.9s)

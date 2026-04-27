@@ -28,4 +28,3 @@ Bytecode compiled 4120 files in 158ms
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 59 passed, 1 warning in 14.84s
-

@@ -56,8 +56,14 @@ def _assert_snapshot(
     raise AssertionError(f"{path} does not match live surface:\n{diff}")
 
 
-def _get_json(url: str) -> dict[str, Any]:
-    response = httpx.get(url, timeout=10)
+def _get_json(
+    url: str,
+    *,
+    api_key: str | None = None,
+    params: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    headers = {"Authorization": f"Bearer {api_key}"} if api_key is not None else None
+    response = httpx.get(url, headers=headers, params=params, timeout=10)
     response.raise_for_status()
     payload = response.json()
     assert isinstance(payload, dict)
@@ -65,14 +71,23 @@ def _get_json(url: str) -> dict[str, Any]:
 
 
 def _post_mcp(
-    mcp_base_url: str, method: str, params: dict[str, Any], request_id: int
+    mcp_base_url: str,
+    method: str,
+    params: dict[str, Any],
+    request_id: int,
+    *,
+    api_key: str | None = None,
 ) -> dict[str, Any]:
+    headers = {
+        "Accept": "application/json,text/event-stream",
+        "Content-Type": "application/json",
+    }
+    if api_key is not None:
+        headers["Authorization"] = f"Bearer {api_key}"
+
     response = httpx.post(
         mcp_base_url,
-        headers={
-            "Accept": "application/json,text/event-stream",
-            "Content-Type": "application/json",
-        },
+        headers=headers,
         json={"jsonrpc": "2.0", "id": request_id, "method": method, "params": params},
         timeout=10,
     )
@@ -83,13 +98,19 @@ def _post_mcp(
 
 
 def _call_mcp_tool(
-    mcp_base_url: str, tool_name: str, request_id: int
+    mcp_base_url: str,
+    tool_name: str,
+    request_id: int,
+    *,
+    api_key: str,
+    arguments: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     payload = _post_mcp(
         mcp_base_url,
         "tools/call",
-        {"name": tool_name, "arguments": {}},
+        {"name": tool_name, "arguments": arguments or {}},
         request_id,
+        api_key=api_key,
     )
     result = payload["result"]
     assert result["isError"] is False
@@ -98,11 +119,19 @@ def _call_mcp_tool(
     return structured_content
 
 
-def _run_cli(command: str, api_base_url: str) -> dict[str, Any]:
+def _run_cli(
+    command: str | list[str],
+    api_base_url: str,
+    *,
+    api_key: str | None = None,
+) -> dict[str, Any]:
     env = os.environ.copy()
     env["AQ_API_URL"] = api_base_url
+    if api_key is not None:
+        env["AQ_API_KEY"] = api_key
+    command_args = [command] if isinstance(command, str) else command
     result = subprocess.run(
-        ["uv", "run", "aq", command],
+        ["uv", "run", "aq", *command_args],
         check=True,
         capture_output=True,
         env=env,
@@ -176,18 +205,18 @@ def test_openapi_snapshot_matches_live_api(
 
 
 def test_mcp_schema_snapshot_matches_live_tools(
-    mcp_base_url: str, update_snapshots: bool
+    mcp_base_url: str, founder_key: str, update_snapshots: bool
 ) -> None:
-    live = _post_mcp(mcp_base_url, "tools/list", {}, 1)
+    live = _post_mcp(mcp_base_url, "tools/list", {}, 1, api_key=founder_key)
     _assert_snapshot(MCP_SCHEMA_SNAPSHOT, live, update_snapshots)
 
 
-def test_rest_and_cli_payloads_match(api_base_url: str) -> None:
+def test_rest_and_cli_payloads_match(api_base_url: str, founder_key: str) -> None:
     started_at = datetime.now(UTC)
     rest_health = _get_json(f"{api_base_url}/healthz")
-    rest_version = _get_json(f"{api_base_url}/version")
+    rest_version = _get_json(f"{api_base_url}/version", api_key=founder_key)
     cli_health = _run_cli("health", api_base_url)
-    cli_version = _run_cli("version", api_base_url)
+    cli_version = _run_cli("version", api_base_url, api_key=founder_key)
 
     assert cli_health["status"] == rest_health["status"]
     _assert_health_payload(rest_health, started_at)
@@ -197,12 +226,26 @@ def test_rest_and_cli_payloads_match(api_base_url: str) -> None:
     _assert_version_equal(rest_version, cli_version)
 
 
-def test_rest_and_mcp_payloads_match(api_base_url: str, mcp_base_url: str) -> None:
+def test_rest_and_mcp_payloads_match(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+) -> None:
     started_at = datetime.now(UTC)
     rest_health = _get_json(f"{api_base_url}/healthz")
-    rest_version = _get_json(f"{api_base_url}/version")
-    mcp_health = _call_mcp_tool(mcp_base_url, "health_check", 2)
-    mcp_version = _call_mcp_tool(mcp_base_url, "get_version", 3)
+    rest_version = _get_json(f"{api_base_url}/version", api_key=founder_key)
+    mcp_health = _call_mcp_tool(
+        mcp_base_url,
+        "health_check",
+        2,
+        api_key=founder_key,
+    )
+    mcp_version = _call_mcp_tool(
+        mcp_base_url,
+        "get_version",
+        3,
+        api_key=founder_key,
+    )
 
     assert mcp_health["status"] == rest_health["status"]
     _assert_health_payload(rest_health, started_at)
@@ -246,4 +289,96 @@ def test_web_and_rest_payloads_match_via_playwright(
     assert report["stats"]["flaky"] == 0
     assert report["suites"][0]["specs"][0]["tests"][0]["results"][0]["status"] == (
         "passed"
+    )
+
+
+def test_whoami_matches_rest_cli_mcp_and_reads_do_not_audit(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    artifact_dir: Path,
+    redact_evidence: Any,
+) -> None:
+    before_audit = _get_json(f"{api_base_url}/audit", api_key=founder_key)
+    rest = _get_json(f"{api_base_url}/actors/me", api_key=founder_key)
+    cli = _run_cli("whoami", api_base_url, api_key=founder_key)
+    mcp = _call_mcp_tool(
+        mcp_base_url,
+        "get_self",
+        10,
+        api_key=founder_key,
+        arguments={"agent_identity": "parity-whoami"},
+    )
+    actor_list = _get_json(f"{api_base_url}/actors", api_key=founder_key)
+    after_audit = _get_json(f"{api_base_url}/audit", api_key=founder_key)
+
+    assert before_audit == {"entries": [], "next_cursor": None}
+    assert rest == cli == mcp
+    assert len(actor_list["actors"]) == 1
+    assert after_audit == before_audit
+
+    artifact = {
+        "rest": rest,
+        "cli": cli,
+        "mcp": mcp,
+        "audit_before": before_audit,
+        "audit_after": after_audit,
+    }
+    (artifact_dir / "whoami-parity.txt").write_text(
+        redact_evidence(_json_text(artifact)),
+        encoding="utf-8",
+    )
+
+
+def test_audit_query_matches_rest_cli_mcp_and_injection_returns_zero_rows(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    artifact_dir: Path,
+    redact_evidence: Any,
+) -> None:
+    create_payload = {"name": "parity-created-actor", "kind": "agent"}
+    create_response = httpx.post(
+        f"{api_base_url}/actors",
+        headers={"Authorization": f"Bearer {founder_key}"},
+        json=create_payload,
+        timeout=10,
+    )
+    create_response.raise_for_status()
+
+    params = {"op": "create_actor", "limit": 20}
+    rest = _get_json(f"{api_base_url}/audit", api_key=founder_key, params=params)
+    cli = _run_cli(
+        ["audit", "--op", "create_actor", "--limit", "20"],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp = _call_mcp_tool(
+        mcp_base_url,
+        "query_audit_log",
+        11,
+        api_key=founder_key,
+        arguments={
+            "op": "create_actor",
+            "limit": 20,
+            "agent_identity": "parity-audit",
+        },
+    )
+
+    injection = _get_json(
+        f"{api_base_url}/audit",
+        api_key=founder_key,
+        params={"op": "create_actor' OR '1'='1", "limit": 20},
+    )
+
+    assert rest == cli == mcp
+    assert len(rest["entries"]) == 1
+    assert rest["entries"][0]["op"] == "create_actor"
+    assert rest["entries"][0]["error_code"] is None
+    assert injection == {"entries": [], "next_cursor": None}
+
+    artifact = {"rest": rest, "cli": cli, "mcp": mcp, "injection": injection}
+    (artifact_dir / "audit-parity.txt").write_text(
+        redact_evidence(_json_text(artifact)),
+        encoding="utf-8",
     )
