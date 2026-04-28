@@ -1,0 +1,14 @@
+### Seed template Pipeline and Job shape
+### docker compose exec -T db psql -U aq -d aq2 -v ON_ERROR_STOP=1 -c "SELECT p.id AS pipeline_id, p.project_id, p.name, p.is_template, p.cloned_from_pipeline_id, p.archived_at, count(j.id) AS job_count, bool_and(j.state = 'ready') AS all_ready, bool_and(j.contract != '{}'::jsonb) AS contracts_nonempty, bool_and(jsonb_array_length(j.contract->'dod_items') > 0) AS dod_items_nonempty FROM pipelines p LEFT JOIN jobs j ON j.pipeline_id = p.id WHERE p.name = 'ship-a-thing' AND p.is_template = true GROUP BY p.id, p.project_id, p.name, p.is_template, p.cloned_from_pipeline_id, p.archived_at;"
+             pipeline_id              |              project_id              |     name     | is_template | cloned_from_pipeline_id | archived_at | job_count | all_ready | contracts_nonempty | dod_items_nonempty
+--------------------------------------+--------------------------------------+--------------+-------------+-------------------------+-------------+-----------+-----------+--------------------+--------------------
+ [UUID_REDACTED] | [UUID_REDACTED] | ship-a-thing | t           |                         |             |         3 | t         | t                  | t
+(1 row)
+
+### docker compose exec -T db psql -U aq -d aq2 -v ON_ERROR_STOP=1 -c "SELECT j.title, j.state, j.contract->>'contract_type' AS contract_type, jsonb_array_length(j.contract->'dod_items') AS dod_items FROM jobs j JOIN pipelines p ON p.id = j.pipeline_id WHERE p.name = 'ship-a-thing' AND p.is_template = true ORDER BY j.created_at, j.id;"
+ title  | state | contract_type | dod_items
+--------+-------+---------------+-----------
+ verify | ready | verification  |         1
+ build  | ready | coding-task   |         2
+ scope  | ready | scoping       |         1
+(3 rows)
