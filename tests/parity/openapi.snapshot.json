@@ -994,6 +994,319 @@
           }
         }
       }
+    },
+    "/workflows": {
+      "post": {
+        "summary": "Create Workflow",
+        "operationId": "create_workflow_workflows_post",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkflowRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateWorkflowResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Workflows",
+        "operationId": "list_workflows_workflows_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "include_archived",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Archived"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListWorkflowsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workflows/{workflow_id}": {
+      "get": {
+        "summary": "Get Workflow",
+        "operationId": "get_workflow_workflows__workflow_id__get",
+        "parameters": [
+          {
+            "name": "workflow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Workflow Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetWorkflowResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update Workflow",
+        "operationId": "update_workflow_workflows__workflow_id__patch",
+        "parameters": [
+          {
+            "name": "workflow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Workflow Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkflowRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateWorkflowResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workflows/{slug}/archive": {
+      "post": {
+        "summary": "Archive Workflow",
+        "operationId": "archive_workflow_workflows__slug__archive_post",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArchiveWorkflowResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1111,6 +1424,27 @@
           "project"
         ],
         "title": "ArchiveProjectResponse"
+      },
+      "ArchiveWorkflowResponse": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+            "title": "Slug"
+          },
+          "archived_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Archived Count"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "slug",
+          "archived_count"
+        ],
+        "title": "ArchiveWorkflowResponse"
       },
       "AttachLabelRequest": {
         "properties": {
@@ -1380,6 +1714,50 @@
         ],
         "title": "CreateProjectResponse"
       },
+      "CreateWorkflowRequest": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+            "title": "Slug"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/WorkflowStepInput"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Steps"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "slug",
+          "name",
+          "steps"
+        ],
+        "title": "CreateWorkflowRequest"
+      },
+      "CreateWorkflowResponse": {
+        "properties": {
+          "workflow": {
+            "$ref": "#/components/schemas/Workflow"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "workflow"
+        ],
+        "title": "CreateWorkflowResponse"
+      },
       "DetachLabelResponse": {
         "properties": {
           "job_id": {
@@ -1418,6 +1796,19 @@
           "project"
         ],
         "title": "GetProjectResponse"
+      },
+      "GetWorkflowResponse": {
+        "properties": {
+          "workflow": {
+            "$ref": "#/components/schemas/Workflow"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "workflow"
+        ],
+        "title": "GetWorkflowResponse"
       },
       "HTTPValidationError": {
         "properties": {
@@ -1568,6 +1959,35 @@
           "projects"
         ],
         "title": "ListProjectsResponse"
+      },
+      "ListWorkflowsResponse": {
+        "properties": {
+          "workflows": {
+            "items": {
+              "$ref": "#/components/schemas/Workflow"
+            },
+            "type": "array",
+            "title": "Workflows"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "workflows"
+        ],
+        "title": "ListWorkflowsResponse"
       },
       "Project": {
         "properties": {
@@ -1766,6 +2186,44 @@
         ],
         "title": "UpdateProjectResponse"
       },
+      "UpdateWorkflowRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/WorkflowStepInput"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Steps"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "steps"
+        ],
+        "title": "UpdateWorkflowRequest"
+      },
+      "UpdateWorkflowResponse": {
+        "properties": {
+          "workflow": {
+            "$ref": "#/components/schemas/Workflow"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "workflow"
+        ],
+        "title": "UpdateWorkflowResponse"
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -1845,6 +2303,160 @@
           "actor"
         ],
         "title": "WhoamiResponse"
+      },
+      "Workflow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+            "title": "Slug"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Version"
+          },
+          "is_archived": {
+            "type": "boolean",
+            "title": "Is Archived",
+            "default": false
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "created_by_actor_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By Actor Id"
+          },
+          "supersedes_workflow_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supersedes Workflow Id"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/WorkflowStep"
+            },
+            "type": "array",
+            "title": "Steps"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "version",
+          "created_at"
+        ],
+        "title": "Workflow"
+      },
+      "WorkflowStep": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "workflow_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Workflow Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "ordinal": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Ordinal"
+          },
+          "default_contract_profile_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Default Contract Profile Id"
+          },
+          "step_edges": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Step Edges"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "workflow_id",
+          "name",
+          "ordinal",
+          "default_contract_profile_id"
+        ],
+        "title": "WorkflowStep"
+      },
+      "WorkflowStepInput": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "ordinal": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Ordinal"
+          },
+          "default_contract_profile_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Default Contract Profile Id"
+          },
+          "step_edges": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Step Edges"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "ordinal",
+          "default_contract_profile_id"
+        ],
+        "title": "WorkflowStepInput"
       }
     }
   }

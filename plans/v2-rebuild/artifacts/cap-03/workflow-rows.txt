@@ -1,0 +1,4 @@
+     slug     | version | is_archived
+--------------+---------+-------------
+ ship-a-thing |       1 | f
+(1 row)

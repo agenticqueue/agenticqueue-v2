@@ -163,6 +163,18 @@ def _contract_profile_id() -> str:
     return str(row[0])
 
 
+def _workflow_steps(profile_id: str, *names: str) -> list[dict[str, object]]:
+    return [
+        {
+            "name": name,
+            "ordinal": ordinal,
+            "default_contract_profile_id": profile_id,
+            "step_edges": {},
+        }
+        for ordinal, name in enumerate(names, start=1)
+    ]
+
+
 def _insert_pipeline_job(project_id: str, actor_id: str, title: str) -> str:
     with psycopg.connect(_direct_conninfo(), autocommit=True) as connection:
         with connection.cursor() as cursor:
@@ -686,6 +698,243 @@ def test_project_ops_match_rest_cli_mcp_and_audit(
         "audit": audit,
     }
     (artifact_dir / "projects-parity.txt").write_text(
+        redact_evidence(_json_text(artifact)),
+        encoding="utf-8",
+    )
+
+
+def test_workflow_ops_match_rest_cli_mcp_and_audit(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    founder_actor_id: str,
+    artifact_dir: Path,
+    redact_evidence: Any,
+) -> None:
+    suffix = uuid.uuid4().hex[:12]
+    auth = {"Authorization": f"Bearer {founder_key}"}
+    profile_id = _contract_profile_id()
+    initial_steps = _workflow_steps(profile_id, "scope", "build", "verify")
+    updated_steps = _workflow_steps(profile_id, "scope", "design", "build", "verify")
+    rest_slug = f"parity-rest-workflow-{suffix}"
+    cli_slug = f"parity-cli-workflow-{suffix}"
+    mcp_slug = f"parity-mcp-workflow-{suffix}"
+
+    rest_create_response = httpx.post(
+        f"{api_base_url}/workflows",
+        headers=auth,
+        json={
+            "name": "REST Workflow",
+            "slug": rest_slug,
+            "steps": initial_steps,
+        },
+        timeout=10,
+    )
+    rest_create_response.raise_for_status()
+    rest_create = rest_create_response.json()
+    cli_create = _run_cli(
+        [
+            "workflow",
+            "create",
+            "--name",
+            "CLI Workflow",
+            "--slug",
+            cli_slug,
+            "--steps-json",
+            json.dumps(initial_steps, separators=(",", ":")),
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_create = _call_mcp_tool(
+        mcp_base_url,
+        "create_workflow",
+        40,
+        api_key=founder_key,
+        arguments={
+            "name": "MCP Workflow",
+            "slug": mcp_slug,
+            "steps": initial_steps,
+            "agent_identity": "parity-workflow",
+        },
+    )
+
+    rest_workflow_id = rest_create["workflow"]["id"]
+    cli_workflow_id = cli_create["workflow"]["id"]
+    mcp_workflow_id = mcp_create["workflow"]["id"]
+    expected_v1_ids = {rest_workflow_id, cli_workflow_id, mcp_workflow_id}
+
+    rest_list = _get_json(
+        f"{api_base_url}/workflows",
+        api_key=founder_key,
+        params={"limit": 200},
+    )
+    cli_list = _run_cli(
+        ["workflow", "list", "--limit", "200"],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_list = _call_mcp_tool(
+        mcp_base_url,
+        "list_workflows",
+        41,
+        api_key=founder_key,
+        arguments={"limit": 200, "agent_identity": "parity-workflow"},
+    )
+    for page in (rest_list, cli_list, mcp_list):
+        assert expected_v1_ids.issubset(
+            {workflow["id"] for workflow in page["workflows"]}
+        )
+
+    rest_get = _get_json(
+        f"{api_base_url}/workflows/{rest_workflow_id}",
+        api_key=founder_key,
+    )
+    cli_get = _run_cli(
+        ["workflow", "get", cli_workflow_id],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_get = _call_mcp_tool(
+        mcp_base_url,
+        "get_workflow",
+        42,
+        api_key=founder_key,
+        arguments={
+            "workflow_id": mcp_workflow_id,
+            "agent_identity": "parity-workflow",
+        },
+    )
+    assert rest_get["workflow"]["id"] == rest_workflow_id
+    assert cli_get["workflow"]["id"] == cli_workflow_id
+    assert mcp_get["workflow"]["id"] == mcp_workflow_id
+
+    rest_update_response = httpx.patch(
+        f"{api_base_url}/workflows/{rest_workflow_id}",
+        headers=auth,
+        json={"name": "REST Workflow v2", "steps": updated_steps},
+        timeout=10,
+    )
+    rest_update_response.raise_for_status()
+    rest_update = rest_update_response.json()
+    cli_update = _run_cli(
+        [
+            "workflow",
+            "update",
+            cli_workflow_id,
+            "--name",
+            "CLI Workflow v2",
+            "--steps-json",
+            json.dumps(updated_steps, separators=(",", ":")),
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_update = _call_mcp_tool(
+        mcp_base_url,
+        "update_workflow",
+        43,
+        api_key=founder_key,
+        arguments={
+            "workflow_id": mcp_workflow_id,
+            "name": "MCP Workflow v2",
+            "steps": updated_steps,
+            "agent_identity": "parity-workflow",
+        },
+    )
+    assert rest_update["workflow"]["version"] == 2
+    assert cli_update["workflow"]["version"] == 2
+    assert mcp_update["workflow"]["version"] == 2
+    assert rest_update["workflow"]["supersedes_workflow_id"] == rest_workflow_id
+    assert cli_update["workflow"]["supersedes_workflow_id"] == cli_workflow_id
+    assert mcp_update["workflow"]["supersedes_workflow_id"] == mcp_workflow_id
+
+    expected_all_ids = expected_v1_ids | {
+        rest_update["workflow"]["id"],
+        cli_update["workflow"]["id"],
+        mcp_update["workflow"]["id"],
+    }
+
+    rest_archive_response = httpx.post(
+        f"{api_base_url}/workflows/{rest_slug}/archive",
+        headers=auth,
+        json={},
+        timeout=10,
+    )
+    rest_archive_response.raise_for_status()
+    rest_archive = rest_archive_response.json()
+    cli_archive = _run_cli(
+        ["workflow", "archive", cli_slug],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_archive = _call_mcp_tool(
+        mcp_base_url,
+        "archive_workflow",
+        44,
+        api_key=founder_key,
+        arguments={"slug": mcp_slug, "agent_identity": "parity-workflow"},
+    )
+    assert rest_archive["archived_count"] == 2
+    assert cli_archive["archived_count"] == 2
+    assert mcp_archive["archived_count"] == 2
+
+    rest_after_archive = _get_json(
+        f"{api_base_url}/workflows",
+        api_key=founder_key,
+        params={"limit": 200},
+    )
+    cli_after_archive = _run_cli(
+        ["workflow", "list", "--limit", "200"],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_after_archive = _call_mcp_tool(
+        mcp_base_url,
+        "list_workflows",
+        45,
+        api_key=founder_key,
+        arguments={"limit": 200, "agent_identity": "parity-workflow"},
+    )
+    for page in (rest_after_archive, cli_after_archive, mcp_after_archive):
+        assert expected_all_ids.isdisjoint(
+            {workflow["id"] for workflow in page["workflows"]}
+        )
+
+    audit = _get_json(
+        f"{api_base_url}/audit",
+        api_key=founder_key,
+        params={"actor": founder_actor_id, "limit": 50},
+    )
+    workflow_ops = [
+        row["op"]
+        for row in audit["entries"]
+        if row["op"] in {"create_workflow", "update_workflow", "archive_workflow"}
+    ]
+    assert workflow_ops.count("create_workflow") == 3
+    assert workflow_ops.count("update_workflow") == 3
+    assert workflow_ops.count("archive_workflow") == 3
+
+    artifact = {
+        "creates": {"rest": rest_create, "cli": cli_create, "mcp": mcp_create},
+        "lists": {
+            "rest": rest_list,
+            "cli": cli_list,
+            "mcp": mcp_list,
+            "rest_after_archive": rest_after_archive,
+            "cli_after_archive": cli_after_archive,
+            "mcp_after_archive": mcp_after_archive,
+        },
+        "gets": {"rest": rest_get, "cli": cli_get, "mcp": mcp_get},
+        "updates": {"rest": rest_update, "cli": cli_update, "mcp": mcp_update},
+        "archives": {
+            "rest": rest_archive,
+            "cli": cli_archive,
+            "mcp": mcp_archive,
+        },
+        "audit": audit,
+    }
+    (artifact_dir / "workflows-parity.txt").write_text(
         redact_evidence(_json_text(artifact)),
         encoding="utf-8",
     )

@@ -16,6 +16,7 @@ from aq_api._version import VERSION_INFO
 from aq_api.models import (
     ActorKind,
     ArchiveProjectResponse,
+    ArchiveWorkflowResponse,
     AttachLabelRequest,
     AttachLabelResponse,
     AuditLogPage,
@@ -24,19 +25,26 @@ from aq_api.models import (
     CreateActorResponse,
     CreateProjectRequest,
     CreateProjectResponse,
+    CreateWorkflowRequest,
+    CreateWorkflowResponse,
     DetachLabelRequest,
     DetachLabelResponse,
     GetProjectResponse,
+    GetWorkflowResponse,
     HealthStatus,
     ListActorsResponse,
     ListProjectsResponse,
+    ListWorkflowsResponse,
     RegisterLabelRequest,
     RegisterLabelResponse,
     RevokeApiKeyResponse,
     UpdateProjectRequest,
     UpdateProjectResponse,
+    UpdateWorkflowRequest,
+    UpdateWorkflowResponse,
     VersionInfo,
     WhoamiResponse,
+    WorkflowStepInput,
 )
 from aq_api.models.labels import LabelColor, LabelName
 from aq_api.models.projects import (
@@ -61,6 +69,11 @@ from aq_api.services.projects import create_project as create_project_service
 from aq_api.services.projects import get_project as get_project_service
 from aq_api.services.projects import list_projects as list_project_service
 from aq_api.services.projects import update_project as update_project_service
+from aq_api.services.workflows import archive_workflow as archive_workflow_service
+from aq_api.services.workflows import create_workflow as create_workflow_service
+from aq_api.services.workflows import get_workflow as get_workflow_service
+from aq_api.services.workflows import list_workflows as list_workflow_service
+from aq_api.services.workflows import update_workflow as update_workflow_service
 
 MCP_NAME = "AgenticQueue 2.0 MCP"
 MCP_HTTP_PATH = "/mcp"
@@ -335,6 +348,109 @@ def create_mcp_server() -> FastMCP:
             _authenticated_actor_id()
             async with SessionLocal() as session:
                 return await archive_project_service(session, project_id)
+
+    @server.tool(
+        description="Create Workflow v1 with an ordered set of step definitions.",
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def create_workflow(
+        name: ProjectName,
+        slug: ProjectSlug,
+        steps: list[WorkflowStepInput],
+        agent_identity: AgentIdentity = None,
+    ) -> CreateWorkflowResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = CreateWorkflowRequest(name=name, slug=slug, steps=steps)
+            async with SessionLocal() as session:
+                return await create_workflow_service(
+                    session,
+                    request,
+                    actor_id=actor_id,
+                )
+
+    @server.tool(
+        description=(
+            "List Workflows with opaque cursor pagination. Archived Workflow "
+            "versions are excluded unless include_archived is true."
+        ),
+        annotations={"readOnlyHint": True},
+    )
+    async def list_workflows(
+        limit: int = 50,
+        cursor: str | None = None,
+        include_archived: bool = False,
+        agent_identity: AgentIdentity = None,
+    ) -> ListWorkflowsResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await list_workflow_service(
+                    session,
+                    limit=limit,
+                    cursor=cursor,
+                    include_archived=include_archived,
+                )
+
+    @server.tool(
+        description="Return one Workflow version by UUID.",
+        annotations={"readOnlyHint": True},
+    )
+    async def get_workflow(
+        workflow_id: UUID,
+        agent_identity: AgentIdentity = None,
+    ) -> GetWorkflowResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await get_workflow_service(session, workflow_id)
+
+    @server.tool(
+        description=(
+            "Create the next Workflow version from a latest Workflow UUID. "
+            "The prior row and prior steps are retained unchanged."
+        ),
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def update_workflow(
+        workflow_id: UUID,
+        name: ProjectName,
+        steps: list[WorkflowStepInput],
+        agent_identity: AgentIdentity = None,
+    ) -> UpdateWorkflowResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = UpdateWorkflowRequest(name=name, steps=steps)
+            async with SessionLocal() as session:
+                return await update_workflow_service(
+                    session,
+                    workflow_id,
+                    request,
+                    actor_id=actor_id,
+                )
+
+    @server.tool(
+        description="Archive every version in a Workflow slug family.",
+        annotations={"readOnlyHint": False, "destructiveHint": True},
+    )
+    async def archive_workflow(
+        slug: ProjectSlug,
+        agent_identity: AgentIdentity = None,
+    ) -> ArchiveWorkflowResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await archive_workflow_service(session, slug)
 
     @server.tool(
         description="Register a Project-scoped Label for future Job attachment.",

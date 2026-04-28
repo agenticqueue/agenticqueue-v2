@@ -1,0 +1,1490 @@
+{
+  "creates": {
+    "rest": {
+      "workflow": {
+        "id": "[UUID_REDACTED]",
+        "slug": "parity-rest-workflow-09a22ab05914",
+        "name": "REST Workflow",
+        "version": 1,
+        "is_archived": false,
+        "created_at": "2026-04-28T00:08:18.985419Z",
+        "created_by_actor_id": "[UUID_REDACTED]",
+        "supersedes_workflow_id": null,
+        "steps": [
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "scope",
+            "ordinal": 1,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          },
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "build",
+            "ordinal": 2,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          },
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "verify",
+            "ordinal": 3,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          }
+        ]
+      }
+    },
+    "cli": {
+      "workflow": {
+        "id": "[UUID_REDACTED]",
+        "slug": "parity-cli-workflow-09a22ab05914",
+        "name": "CLI Workflow",
+        "version": 1,
+        "is_archived": false,
+        "created_at": "2026-04-28T00:08:19.655095Z",
+        "created_by_actor_id": "[UUID_REDACTED]",
+        "supersedes_workflow_id": null,
+        "steps": [
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "scope",
+            "ordinal": 1,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          },
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "build",
+            "ordinal": 2,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          },
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "verify",
+            "ordinal": 3,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          }
+        ]
+      }
+    },
+    "mcp": {
+      "workflow": {
+        "id": "[UUID_REDACTED]",
+        "slug": "parity-mcp-workflow-09a22ab05914",
+        "name": "MCP Workflow",
+        "version": 1,
+        "is_archived": false,
+        "created_at": "2026-04-28T00:08:19.734841Z",
+        "created_by_actor_id": "[UUID_REDACTED]",
+        "supersedes_workflow_id": null,
+        "steps": [
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "scope",
+            "ordinal": 1,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          },
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "build",
+            "ordinal": 2,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          },
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "verify",
+            "ordinal": 3,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          }
+        ]
+      }
+    }
+  },
+  "lists": {
+    "rest": {
+      "workflows": [
+        {
+          "id": "[UUID_REDACTED]",
+          "slug": "ship-a-thing",
+          "name": "Ship A Thing",
+          "version": 1,
+          "is_archived": false,
+          "created_at": "2026-04-27T21:21:56.354237Z",
+          "created_by_actor_id": null,
+          "supersedes_workflow_id": null,
+          "steps": [
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "scope",
+              "ordinal": 1,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "build",
+              "ordinal": 2,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "verify",
+              "ordinal": 3,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            }
+          ]
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "slug": "parity-rest-workflow-09a22ab05914",
+          "name": "REST Workflow",
+          "version": 1,
+          "is_archived": false,
+          "created_at": "2026-04-28T00:08:18.985419Z",
+          "created_by_actor_id": "[UUID_REDACTED]",
+          "supersedes_workflow_id": null,
+          "steps": [
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "scope",
+              "ordinal": 1,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "build",
+              "ordinal": 2,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "verify",
+              "ordinal": 3,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            }
+          ]
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "slug": "parity-cli-workflow-09a22ab05914",
+          "name": "CLI Workflow",
+          "version": 1,
+          "is_archived": false,
+          "created_at": "2026-04-28T00:08:19.655095Z",
+          "created_by_actor_id": "[UUID_REDACTED]",
+          "supersedes_workflow_id": null,
+          "steps": [
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "scope",
+              "ordinal": 1,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "build",
+              "ordinal": 2,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "verify",
+              "ordinal": 3,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            }
+          ]
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "slug": "parity-mcp-workflow-09a22ab05914",
+          "name": "MCP Workflow",
+          "version": 1,
+          "is_archived": false,
+          "created_at": "2026-04-28T00:08:19.734841Z",
+          "created_by_actor_id": "[UUID_REDACTED]",
+          "supersedes_workflow_id": null,
+          "steps": [
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "scope",
+              "ordinal": 1,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "build",
+              "ordinal": 2,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "verify",
+              "ordinal": 3,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            }
+          ]
+        }
+      ],
+      "next_cursor": null
+    },
+    "cli": {
+      "workflows": [
+        {
+          "id": "[UUID_REDACTED]",
+          "slug": "ship-a-thing",
+          "name": "Ship A Thing",
+          "version": 1,
+          "is_archived": false,
+          "created_at": "2026-04-27T21:21:56.354237Z",
+          "created_by_actor_id": null,
+          "supersedes_workflow_id": null,
+          "steps": [
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "scope",
+              "ordinal": 1,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "build",
+              "ordinal": 2,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "verify",
+              "ordinal": 3,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            }
+          ]
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "slug": "parity-rest-workflow-09a22ab05914",
+          "name": "REST Workflow",
+          "version": 1,
+          "is_archived": false,
+          "created_at": "2026-04-28T00:08:18.985419Z",
+          "created_by_actor_id": "[UUID_REDACTED]",
+          "supersedes_workflow_id": null,
+          "steps": [
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "scope",
+              "ordinal": 1,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "build",
+              "ordinal": 2,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "verify",
+              "ordinal": 3,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            }
+          ]
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "slug": "parity-cli-workflow-09a22ab05914",
+          "name": "CLI Workflow",
+          "version": 1,
+          "is_archived": false,
+          "created_at": "2026-04-28T00:08:19.655095Z",
+          "created_by_actor_id": "[UUID_REDACTED]",
+          "supersedes_workflow_id": null,
+          "steps": [
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "scope",
+              "ordinal": 1,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "build",
+              "ordinal": 2,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "verify",
+              "ordinal": 3,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            }
+          ]
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "slug": "parity-mcp-workflow-09a22ab05914",
+          "name": "MCP Workflow",
+          "version": 1,
+          "is_archived": false,
+          "created_at": "2026-04-28T00:08:19.734841Z",
+          "created_by_actor_id": "[UUID_REDACTED]",
+          "supersedes_workflow_id": null,
+          "steps": [
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "scope",
+              "ordinal": 1,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "build",
+              "ordinal": 2,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "verify",
+              "ordinal": 3,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            }
+          ]
+        }
+      ],
+      "next_cursor": null
+    },
+    "mcp": {
+      "workflows": [
+        {
+          "id": "[UUID_REDACTED]",
+          "slug": "ship-a-thing",
+          "name": "Ship A Thing",
+          "version": 1,
+          "is_archived": false,
+          "created_at": "2026-04-27T21:21:56.354237Z",
+          "created_by_actor_id": null,
+          "supersedes_workflow_id": null,
+          "steps": [
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "scope",
+              "ordinal": 1,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "build",
+              "ordinal": 2,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "verify",
+              "ordinal": 3,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            }
+          ]
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "slug": "parity-rest-workflow-09a22ab05914",
+          "name": "REST Workflow",
+          "version": 1,
+          "is_archived": false,
+          "created_at": "2026-04-28T00:08:18.985419Z",
+          "created_by_actor_id": "[UUID_REDACTED]",
+          "supersedes_workflow_id": null,
+          "steps": [
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "scope",
+              "ordinal": 1,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "build",
+              "ordinal": 2,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "verify",
+              "ordinal": 3,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            }
+          ]
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "slug": "parity-cli-workflow-09a22ab05914",
+          "name": "CLI Workflow",
+          "version": 1,
+          "is_archived": false,
+          "created_at": "2026-04-28T00:08:19.655095Z",
+          "created_by_actor_id": "[UUID_REDACTED]",
+          "supersedes_workflow_id": null,
+          "steps": [
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "scope",
+              "ordinal": 1,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "build",
+              "ordinal": 2,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "verify",
+              "ordinal": 3,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            }
+          ]
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "slug": "parity-mcp-workflow-09a22ab05914",
+          "name": "MCP Workflow",
+          "version": 1,
+          "is_archived": false,
+          "created_at": "2026-04-28T00:08:19.734841Z",
+          "created_by_actor_id": "[UUID_REDACTED]",
+          "supersedes_workflow_id": null,
+          "steps": [
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "scope",
+              "ordinal": 1,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "build",
+              "ordinal": 2,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "verify",
+              "ordinal": 3,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            }
+          ]
+        }
+      ],
+      "next_cursor": null
+    },
+    "rest_after_archive": {
+      "workflows": [
+        {
+          "id": "[UUID_REDACTED]",
+          "slug": "ship-a-thing",
+          "name": "Ship A Thing",
+          "version": 1,
+          "is_archived": false,
+          "created_at": "2026-04-27T21:21:56.354237Z",
+          "created_by_actor_id": null,
+          "supersedes_workflow_id": null,
+          "steps": [
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "scope",
+              "ordinal": 1,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "build",
+              "ordinal": 2,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "verify",
+              "ordinal": 3,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            }
+          ]
+        }
+      ],
+      "next_cursor": null
+    },
+    "cli_after_archive": {
+      "workflows": [
+        {
+          "id": "[UUID_REDACTED]",
+          "slug": "ship-a-thing",
+          "name": "Ship A Thing",
+          "version": 1,
+          "is_archived": false,
+          "created_at": "2026-04-27T21:21:56.354237Z",
+          "created_by_actor_id": null,
+          "supersedes_workflow_id": null,
+          "steps": [
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "scope",
+              "ordinal": 1,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "build",
+              "ordinal": 2,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "verify",
+              "ordinal": 3,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            }
+          ]
+        }
+      ],
+      "next_cursor": null
+    },
+    "mcp_after_archive": {
+      "workflows": [
+        {
+          "id": "[UUID_REDACTED]",
+          "slug": "ship-a-thing",
+          "name": "Ship A Thing",
+          "version": 1,
+          "is_archived": false,
+          "created_at": "2026-04-27T21:21:56.354237Z",
+          "created_by_actor_id": null,
+          "supersedes_workflow_id": null,
+          "steps": [
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "scope",
+              "ordinal": 1,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "build",
+              "ordinal": 2,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            },
+            {
+              "id": "[UUID_REDACTED]",
+              "workflow_id": "[UUID_REDACTED]",
+              "name": "verify",
+              "ordinal": 3,
+              "default_contract_profile_id": "[UUID_REDACTED]",
+              "step_edges": {}
+            }
+          ]
+        }
+      ],
+      "next_cursor": null
+    }
+  },
+  "gets": {
+    "rest": {
+      "workflow": {
+        "id": "[UUID_REDACTED]",
+        "slug": "parity-rest-workflow-09a22ab05914",
+        "name": "REST Workflow",
+        "version": 1,
+        "is_archived": false,
+        "created_at": "2026-04-28T00:08:18.985419Z",
+        "created_by_actor_id": "[UUID_REDACTED]",
+        "supersedes_workflow_id": null,
+        "steps": [
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "scope",
+            "ordinal": 1,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          },
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "build",
+            "ordinal": 2,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          },
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "verify",
+            "ordinal": 3,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          }
+        ]
+      }
+    },
+    "cli": {
+      "workflow": {
+        "id": "[UUID_REDACTED]",
+        "slug": "parity-cli-workflow-09a22ab05914",
+        "name": "CLI Workflow",
+        "version": 1,
+        "is_archived": false,
+        "created_at": "2026-04-28T00:08:19.655095Z",
+        "created_by_actor_id": "[UUID_REDACTED]",
+        "supersedes_workflow_id": null,
+        "steps": [
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "scope",
+            "ordinal": 1,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          },
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "build",
+            "ordinal": 2,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          },
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "verify",
+            "ordinal": 3,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          }
+        ]
+      }
+    },
+    "mcp": {
+      "workflow": {
+        "id": "[UUID_REDACTED]",
+        "slug": "parity-mcp-workflow-09a22ab05914",
+        "name": "MCP Workflow",
+        "version": 1,
+        "is_archived": false,
+        "created_at": "2026-04-28T00:08:19.734841Z",
+        "created_by_actor_id": "[UUID_REDACTED]",
+        "supersedes_workflow_id": null,
+        "steps": [
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "scope",
+            "ordinal": 1,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          },
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "build",
+            "ordinal": 2,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          },
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "verify",
+            "ordinal": 3,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          }
+        ]
+      }
+    }
+  },
+  "updates": {
+    "rest": {
+      "workflow": {
+        "id": "[UUID_REDACTED]",
+        "slug": "parity-rest-workflow-09a22ab05914",
+        "name": "REST Workflow v2",
+        "version": 2,
+        "is_archived": false,
+        "created_at": "2026-04-28T00:08:21.195701Z",
+        "created_by_actor_id": "[UUID_REDACTED]",
+        "supersedes_workflow_id": "[UUID_REDACTED]",
+        "steps": [
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "scope",
+            "ordinal": 1,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          },
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "design",
+            "ordinal": 2,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          },
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "build",
+            "ordinal": 3,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          },
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "verify",
+            "ordinal": 4,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          }
+        ]
+      }
+    },
+    "cli": {
+      "workflow": {
+        "id": "[UUID_REDACTED]",
+        "slug": "parity-cli-workflow-09a22ab05914",
+        "name": "CLI Workflow v2",
+        "version": 2,
+        "is_archived": false,
+        "created_at": "2026-04-28T00:08:21.764476Z",
+        "created_by_actor_id": "[UUID_REDACTED]",
+        "supersedes_workflow_id": "[UUID_REDACTED]",
+        "steps": [
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "scope",
+            "ordinal": 1,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          },
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "design",
+            "ordinal": 2,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          },
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "build",
+            "ordinal": 3,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          },
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "verify",
+            "ordinal": 4,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          }
+        ]
+      }
+    },
+    "mcp": {
+      "workflow": {
+        "id": "[UUID_REDACTED]",
+        "slug": "parity-mcp-workflow-09a22ab05914",
+        "name": "MCP Workflow v2",
+        "version": 2,
+        "is_archived": false,
+        "created_at": "2026-04-28T00:08:21.847172Z",
+        "created_by_actor_id": "[UUID_REDACTED]",
+        "supersedes_workflow_id": "[UUID_REDACTED]",
+        "steps": [
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "scope",
+            "ordinal": 1,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          },
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "design",
+            "ordinal": 2,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          },
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "build",
+            "ordinal": 3,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          },
+          {
+            "id": "[UUID_REDACTED]",
+            "workflow_id": "[UUID_REDACTED]",
+            "name": "verify",
+            "ordinal": 4,
+            "default_contract_profile_id": "[UUID_REDACTED]",
+            "step_edges": {}
+          }
+        ]
+      }
+    }
+  },
+  "archives": {
+    "rest": {
+      "slug": "parity-rest-workflow-09a22ab05914",
+      "archived_count": 2
+    },
+    "cli": {
+      "slug": "parity-cli-workflow-09a22ab05914",
+      "archived_count": 2
+    },
+    "mcp": {
+      "slug": "parity-mcp-workflow-09a22ab05914",
+      "archived_count": 2
+    }
+  },
+  "audit": {
+    "entries": [
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T00:08:22.583268Z",
+        "op": "archive_workflow",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-workflow",
+        "target_kind": "workflow",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "slug": "parity-mcp-workflow-09a22ab05914"
+        },
+        "response_payload": {
+          "slug": "parity-mcp-workflow-09a22ab05914",
+          "archived_count": 2
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T00:08:22.500363Z",
+        "op": "archive_workflow",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "workflow",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "slug": "parity-cli-workflow-09a22ab05914"
+        },
+        "response_payload": {
+          "slug": "parity-cli-workflow-09a22ab05914",
+          "archived_count": 2
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T00:08:21.911463Z",
+        "op": "archive_workflow",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "workflow",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "slug": "parity-rest-workflow-09a22ab05914"
+        },
+        "response_payload": {
+          "slug": "parity-rest-workflow-09a22ab05914",
+          "archived_count": 2
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T00:08:21.847172Z",
+        "op": "update_workflow",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-workflow",
+        "target_kind": "workflow",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "MCP Workflow v2",
+          "steps": [
+            {
+              "name": "scope",
+              "ordinal": 1,
+              "step_edges": {},
+              "default_contract_profile_id": "[UUID_REDACTED]"
+            },
+            {
+              "name": "design",
+              "ordinal": 2,
+              "step_edges": {},
+              "default_contract_profile_id": "[UUID_REDACTED]"
+            },
+            {
+              "name": "build",
+              "ordinal": 3,
+              "step_edges": {},
+              "default_contract_profile_id": "[UUID_REDACTED]"
+            },
+            {
+              "name": "verify",
+              "ordinal": 4,
+              "step_edges": {},
+              "default_contract_profile_id": "[UUID_REDACTED]"
+            }
+          ],
+          "workflow_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "workflow": {
+            "id": "[UUID_REDACTED]",
+            "name": "MCP Workflow v2",
+            "slug": "parity-mcp-workflow-09a22ab05914",
+            "steps": [
+              {
+                "id": "[UUID_REDACTED]",
+                "name": "scope",
+                "ordinal": 1,
+                "step_edges": {},
+                "workflow_id": "[UUID_REDACTED]",
+                "default_contract_profile_id": "[UUID_REDACTED]"
+              },
+              {
+                "id": "[UUID_REDACTED]",
+                "name": "design",
+                "ordinal": 2,
+                "step_edges": {},
+                "workflow_id": "[UUID_REDACTED]",
+                "default_contract_profile_id": "[UUID_REDACTED]"
+              },
+              {
+                "id": "[UUID_REDACTED]",
+                "name": "build",
+                "ordinal": 3,
+                "step_edges": {},
+                "workflow_id": "[UUID_REDACTED]",
+                "default_contract_profile_id": "[UUID_REDACTED]"
+              },
+              {
+                "id": "[UUID_REDACTED]",
+                "name": "verify",
+                "ordinal": 4,
+                "step_edges": {},
+                "workflow_id": "[UUID_REDACTED]",
+                "default_contract_profile_id": "[UUID_REDACTED]"
+              }
+            ],
+            "version": 2,
+            "created_at": "2026-04-28T00:08:21.847172Z",
+            "is_archived": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "supersedes_workflow_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T00:08:21.764476Z",
+        "op": "update_workflow",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "workflow",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "CLI Workflow v2",
+          "steps": [
+            {
+              "name": "scope",
+              "ordinal": 1,
+              "step_edges": {},
+              "default_contract_profile_id": "[UUID_REDACTED]"
+            },
+            {
+              "name": "design",
+              "ordinal": 2,
+              "step_edges": {},
+              "default_contract_profile_id": "[UUID_REDACTED]"
+            },
+            {
+              "name": "build",
+              "ordinal": 3,
+              "step_edges": {},
+              "default_contract_profile_id": "[UUID_REDACTED]"
+            },
+            {
+              "name": "verify",
+              "ordinal": 4,
+              "step_edges": {},
+              "default_contract_profile_id": "[UUID_REDACTED]"
+            }
+          ],
+          "workflow_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "workflow": {
+            "id": "[UUID_REDACTED]",
+            "name": "CLI Workflow v2",
+            "slug": "parity-cli-workflow-09a22ab05914",
+            "steps": [
+              {
+                "id": "[UUID_REDACTED]",
+                "name": "scope",
+                "ordinal": 1,
+                "step_edges": {},
+                "workflow_id": "[UUID_REDACTED]",
+                "default_contract_profile_id": "[UUID_REDACTED]"
+              },
+              {
+                "id": "[UUID_REDACTED]",
+                "name": "design",
+                "ordinal": 2,
+                "step_edges": {},
+                "workflow_id": "[UUID_REDACTED]",
+                "default_contract_profile_id": "[UUID_REDACTED]"
+              },
+              {
+                "id": "[UUID_REDACTED]",
+                "name": "build",
+                "ordinal": 3,
+                "step_edges": {},
+                "workflow_id": "[UUID_REDACTED]",
+                "default_contract_profile_id": "[UUID_REDACTED]"
+              },
+              {
+                "id": "[UUID_REDACTED]",
+                "name": "verify",
+                "ordinal": 4,
+                "step_edges": {},
+                "workflow_id": "[UUID_REDACTED]",
+                "default_contract_profile_id": "[UUID_REDACTED]"
+              }
+            ],
+            "version": 2,
+            "created_at": "2026-04-28T00:08:21.764476Z",
+            "is_archived": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "supersedes_workflow_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T00:08:21.195701Z",
+        "op": "update_workflow",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "workflow",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "REST Workflow v2",
+          "steps": [
+            {
+              "name": "scope",
+              "ordinal": 1,
+              "step_edges": {},
+              "default_contract_profile_id": "[UUID_REDACTED]"
+            },
+            {
+              "name": "design",
+              "ordinal": 2,
+              "step_edges": {},
+              "default_contract_profile_id": "[UUID_REDACTED]"
+            },
+            {
+              "name": "build",
+              "ordinal": 3,
+              "step_edges": {},
+              "default_contract_profile_id": "[UUID_REDACTED]"
+            },
+            {
+              "name": "verify",
+              "ordinal": 4,
+              "step_edges": {},
+              "default_contract_profile_id": "[UUID_REDACTED]"
+            }
+          ],
+          "workflow_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "workflow": {
+            "id": "[UUID_REDACTED]",
+            "name": "REST Workflow v2",
+            "slug": "parity-rest-workflow-09a22ab05914",
+            "steps": [
+              {
+                "id": "[UUID_REDACTED]",
+                "name": "scope",
+                "ordinal": 1,
+                "step_edges": {},
+                "workflow_id": "[UUID_REDACTED]",
+                "default_contract_profile_id": "[UUID_REDACTED]"
+              },
+              {
+                "id": "[UUID_REDACTED]",
+                "name": "design",
+                "ordinal": 2,
+                "step_edges": {},
+                "workflow_id": "[UUID_REDACTED]",
+                "default_contract_profile_id": "[UUID_REDACTED]"
+              },
+              {
+                "id": "[UUID_REDACTED]",
+                "name": "build",
+                "ordinal": 3,
+                "step_edges": {},
+                "workflow_id": "[UUID_REDACTED]",
+                "default_contract_profile_id": "[UUID_REDACTED]"
+              },
+              {
+                "id": "[UUID_REDACTED]",
+                "name": "verify",
+                "ordinal": 4,
+                "step_edges": {},
+                "workflow_id": "[UUID_REDACTED]",
+                "default_contract_profile_id": "[UUID_REDACTED]"
+              }
+            ],
+            "version": 2,
+            "created_at": "2026-04-28T00:08:21.195701Z",
+            "is_archived": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "supersedes_workflow_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T00:08:19.734841Z",
+        "op": "create_workflow",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-workflow",
+        "target_kind": "workflow",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "MCP Workflow",
+          "slug": "parity-mcp-workflow-09a22ab05914",
+          "steps": [
+            {
+              "name": "scope",
+              "ordinal": 1,
+              "step_edges": {},
+              "default_contract_profile_id": "[UUID_REDACTED]"
+            },
+            {
+              "name": "build",
+              "ordinal": 2,
+              "step_edges": {},
+              "default_contract_profile_id": "[UUID_REDACTED]"
+            },
+            {
+              "name": "verify",
+              "ordinal": 3,
+              "step_edges": {},
+              "default_contract_profile_id": "[UUID_REDACTED]"
+            }
+          ]
+        },
+        "response_payload": {
+          "workflow": {
+            "id": "[UUID_REDACTED]",
+            "name": "MCP Workflow",
+            "slug": "parity-mcp-workflow-09a22ab05914",
+            "steps": [
+              {
+                "id": "[UUID_REDACTED]",
+                "name": "scope",
+                "ordinal": 1,
+                "step_edges": {},
+                "workflow_id": "[UUID_REDACTED]",
+                "default_contract_profile_id": "[UUID_REDACTED]"
+              },
+              {
+                "id": "[UUID_REDACTED]",
+                "name": "build",
+                "ordinal": 2,
+                "step_edges": {},
+                "workflow_id": "[UUID_REDACTED]",
+                "default_contract_profile_id": "[UUID_REDACTED]"
+              },
+              {
+                "id": "[UUID_REDACTED]",
+                "name": "verify",
+                "ordinal": 3,
+                "step_edges": {},
+                "workflow_id": "[UUID_REDACTED]",
+                "default_contract_profile_id": "[UUID_REDACTED]"
+              }
+            ],
+            "version": 1,
+            "created_at": "2026-04-28T00:08:19.734841Z",
+            "is_archived": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "supersedes_workflow_id": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T00:08:19.655095Z",
+        "op": "create_workflow",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "workflow",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "CLI Workflow",
+          "slug": "parity-cli-workflow-09a22ab05914",
+          "steps": [
+            {
+              "name": "scope",
+              "ordinal": 1,
+              "step_edges": {},
+              "default_contract_profile_id": "[UUID_REDACTED]"
+            },
+            {
+              "name": "build",
+              "ordinal": 2,
+              "step_edges": {},
+              "default_contract_profile_id": "[UUID_REDACTED]"
+            },
+            {
+              "name": "verify",
+              "ordinal": 3,
+              "step_edges": {},
+              "default_contract_profile_id": "[UUID_REDACTED]"
+            }
+          ]
+        },
+        "response_payload": {
+          "workflow": {
+            "id": "[UUID_REDACTED]",
+            "name": "CLI Workflow",
+            "slug": "parity-cli-workflow-09a22ab05914",
+            "steps": [
+              {
+                "id": "[UUID_REDACTED]",
+                "name": "scope",
+                "ordinal": 1,
+                "step_edges": {},
+                "workflow_id": "[UUID_REDACTED]",
+                "default_contract_profile_id": "[UUID_REDACTED]"
+              },
+              {
+                "id": "[UUID_REDACTED]",
+                "name": "build",
+                "ordinal": 2,
+                "step_edges": {},
+                "workflow_id": "[UUID_REDACTED]",
+                "default_contract_profile_id": "[UUID_REDACTED]"
+              },
+              {
+                "id": "[UUID_REDACTED]",
+                "name": "verify",
+                "ordinal": 3,
+                "step_edges": {},
+                "workflow_id": "[UUID_REDACTED]",
+                "default_contract_profile_id": "[UUID_REDACTED]"
+              }
+            ],
+            "version": 1,
+            "created_at": "2026-04-28T00:08:19.655095Z",
+            "is_archived": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "supersedes_workflow_id": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T00:08:18.985419Z",
+        "op": "create_workflow",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "workflow",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "REST Workflow",
+          "slug": "parity-rest-workflow-09a22ab05914",
+          "steps": [
+            {
+              "name": "scope",
+              "ordinal": 1,
+              "step_edges": {},
+              "default_contract_profile_id": "[UUID_REDACTED]"
+            },
+            {
+              "name": "build",
+              "ordinal": 2,
+              "step_edges": {},
+              "default_contract_profile_id": "[UUID_REDACTED]"
+            },
+            {
+              "name": "verify",
+              "ordinal": 3,
+              "step_edges": {},
+              "default_contract_profile_id": "[UUID_REDACTED]"
+            }
+          ]
+        },
+        "response_payload": {
+          "workflow": {
+            "id": "[UUID_REDACTED]",
+            "name": "REST Workflow",
+            "slug": "parity-rest-workflow-09a22ab05914",
+            "steps": [
+              {
+                "id": "[UUID_REDACTED]",
+                "name": "scope",
+                "ordinal": 1,
+                "step_edges": {},
+                "workflow_id": "[UUID_REDACTED]",
+                "default_contract_profile_id": "[UUID_REDACTED]"
+              },
+              {
+                "id": "[UUID_REDACTED]",
+                "name": "build",
+                "ordinal": 2,
+                "step_edges": {},
+                "workflow_id": "[UUID_REDACTED]",
+                "default_contract_profile_id": "[UUID_REDACTED]"
+              },
+              {
+                "id": "[UUID_REDACTED]",
+                "name": "verify",
+                "ordinal": 3,
+                "step_edges": {},
+                "workflow_id": "[UUID_REDACTED]",
+                "default_contract_profile_id": "[UUID_REDACTED]"
+              }
+            ],
+            "version": 1,
+            "created_at": "2026-04-28T00:08:18.985419Z",
+            "is_archived": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "supersedes_workflow_id": null
+          }
+        },
+        "error_code": null
+      }
+    ],
+    "next_cursor": null
+  }
+}
