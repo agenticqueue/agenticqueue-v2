@@ -940,6 +940,207 @@ def test_workflow_ops_match_rest_cli_mcp_and_audit(
     )
 
 
+def test_pipeline_ops_match_rest_cli_mcp_and_audit(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    founder_actor_id: str,
+    artifact_dir: Path,
+    redact_evidence: Any,
+) -> None:
+    suffix = uuid.uuid4().hex[:12]
+    auth = {"Authorization": f"Bearer {founder_key}"}
+
+    rest_project_response = httpx.post(
+        f"{api_base_url}/projects",
+        headers=auth,
+        json={
+            "name": "REST Pipeline Project",
+            "slug": f"parity-rest-pipeline-{suffix}",
+        },
+        timeout=10,
+    )
+    rest_project_response.raise_for_status()
+    rest_project_id = rest_project_response.json()["project"]["id"]
+
+    cli_project = _run_cli(
+        [
+            "project",
+            "create",
+            "--name",
+            "CLI Pipeline Project",
+            "--slug",
+            f"parity-cli-pipeline-{suffix}",
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    cli_project_id = cli_project["project"]["id"]
+
+    mcp_project = _call_mcp_tool(
+        mcp_base_url,
+        "create_project",
+        46,
+        api_key=founder_key,
+        arguments={
+            "name": "MCP Pipeline Project",
+            "slug": f"parity-mcp-pipeline-{suffix}",
+            "agent_identity": "parity-pipeline",
+        },
+    )
+    mcp_project_id = mcp_project["project"]["id"]
+
+    rest_create_response = httpx.post(
+        f"{api_base_url}/pipelines",
+        headers=auth,
+        json={
+            "project_id": rest_project_id,
+            "name": "REST Pipeline",
+        },
+        timeout=10,
+    )
+    rest_create_response.raise_for_status()
+    rest_create = rest_create_response.json()
+    cli_create = _run_cli(
+        [
+            "pipeline",
+            "create",
+            "--project",
+            cli_project_id,
+            "--name",
+            "CLI Pipeline",
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_create = _call_mcp_tool(
+        mcp_base_url,
+        "create_pipeline",
+        47,
+        api_key=founder_key,
+        arguments={
+            "project_id": mcp_project_id,
+            "name": "MCP Pipeline",
+            "agent_identity": "parity-pipeline",
+        },
+    )
+    for payload in (rest_create, cli_create, mcp_create):
+        assert payload["pipeline"]["instantiated_from_workflow_id"] is None
+        assert payload["pipeline"]["instantiated_from_workflow_version"] is None
+
+    rest_pipeline_id = rest_create["pipeline"]["id"]
+    cli_pipeline_id = cli_create["pipeline"]["id"]
+    mcp_pipeline_id = mcp_create["pipeline"]["id"]
+    expected_ids = {rest_pipeline_id, cli_pipeline_id, mcp_pipeline_id}
+
+    rest_list = _get_json(
+        f"{api_base_url}/pipelines",
+        api_key=founder_key,
+        params={"limit": 200},
+    )
+    cli_list = _run_cli(
+        ["pipeline", "list", "--limit", "200"],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_list = _call_mcp_tool(
+        mcp_base_url,
+        "list_pipelines",
+        48,
+        api_key=founder_key,
+        arguments={"limit": 200, "agent_identity": "parity-pipeline"},
+    )
+    for page in (rest_list, cli_list, mcp_list):
+        assert expected_ids.issubset({pipeline["id"] for pipeline in page["pipelines"]})
+
+    rest_get = _get_json(
+        f"{api_base_url}/pipelines/{rest_pipeline_id}",
+        api_key=founder_key,
+    )
+    cli_get = _run_cli(
+        ["pipeline", "get", cli_pipeline_id],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_get = _call_mcp_tool(
+        mcp_base_url,
+        "get_pipeline",
+        49,
+        api_key=founder_key,
+        arguments={
+            "pipeline_id": mcp_pipeline_id,
+            "agent_identity": "parity-pipeline",
+        },
+    )
+    assert rest_get["pipeline"]["id"] == rest_pipeline_id
+    assert cli_get["pipeline"]["id"] == cli_pipeline_id
+    assert mcp_get["pipeline"]["id"] == mcp_pipeline_id
+
+    rest_update_response = httpx.patch(
+        f"{api_base_url}/pipelines/{rest_pipeline_id}",
+        headers=auth,
+        json={"name": "REST Pipeline v2"},
+        timeout=10,
+    )
+    rest_update_response.raise_for_status()
+    rest_update = rest_update_response.json()
+    cli_update = _run_cli(
+        [
+            "pipeline",
+            "update",
+            cli_pipeline_id,
+            "--name",
+            "CLI Pipeline v2",
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_update = _call_mcp_tool(
+        mcp_base_url,
+        "update_pipeline",
+        50,
+        api_key=founder_key,
+        arguments={
+            "pipeline_id": mcp_pipeline_id,
+            "name": "MCP Pipeline v2",
+            "agent_identity": "parity-pipeline",
+        },
+    )
+    assert rest_update["pipeline"]["name"] == "REST Pipeline v2"
+    assert cli_update["pipeline"]["name"] == "CLI Pipeline v2"
+    assert mcp_update["pipeline"]["name"] == "MCP Pipeline v2"
+
+    audit = _get_json(
+        f"{api_base_url}/audit",
+        api_key=founder_key,
+        params={"actor": founder_actor_id, "limit": 50},
+    )
+    pipeline_ops = [
+        row["op"]
+        for row in audit["entries"]
+        if row["op"] in {"create_pipeline", "update_pipeline"}
+    ]
+    assert pipeline_ops.count("create_pipeline") == 3
+    assert pipeline_ops.count("update_pipeline") == 3
+
+    artifact = {
+        "projects": {
+            "rest": rest_project_response.json(),
+            "cli": cli_project,
+            "mcp": mcp_project,
+        },
+        "creates": {"rest": rest_create, "cli": cli_create, "mcp": mcp_create},
+        "lists": {"rest": rest_list, "cli": cli_list, "mcp": mcp_list},
+        "gets": {"rest": rest_get, "cli": cli_get, "mcp": mcp_get},
+        "updates": {"rest": rest_update, "cli": cli_update, "mcp": mcp_update},
+        "audit": audit,
+    }
+    (artifact_dir / "pipelines-parity.txt").write_text(
+        redact_evidence(_json_text(artifact)),
+        encoding="utf-8",
+    )
+
+
 def test_label_ops_match_rest_cli_mcp_and_audit(
     api_base_url: str,
     mcp_base_url: str,

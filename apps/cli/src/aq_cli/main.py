@@ -42,6 +42,7 @@ key_app = typer.Typer(add_completion=False, help="API key commands.")
 project_app = typer.Typer(add_completion=False, help="Project commands.")
 label_app = typer.Typer(add_completion=False, help="Label commands.")
 workflow_app = typer.Typer(add_completion=False, help="Workflow commands.")
+pipeline_app = typer.Typer(add_completion=False, help="Pipeline commands.")
 SLUG_CHARS_RE = re.compile(r"[^a-z0-9]+")
 
 
@@ -552,6 +553,63 @@ def workflow_archive(
 
 
 app.add_typer(workflow_app, name="workflow")
+
+
+@pipeline_app.command("create")
+def pipeline_create(
+    project_id: Annotated[str, typer.Option("--project")],
+    name: Annotated[str, typer.Option("--name")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Create an ad-hoc Pipeline in a Project."""
+    body: dict[str, object] = {"project_id": project_id, "name": name}
+    typer.echo(_post_auth("/pipelines", body, timeout, config))
+
+
+@pipeline_app.command("list")
+def pipeline_list(
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+    limit: Annotated[int, typer.Option("--limit", min=1, max=200)] = 50,
+    cursor: Annotated[str | None, typer.Option("--cursor")] = None,
+) -> None:
+    """Print the paginated ListPipelinesResponse JSON payload."""
+    params: QueryParams = {"limit": limit}
+    if cursor is not None:
+        params["cursor"] = cursor
+    typer.echo(_get_auth("/pipelines", timeout, config, params=params))
+
+
+@pipeline_app.command("get")
+def pipeline_get(
+    pipeline_id: Annotated[str, typer.Argument(help="Pipeline UUID.")],
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    """Print one Pipeline JSON payload."""
+    typer.echo(_get_auth(f"/pipelines/{pipeline_id}", timeout, config))
+
+
+@pipeline_app.command("update")
+def pipeline_update(
+    pipeline_id: Annotated[str, typer.Argument(help="Pipeline UUID.")],
+    name: Annotated[str, typer.Option("--name")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Update mutable Pipeline metadata."""
+    typer.echo(
+        _patch_auth(
+            f"/pipelines/{pipeline_id}",
+            {"name": name},
+            timeout,
+            config,
+        )
+    )
+
+
+app.add_typer(pipeline_app, name="pipeline")
 
 
 @label_app.command("register")

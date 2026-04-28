@@ -34,6 +34,10 @@ async def test_mcp_tools_return_shared_contract_payloads() -> None:
             "get_workflow",
             "update_workflow",
             "archive_workflow",
+            "create_pipeline",
+            "list_pipelines",
+            "get_pipeline",
+            "update_pipeline",
             "register_label",
             "attach_label",
             "detach_label",
@@ -79,6 +83,16 @@ async def test_mcp_tools_return_shared_contract_payloads() -> None:
         assert tool_by_name["archive_workflow"].annotations is not None
         assert tool_by_name["archive_workflow"].annotations.readOnlyHint is False
         assert tool_by_name["archive_workflow"].annotations.destructiveHint is True
+        assert tool_by_name["create_pipeline"].annotations is not None
+        assert tool_by_name["create_pipeline"].annotations.readOnlyHint is False
+        assert tool_by_name["create_pipeline"].annotations.destructiveHint is False
+        assert tool_by_name["list_pipelines"].annotations is not None
+        assert tool_by_name["list_pipelines"].annotations.readOnlyHint is True
+        assert tool_by_name["get_pipeline"].annotations is not None
+        assert tool_by_name["get_pipeline"].annotations.readOnlyHint is True
+        assert tool_by_name["update_pipeline"].annotations is not None
+        assert tool_by_name["update_pipeline"].annotations.readOnlyHint is False
+        assert tool_by_name["update_pipeline"].annotations.destructiveHint is False
         assert tool_by_name["register_label"].annotations is not None
         assert tool_by_name["register_label"].annotations.readOnlyHint is False
         assert tool_by_name["register_label"].annotations.destructiveHint is False

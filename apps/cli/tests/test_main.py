@@ -516,6 +516,154 @@ def test_project_get_update_archive_use_expected_paths(
     ]
 
 
+def test_pipeline_create_and_list_use_expected_payloads(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    project_id = "44444444-4444-4444-8444-444444444444"
+    body = (
+        '{"pipeline":{"id":"77777777-7777-4777-8777-777777777777",'
+        '"project_id":"44444444-4444-4444-8444-444444444444",'
+        '"name":"hotfix-2026-04-28","instantiated_from_workflow_id":null,'
+        '"instantiated_from_workflow_version":null,'
+        '"created_at":"2026-04-27T01:00:00Z",'
+        '"created_by_actor_id":"11111111-1111-4111-8111-111111111111"}}'
+    )
+    list_body = '{"pipelines":[],"next_cursor":"cursor-2"}'
+    post_calls: list[tuple[str, dict[str, str], dict[str, object], float]] = []
+    get_calls: list[tuple[str, dict[str, str], dict[str, object], float]] = []
+
+    def fake_post(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        post_calls.append((url, headers, json, timeout))
+        return _json_response(url, body, method="POST")
+
+    def fake_get(
+        url: str,
+        *,
+        headers: dict[str, str],
+        params: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        get_calls.append((url, headers, params, timeout))
+        return _json_response(url, list_body)
+
+    monkeypatch.setattr("aq_cli.main.httpx.post", fake_post)
+    monkeypatch.setattr("aq_cli.main.httpx.get", fake_get)
+
+    create_result = runner.invoke(
+        app,
+        [
+            "pipeline",
+            "create",
+            "--project",
+            project_id,
+            "--name",
+            "hotfix-2026-04-28",
+        ],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+    list_result = runner.invoke(
+        app,
+        [
+            "pipeline",
+            "list",
+            "--limit",
+            "10",
+            "--cursor",
+            "cursor-1",
+        ],
+        env={API_URL_ENV: "http://api.test/", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert create_result.exit_code == 0
+    assert create_result.stdout == f"{body}\n"
+    assert list_result.exit_code == 0
+    assert list_result.stdout == f"{list_body}\n"
+    assert post_calls == [
+        (
+            "http://api.test/pipelines",
+            {"Authorization": "Bearer aq2_cli_contract_key"},
+            {"project_id": project_id, "name": "hotfix-2026-04-28"},
+            10.0,
+        )
+    ]
+    assert get_calls == [
+        (
+            "http://api.test/pipelines",
+            {"Authorization": "Bearer aq2_cli_contract_key"},
+            {"limit": 10, "cursor": "cursor-1"},
+            5.0,
+        )
+    ]
+
+
+def test_pipeline_get_and_update_use_expected_paths(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    pipeline_id = "77777777-7777-4777-8777-777777777777"
+    body = (
+        '{"pipeline":{"id":"77777777-7777-4777-8777-777777777777",'
+        '"project_id":"44444444-4444-4444-8444-444444444444",'
+        '"name":"hotfix-2026-04-28","instantiated_from_workflow_id":null,'
+        '"instantiated_from_workflow_version":null,'
+        '"created_at":"2026-04-27T01:00:00Z",'
+        '"created_by_actor_id":"11111111-1111-4111-8111-111111111111"}}'
+    )
+    calls: list[tuple[str, str, dict[str, object] | None, float]] = []
+
+    def fake_get(
+        url: str,
+        *,
+        headers: dict[str, str],
+        timeout: float,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("GET", url, None, timeout))
+        return _json_response(url, body)
+
+    def fake_patch(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("PATCH", url, json, timeout))
+        return _json_response(url, body, method="PATCH")
+
+    monkeypatch.setattr("aq_cli.main.httpx.get", fake_get)
+    monkeypatch.setattr("aq_cli.main.httpx.patch", fake_patch)
+
+    get_result = runner.invoke(
+        app,
+        ["pipeline", "get", pipeline_id],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+    update_result = runner.invoke(
+        app,
+        ["pipeline", "update", pipeline_id, "--name", "hotfix-2026-04-28-updated"],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert get_result.exit_code == 0
+    assert update_result.exit_code == 0
+    assert calls == [
+        ("GET", f"http://api.test/pipelines/{pipeline_id}", None, 5.0),
+        (
+            "PATCH",
+            f"http://api.test/pipelines/{pipeline_id}",
+            {"name": "hotfix-2026-04-28-updated"},
+            10.0,
+        ),
+    ]
+
+
 def test_label_register_posts_body_and_prints_raw_json(
     monkeypatch: MonkeyPatch,
 ) -> None:

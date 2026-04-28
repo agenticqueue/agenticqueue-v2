@@ -23,21 +23,27 @@ from aq_api.models import (
     AuditQueryParams,
     CreateActorRequest,
     CreateActorResponse,
+    CreatePipelineRequest,
+    CreatePipelineResponse,
     CreateProjectRequest,
     CreateProjectResponse,
     CreateWorkflowRequest,
     CreateWorkflowResponse,
     DetachLabelRequest,
     DetachLabelResponse,
+    GetPipelineResponse,
     GetProjectResponse,
     GetWorkflowResponse,
     HealthStatus,
     ListActorsResponse,
+    ListPipelinesResponse,
     ListProjectsResponse,
     ListWorkflowsResponse,
     RegisterLabelRequest,
     RegisterLabelResponse,
     RevokeApiKeyResponse,
+    UpdatePipelineRequest,
+    UpdatePipelineResponse,
     UpdateProjectRequest,
     UpdateProjectResponse,
     UpdateWorkflowRequest,
@@ -47,6 +53,7 @@ from aq_api.models import (
     WorkflowStepInput,
 )
 from aq_api.models.labels import LabelColor, LabelName
+from aq_api.models.pipelines import PipelineName
 from aq_api.models.projects import (
     Description as ProjectDescription,
 )
@@ -64,6 +71,10 @@ from aq_api.services.audit import query_audit_log as query_audit_log_service
 from aq_api.services.labels import attach_label as attach_label_service
 from aq_api.services.labels import detach_label as detach_label_service
 from aq_api.services.labels import register_label as register_label_service
+from aq_api.services.pipelines import create_pipeline as create_pipeline_service
+from aq_api.services.pipelines import get_pipeline as get_pipeline_service
+from aq_api.services.pipelines import list_pipelines as list_pipeline_service
+from aq_api.services.pipelines import update_pipeline as update_pipeline_service
 from aq_api.services.projects import archive_project as archive_project_service
 from aq_api.services.projects import create_project as create_project_service
 from aq_api.services.projects import get_project as get_project_service
@@ -451,6 +462,85 @@ def create_mcp_server() -> FastMCP:
             _authenticated_actor_id()
             async with SessionLocal() as session:
                 return await archive_workflow_service(session, slug)
+
+    @server.tool(
+        description=(
+            "Create an ad-hoc Pipeline in a Project without a Workflow link."
+        ),
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def create_pipeline(
+        project_id: UUID,
+        name: PipelineName,
+        agent_identity: AgentIdentity = None,
+    ) -> CreatePipelineResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = CreatePipelineRequest(project_id=project_id, name=name)
+            async with SessionLocal() as session:
+                return await create_pipeline_service(
+                    session,
+                    request,
+                    actor_id=actor_id,
+                )
+
+    @server.tool(
+        description="List Pipelines with opaque cursor pagination.",
+        annotations={"readOnlyHint": True},
+    )
+    async def list_pipelines(
+        limit: int = 50,
+        cursor: str | None = None,
+        agent_identity: AgentIdentity = None,
+    ) -> ListPipelinesResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await list_pipeline_service(
+                    session,
+                    limit=limit,
+                    cursor=cursor,
+                )
+
+    @server.tool(
+        description="Return one Pipeline by UUID.",
+        annotations={"readOnlyHint": True},
+    )
+    async def get_pipeline(
+        pipeline_id: UUID,
+        agent_identity: AgentIdentity = None,
+    ) -> GetPipelineResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await get_pipeline_service(session, pipeline_id)
+
+    @server.tool(
+        description="Update mutable Pipeline metadata by UUID.",
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def update_pipeline(
+        pipeline_id: UUID,
+        name: PipelineName,
+        agent_identity: AgentIdentity = None,
+    ) -> UpdatePipelineResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            request = UpdatePipelineRequest(name=name)
+            async with SessionLocal() as session:
+                return await update_pipeline_service(
+                    session,
+                    pipeline_id,
+                    request.model_dump(mode="json"),
+                )
 
     @server.tool(
         description="Register a Project-scoped Label for future Job attachment.",
