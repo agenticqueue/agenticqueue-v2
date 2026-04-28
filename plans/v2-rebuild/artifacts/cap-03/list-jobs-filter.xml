@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="1.845" timestamp="2026-04-28T23:19:56.572885+00:00" hostname="3630f67e9a96"><testcase classname="apps.api.tests.test_jobs" name="test_list_jobs_filters_and_paginates" time="0.483" /></testsuite></testsuites>

@@ -9,6 +9,7 @@ from aq_api.models.auth import (
     coerce_optional_utc_datetime,
     coerce_utc_datetime,
 )
+from aq_api.models.inheritance import InheritanceReferenceLists
 
 Slug = Annotated[str, Field(pattern=r"^[a-z0-9][a-z0-9-]{0,62}$")]
 Name = Annotated[str, Field(min_length=1, max_length=256)]
@@ -53,6 +54,12 @@ class ListProjectsResponse(AQModel):
 
 class GetProjectResponse(AQModel):
     project: Project
+    decisions: InheritanceReferenceLists = Field(
+        default_factory=InheritanceReferenceLists
+    )
+    learnings: InheritanceReferenceLists = Field(
+        default_factory=InheritanceReferenceLists
+    )
 
 
 class UpdateProjectRequest(AQModel):

@@ -1373,6 +1373,226 @@ def test_archive_pipeline_matches_rest_cli_mcp_and_audit(
     )
 
 
+def test_job_ops_match_rest_cli_mcp_and_audit(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    founder_actor_id: str,
+    artifact_dir: Path,
+    redact_evidence: Any,
+) -> None:
+    auth = {"Authorization": f"Bearer {founder_key}"}
+    fixture = _create_pipeline_triplet(
+        api_base_url,
+        mcp_base_url,
+        founder_key,
+        label="job",
+        mcp_request_start=90,
+    )
+    project_ids = {
+        surface: payload["project"]["id"]
+        for surface, payload in fixture["projects"].items()
+    }
+    pipeline_ids = fixture["pipeline_ids"]
+    contract = {
+        "contract_type": "coding-task",
+        "dod_items": [{"id": "job-parity"}],
+    }
+    contract_json = json.dumps(contract, separators=(",", ":"))
+
+    rest_create_response = httpx.post(
+        f"{api_base_url}/jobs",
+        headers=auth,
+        json={
+            "pipeline_id": pipeline_ids["rest"],
+            "title": "REST Job",
+            "description": "Created through REST",
+            "contract": contract,
+        },
+        timeout=10,
+    )
+    rest_create_response.raise_for_status()
+    rest_create = rest_create_response.json()
+    cli_create = _run_cli(
+        [
+            "job",
+            "create",
+            "--pipeline",
+            pipeline_ids["cli"],
+            "--title",
+            "CLI Job",
+            "--description",
+            "Created through CLI",
+            "--contract-json",
+            contract_json,
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_create = _call_mcp_tool(
+        mcp_base_url,
+        "create_job",
+        93,
+        api_key=founder_key,
+        arguments={
+            "pipeline_id": pipeline_ids["mcp"],
+            "title": "MCP Job",
+            "description": "Created through MCP",
+            "contract": contract,
+            "agent_identity": "parity-job",
+        },
+    )
+
+    created = {"rest": rest_create, "cli": cli_create, "mcp": mcp_create}
+    for surface, payload in created.items():
+        job = payload["job"]
+        assert job["pipeline_id"] == pipeline_ids[surface]
+        assert job["project_id"] == project_ids[surface]
+        assert job["state"] == "ready"
+        assert job["contract"] == contract
+        assert job["labels"] == []
+
+    job_ids = {
+        "rest": rest_create["job"]["id"],
+        "cli": cli_create["job"]["id"],
+        "mcp": mcp_create["job"]["id"],
+    }
+    rest_list = _get_json(
+        f"{api_base_url}/jobs",
+        api_key=founder_key,
+        params={
+            "project_id": project_ids["rest"],
+            "pipeline_id": pipeline_ids["rest"],
+            "state": "ready",
+            "limit": 100,
+        },
+    )
+    cli_list = _run_cli(
+        [
+            "job",
+            "list",
+            "--project",
+            project_ids["cli"],
+            "--pipeline",
+            pipeline_ids["cli"],
+            "--state",
+            "ready",
+            "--limit",
+            "100",
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_list = _call_mcp_tool(
+        mcp_base_url,
+        "list_jobs",
+        94,
+        api_key=founder_key,
+        arguments={
+            "project_id": project_ids["mcp"],
+            "pipeline_id": pipeline_ids["mcp"],
+            "state": "ready",
+            "limit": 100,
+            "agent_identity": "parity-job",
+        },
+    )
+    for surface, page in (
+        ("rest", rest_list),
+        ("cli", cli_list),
+        ("mcp", mcp_list),
+    ):
+        assert job_ids[surface] in {job["id"] for job in page["jobs"]}
+
+    rest_get = _get_json(
+        f"{api_base_url}/jobs/{job_ids['rest']}",
+        api_key=founder_key,
+    )
+    cli_get = _run_cli(
+        ["job", "get", job_ids["cli"]],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_get = _call_mcp_tool(
+        mcp_base_url,
+        "get_job",
+        95,
+        api_key=founder_key,
+        arguments={
+            "job_id": job_ids["mcp"],
+            "agent_identity": "parity-job",
+        },
+    )
+    for payload in (rest_get, cli_get, mcp_get):
+        assert payload["decisions"] == {"direct": [], "inherited": []}
+        assert payload["learnings"] == {"direct": [], "inherited": []}
+
+    rest_update_response = httpx.patch(
+        f"{api_base_url}/jobs/{job_ids['rest']}",
+        headers=auth,
+        json={"title": "REST Job v2", "description": "Updated through REST"},
+        timeout=10,
+    )
+    rest_update_response.raise_for_status()
+    rest_update = rest_update_response.json()
+    cli_update = _run_cli(
+        [
+            "job",
+            "update",
+            job_ids["cli"],
+            "--title",
+            "CLI Job v2",
+            "--description",
+            "Updated through CLI",
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_update = _call_mcp_tool(
+        mcp_base_url,
+        "update_job",
+        96,
+        api_key=founder_key,
+        arguments={
+            "job_id": job_ids["mcp"],
+            "title": "MCP Job v2",
+            "description": "Updated through MCP",
+            "agent_identity": "parity-job",
+        },
+    )
+    assert rest_update["job"]["title"] == "REST Job v2"
+    assert cli_update["job"]["title"] == "CLI Job v2"
+    assert mcp_update["job"]["title"] == "MCP Job v2"
+    for payload in (rest_update, cli_update, mcp_update):
+        assert payload["job"]["state"] == "ready"
+        assert payload["job"]["contract"] == contract
+
+    audit = _get_json(
+        f"{api_base_url}/audit",
+        api_key=founder_key,
+        params={"actor": founder_actor_id, "limit": 80},
+    )
+    job_ops = [
+        row["op"]
+        for row in audit["entries"]
+        if row["op"] in {"create_job", "update_job"}
+    ]
+    assert job_ops.count("create_job") == 3
+    assert job_ops.count("update_job") == 3
+
+    artifact = {
+        "fixture": fixture,
+        "creates": created,
+        "lists": {"rest": rest_list, "cli": cli_list, "mcp": mcp_list},
+        "gets": {"rest": rest_get, "cli": cli_get, "mcp": mcp_get},
+        "updates": {"rest": rest_update, "cli": cli_update, "mcp": mcp_update},
+        "audit": audit,
+    }
+    (artifact_dir / "jobs-parity.txt").write_text(
+        redact_evidence(_json_text(artifact)),
+        encoding="utf-8",
+    )
+
+
 def test_label_ops_match_rest_cli_mcp_and_audit(
     api_base_url: str,
     mcp_base_url: str,

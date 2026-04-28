@@ -9,6 +9,7 @@ from aq_api.models.auth import (
     coerce_optional_utc_datetime,
     coerce_utc_datetime,
 )
+from aq_api.models.inheritance import InheritanceReferenceLists
 from aq_api.models.projects import Cursor
 
 PipelineName = Annotated[str, Field(min_length=1, max_length=256)]
@@ -51,6 +52,12 @@ class ListPipelinesResponse(AQModel):
 
 class GetPipelineResponse(AQModel):
     pipeline: Pipeline
+    decisions: InheritanceReferenceLists = Field(
+        default_factory=InheritanceReferenceLists
+    )
+    learnings: InheritanceReferenceLists = Field(
+        default_factory=InheritanceReferenceLists
+    )
 
 
 class UpdatePipelineRequest(AQModel):

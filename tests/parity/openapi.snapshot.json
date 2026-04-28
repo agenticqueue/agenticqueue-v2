@@ -1364,6 +1364,316 @@
           }
         }
       }
+    },
+    "/jobs": {
+      "post": {
+        "summary": "Create Job",
+        "operationId": "create_job_jobs_post",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateJobRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateJobResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Jobs",
+        "operationId": "list_jobs_jobs_get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "pipeline_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pipeline Id"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "draft",
+                    "ready",
+                    "in_progress",
+                    "done",
+                    "failed",
+                    "blocked",
+                    "pending_review",
+                    "cancelled"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListJobsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{job_id}": {
+      "get": {
+        "summary": "Get Job",
+        "operationId": "get_job_jobs__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetJobResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update Job",
+        "operationId": "update_job_jobs__job_id__patch",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Request"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateJobResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1753,6 +2063,59 @@
         ],
         "title": "CreateActorResponse"
       },
+      "CreateJobRequest": {
+        "properties": {
+          "pipeline_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Pipeline Id"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16384
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "contract": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Contract"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "pipeline_id",
+          "title",
+          "contract"
+        ],
+        "title": "CreateJobRequest"
+      },
+      "CreateJobResponse": {
+        "properties": {
+          "job": {
+            "$ref": "#/components/schemas/Job"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "job"
+        ],
+        "title": "CreateJobResponse"
+      },
       "CreatePipelineRequest": {
         "properties": {
           "project_id": {
@@ -1861,10 +2224,35 @@
         ],
         "title": "DetachLabelResponse"
       },
+      "GetJobResponse": {
+        "properties": {
+          "job": {
+            "$ref": "#/components/schemas/Job"
+          },
+          "decisions": {
+            "$ref": "#/components/schemas/InheritanceReferenceLists"
+          },
+          "learnings": {
+            "$ref": "#/components/schemas/InheritanceReferenceLists"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "job"
+        ],
+        "title": "GetJobResponse"
+      },
       "GetPipelineResponse": {
         "properties": {
           "pipeline": {
             "$ref": "#/components/schemas/Pipeline"
+          },
+          "decisions": {
+            "$ref": "#/components/schemas/InheritanceReferenceLists"
+          },
+          "learnings": {
+            "$ref": "#/components/schemas/InheritanceReferenceLists"
           }
         },
         "additionalProperties": false,
@@ -1878,6 +2266,12 @@
         "properties": {
           "project": {
             "$ref": "#/components/schemas/Project"
+          },
+          "decisions": {
+            "$ref": "#/components/schemas/InheritanceReferenceLists"
+          },
+          "learnings": {
+            "$ref": "#/components/schemas/InheritanceReferenceLists"
           }
         },
         "additionalProperties": false,
@@ -1920,6 +2314,29 @@
           "timestamp"
         ],
         "title": "HealthStatus"
+      },
+      "InheritanceReferenceLists": {
+        "properties": {
+          "direct": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Direct"
+          },
+          "inherited": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Inherited"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "InheritanceReferenceLists"
       },
       "Job": {
         "properties": {
@@ -2138,6 +2555,35 @@
           "actors"
         ],
         "title": "ListActorsResponse"
+      },
+      "ListJobsResponse": {
+        "properties": {
+          "jobs": {
+            "items": {
+              "$ref": "#/components/schemas/Job"
+            },
+            "type": "array",
+            "title": "Jobs"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "jobs"
+        ],
+        "title": "ListJobsResponse"
       },
       "ListPipelinesResponse": {
         "properties": {
@@ -2429,6 +2875,19 @@
           "bootstrap_project_id"
         ],
         "title": "SetupResponse"
+      },
+      "UpdateJobResponse": {
+        "properties": {
+          "job": {
+            "$ref": "#/components/schemas/Job"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "job"
+        ],
+        "title": "UpdateJobResponse"
       },
       "UpdatePipelinePayload": {
         "properties": {

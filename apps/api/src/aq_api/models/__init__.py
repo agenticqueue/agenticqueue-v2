@@ -14,6 +14,7 @@ from aq_api.models.auth import (
     WhoamiResponse,
 )
 from aq_api.models.health import HealthStatus, VersionInfo
+from aq_api.models.inheritance import InheritanceReferenceLists
 from aq_api.models.job_comments import (
     CommentOnJobRequest,
     CommentOnJobResponse,
@@ -99,6 +100,7 @@ __all__ = [
     "GetPipelineResponse",
     "GetProjectResponse",
     "HealthStatus",
+    "InheritanceReferenceLists",
     "Job",
     "JobComment",
     "JobEdge",

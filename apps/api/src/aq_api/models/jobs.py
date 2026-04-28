@@ -9,6 +9,7 @@ from aq_api.models.auth import (
     coerce_optional_utc_datetime,
     coerce_utc_datetime,
 )
+from aq_api.models.inheritance import InheritanceReferenceLists
 from aq_api.models.labels import LabelName
 from aq_api.models.projects import Cursor, Description
 
@@ -85,6 +86,12 @@ class ListJobsResponse(AQModel):
 
 class GetJobResponse(AQModel):
     job: Job
+    decisions: InheritanceReferenceLists = Field(
+        default_factory=InheritanceReferenceLists
+    )
+    learnings: InheritanceReferenceLists = Field(
+        default_factory=InheritanceReferenceLists
+    )
 
 
 class UpdateJobRequest(AQModel):

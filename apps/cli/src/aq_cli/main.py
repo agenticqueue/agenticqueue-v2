@@ -42,6 +42,7 @@ key_app = typer.Typer(add_completion=False, help="API key commands.")
 project_app = typer.Typer(add_completion=False, help="Project commands.")
 label_app = typer.Typer(add_completion=False, help="Label commands.")
 pipeline_app = typer.Typer(add_completion=False, help="Pipeline commands.")
+job_app = typer.Typer(add_completion=False, help="Job commands.")
 SLUG_CHARS_RE = re.compile(r"[^a-z0-9]+")
 
 
@@ -253,6 +254,16 @@ def _delete_auth(
 def _slug_from_name(name: str) -> str:
     slug = SLUG_CHARS_RE.sub("-", name.lower()).strip("-")
     return slug[:63].strip("-") or "project"
+
+
+def _json_object(raw: str, *, option_name: str) -> dict[str, object]:
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        _fail("invalid_json", option_name, message=str(exc))
+    if not isinstance(payload, dict):
+        _fail("invalid_json", option_name, message="JSON value must be an object")
+    return payload
 
 
 @app.command()
@@ -548,6 +559,79 @@ def pipeline_archive(
 
 
 app.add_typer(pipeline_app, name="pipeline")
+
+
+@job_app.command("create")
+def job_create(
+    pipeline_id: Annotated[str, typer.Option("--pipeline")],
+    title: Annotated[str, typer.Option("--title")],
+    contract_json: Annotated[str, typer.Option("--contract-json")],
+    description: Annotated[str | None, typer.Option("--description")] = None,
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Create a ready Job with an inline Contract JSON object."""
+    body: dict[str, object] = {
+        "pipeline_id": pipeline_id,
+        "title": title,
+        "contract": _json_object(contract_json, option_name="--contract-json"),
+    }
+    if description is not None:
+        body["description"] = description
+    typer.echo(_post_auth("/jobs", body, timeout, config))
+
+
+@job_app.command("list")
+def job_list(
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+    project_id: Annotated[str | None, typer.Option("--project")] = None,
+    pipeline_id: Annotated[str | None, typer.Option("--pipeline")] = None,
+    state: Annotated[str | None, typer.Option("--state")] = None,
+    limit: Annotated[int, typer.Option("--limit", min=1, max=100)] = 50,
+    cursor: Annotated[str | None, typer.Option("--cursor")] = None,
+) -> None:
+    """Print the paginated ListJobsResponse JSON payload."""
+    params: QueryParams = {"limit": limit}
+    if project_id is not None:
+        params["project_id"] = project_id
+    if pipeline_id is not None:
+        params["pipeline_id"] = pipeline_id
+    if state is not None:
+        params["state"] = state
+    if cursor is not None:
+        params["cursor"] = cursor
+    typer.echo(_get_auth("/jobs", timeout, config, params=params))
+
+
+@job_app.command("get")
+def job_get(
+    job_id: Annotated[str, typer.Argument(help="Job UUID.")],
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    """Print one Job JSON payload."""
+    typer.echo(_get_auth(f"/jobs/{job_id}", timeout, config))
+
+
+@job_app.command("update")
+def job_update(
+    job_id: Annotated[str, typer.Argument(help="Job UUID.")],
+    title: Annotated[str | None, typer.Option("--title")] = None,
+    description: Annotated[str | None, typer.Option("--description")] = None,
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Update mutable Job metadata."""
+    body: dict[str, object] = {}
+    if title is not None:
+        body["title"] = title
+    if description is not None:
+        body["description"] = description
+    typer.echo(_patch_auth(f"/jobs/{job_id}", body, timeout, config))
+
+
+app.add_typer(job_app, name="job")
 
 
 @label_app.command("register")
