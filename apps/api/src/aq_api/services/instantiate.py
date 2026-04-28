@@ -1,10 +1,16 @@
+from typing import cast
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from aq_api._audit import BusinessRuleException, audited_op
-from aq_api.models import InstantiatePipelineRequest, InstantiatePipelineResponse, Job
+from aq_api.models import (
+    InstantiatePipelineRequest,
+    InstantiatePipelineResponse,
+    Job,
+    JobState,
+)
 from aq_api.models.db import Job as DbJob
 from aq_api.models.db import Pipeline as DbPipeline
 from aq_api.models.db import Project as DbProject
@@ -20,7 +26,7 @@ def job_from_db(job: DbJob) -> Job:
         id=job.id,
         pipeline_id=job.pipeline_id,
         project_id=job.project_id,
-        state=job.state,
+        state=cast(JobState, job.state),
         title=job.title,
         description=job.description,
         contract_profile_id=job.contract_profile_id,
@@ -39,11 +45,14 @@ async def _latest_family_workflow(
     *,
     slug: str,
 ) -> DbWorkflow | None:
-    return await session.scalar(
-        select(DbWorkflow)
-        .where(DbWorkflow.slug == slug)
-        .order_by(DbWorkflow.version.desc(), DbWorkflow.id.desc())
-        .limit(1)
+    return cast(
+        DbWorkflow | None,
+        await session.scalar(
+            select(DbWorkflow)
+            .where(DbWorkflow.slug == slug)
+            .order_by(DbWorkflow.version.desc(), DbWorkflow.id.desc())
+            .limit(1)
+        ),
     )
 
 
