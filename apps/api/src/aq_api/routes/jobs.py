@@ -9,14 +9,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from aq_api._audit import BusinessRuleException
 from aq_api._auth import current_actor
 from aq_api.models import (
+    CancelJobResponse,
+    CommentOnJobRequest,
+    CommentOnJobResponse,
     CreateJobRequest,
     CreateJobResponse,
     GetJobResponse,
     JobState,
+    ListJobCommentsResponse,
     ListJobsResponse,
     UpdateJobResponse,
 )
 from aq_api.models.db import Actor as DbActor
+from aq_api.services.job_comments import (
+    InvalidJobCommentCursorError,
+    JobCommentJobNotFoundError,
+)
+from aq_api.services.job_comments import comment_on_job as comment_on_job_service
+from aq_api.services.job_comments import list_job_comments as list_job_comments_service
+from aq_api.services.job_lifecycle import cancel_job as cancel_job_service
 from aq_api.services.jobs import InvalidJobCursorError, JobNotFoundError
 from aq_api.services.jobs import create_job as create_job_service
 from aq_api.services.jobs import get_job as get_job_service
@@ -45,6 +56,57 @@ async def create_job(
 ) -> CreateJobResponse | JSONResponse:
     try:
         return await create_job_service(session, request, actor_id=actor.id)
+    except BusinessRuleException as exc:
+        return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)
+
+
+@router.post("/jobs/{job_id}/comments", response_model=CommentOnJobResponse)
+async def comment_on_job(
+    job_id: UUID,
+    request: CommentOnJobRequest,
+    actor: AuthenticatedActor,
+    session: SessionDep,
+) -> CommentOnJobResponse | JSONResponse:
+    try:
+        return await comment_on_job_service(
+            session,
+            job_id,
+            request,
+            actor_id=actor.id,
+        )
+    except BusinessRuleException as exc:
+        return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)
+
+
+@router.get("/jobs/{job_id}/comments", response_model=ListJobCommentsResponse)
+async def list_job_comments(
+    job_id: UUID,
+    _actor: AuthenticatedActor,
+    session: SessionDep,
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    cursor: str | None = None,
+) -> ListJobCommentsResponse | JSONResponse:
+    try:
+        return await list_job_comments_service(
+            session,
+            job_id,
+            limit=limit,
+            cursor=cursor,
+        )
+    except JobCommentJobNotFoundError:
+        return JSONResponse({"error": "job_not_found"}, status_code=404)
+    except InvalidJobCommentCursorError:
+        return JSONResponse({"error": "invalid_cursor"}, status_code=422)
+
+
+@router.post("/jobs/{job_id}/cancel", response_model=CancelJobResponse)
+async def cancel_job(
+    job_id: UUID,
+    _actor: AuthenticatedActor,
+    session: SessionDep,
+) -> CancelJobResponse | JSONResponse:
+    try:
+        return await cancel_job_service(session, job_id)
     except BusinessRuleException as exc:
         return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)
 

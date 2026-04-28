@@ -1593,6 +1593,193 @@ def test_job_ops_match_rest_cli_mcp_and_audit(
     )
 
 
+def test_comment_and_cancel_ops_match_rest_cli_mcp_and_audit(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    founder_actor_id: str,
+    artifact_dir: Path,
+    redact_evidence: Any,
+) -> None:
+    auth = {"Authorization": f"Bearer {founder_key}"}
+    fixture = _create_pipeline_triplet(
+        api_base_url,
+        mcp_base_url,
+        founder_key,
+        label="comment",
+        mcp_request_start=100,
+    )
+    pipeline_ids = fixture["pipeline_ids"]
+    contract = {
+        "contract_type": "coding-task",
+        "dod_items": [{"id": "comment-cancel-parity"}],
+    }
+    contract_json = json.dumps(contract, separators=(",", ":"))
+
+    rest_job_response = httpx.post(
+        f"{api_base_url}/jobs",
+        headers=auth,
+        json={
+            "pipeline_id": pipeline_ids["rest"],
+            "title": "REST Comment Job",
+            "contract": contract,
+        },
+        timeout=10,
+    )
+    rest_job_response.raise_for_status()
+    rest_job = rest_job_response.json()
+    cli_job = _run_cli(
+        [
+            "job",
+            "create",
+            "--pipeline",
+            pipeline_ids["cli"],
+            "--title",
+            "CLI Comment Job",
+            "--contract-json",
+            contract_json,
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_job = _call_mcp_tool(
+        mcp_base_url,
+        "create_job",
+        103,
+        api_key=founder_key,
+        arguments={
+            "pipeline_id": pipeline_ids["mcp"],
+            "title": "MCP Comment Job",
+            "contract": contract,
+            "agent_identity": "parity-comment",
+        },
+    )
+    job_ids = {
+        "rest": rest_job["job"]["id"],
+        "cli": cli_job["job"]["id"],
+        "mcp": mcp_job["job"]["id"],
+    }
+
+    rest_comment_response = httpx.post(
+        f"{api_base_url}/jobs/{job_ids['rest']}/comments",
+        headers=auth,
+        json={"body": "REST durable note"},
+        timeout=10,
+    )
+    rest_comment_response.raise_for_status()
+    rest_comment = rest_comment_response.json()
+    cli_comment = _run_cli(
+        ["job", "comment", job_ids["cli"], "--body", "CLI durable note"],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_comment = _call_mcp_tool(
+        mcp_base_url,
+        "comment_on_job",
+        104,
+        api_key=founder_key,
+        arguments={
+            "job_id": job_ids["mcp"],
+            "body": "MCP durable note",
+            "agent_identity": "parity-comment",
+        },
+    )
+    assert rest_comment["comment"]["body"] == "REST durable note"
+    assert cli_comment["comment"]["body"] == "CLI durable note"
+    assert mcp_comment["comment"]["body"] == "MCP durable note"
+
+    rest_comments = _get_json(
+        f"{api_base_url}/jobs/{job_ids['rest']}/comments",
+        api_key=founder_key,
+        params={"limit": 100},
+    )
+    cli_comments = _run_cli(
+        ["job", "comments", job_ids["cli"], "--limit", "100"],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_comments = _call_mcp_tool(
+        mcp_base_url,
+        "list_job_comments",
+        105,
+        api_key=founder_key,
+        arguments={
+            "job_id": job_ids["mcp"],
+            "limit": 100,
+            "agent_identity": "parity-comment",
+        },
+    )
+    assert [comment["body"] for comment in rest_comments["comments"]] == [
+        "REST durable note"
+    ]
+    assert [comment["body"] for comment in cli_comments["comments"]] == [
+        "CLI durable note"
+    ]
+    assert [comment["body"] for comment in mcp_comments["comments"]] == [
+        "MCP durable note"
+    ]
+
+    rest_cancel_response = httpx.post(
+        f"{api_base_url}/jobs/{job_ids['rest']}/cancel",
+        headers=auth,
+        timeout=10,
+    )
+    rest_cancel_response.raise_for_status()
+    rest_cancel = rest_cancel_response.json()
+    cli_cancel = _run_cli(
+        ["job", "cancel", job_ids["cli"]],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_cancel = _call_mcp_tool(
+        mcp_base_url,
+        "cancel_job",
+        106,
+        api_key=founder_key,
+        arguments={
+            "job_id": job_ids["mcp"],
+            "agent_identity": "parity-comment",
+        },
+    )
+    for payload in (rest_cancel, cli_cancel, mcp_cancel):
+        assert payload["job"]["state"] == "cancelled"
+
+    audit = _get_json(
+        f"{api_base_url}/audit",
+        api_key=founder_key,
+        params={"actor": founder_actor_id, "limit": 100},
+    )
+    comment_ops = [row for row in audit["entries"] if row["op"] == "comment_on_job"]
+    cancel_ops = [row for row in audit["entries"] if row["op"] == "cancel_job"]
+    assert len(comment_ops) == 3
+    assert len(cancel_ops) == 3
+    for row in comment_ops:
+        assert "body_length" in row["request_payload"]
+        assert "body" not in row["request_payload"]
+        assert "body" not in row["response_payload"]
+
+    artifact = {
+        "fixture": fixture,
+        "jobs": {"rest": rest_job, "cli": cli_job, "mcp": mcp_job},
+        "comments": {
+            "rest": rest_comment,
+            "cli": cli_comment,
+            "mcp": mcp_comment,
+        },
+        "comment_lists": {
+            "rest": rest_comments,
+            "cli": cli_comments,
+            "mcp": mcp_comments,
+        },
+        "cancels": {"rest": rest_cancel, "cli": cli_cancel, "mcp": mcp_cancel},
+        "audit": audit,
+    }
+    (artifact_dir / "comments-cancel-parity.txt").write_text(
+        redact_evidence(_json_text(artifact)),
+        encoding="utf-8",
+    )
+
+
 def test_label_ops_match_rest_cli_mcp_and_audit(
     api_base_url: str,
     mcp_base_url: str,

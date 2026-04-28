@@ -3125,6 +3125,372 @@
         }
       },
       {
+        "name": "comment_on_job",
+        "description": "Add a durable Job comment. Audit rows record body_length only; the body is stored in job_comments.",
+        "inputSchema": {
+          "properties": {
+            "job_id": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "body": {
+              "maxLength": 16384,
+              "minLength": 1,
+              "pattern": "^[^\\x00]*$",
+              "type": "string"
+            },
+            "agent_identity": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+            }
+          },
+          "required": [
+            "job_id",
+            "body"
+          ],
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "comment": {
+              "properties": {
+                "id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "job_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "author_actor_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "body": {
+                  "maxLength": 16384,
+                  "minLength": 1,
+                  "pattern": "^[^\\x00]*$",
+                  "type": "string"
+                },
+                "created_at": {
+                  "format": "date-time",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "job_id",
+                "author_actor_id",
+                "body",
+                "created_at"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "comment"
+          ],
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        }
+      },
+      {
+        "name": "list_job_comments",
+        "description": "List Job comments in FIFO order with opaque cursor pagination. Read-only and unaudited.",
+        "inputSchema": {
+          "properties": {
+            "job_id": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "limit": {
+              "default": 50,
+              "type": "integer"
+            },
+            "cursor": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "agent_identity": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+            }
+          },
+          "required": [
+            "job_id"
+          ],
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "comments": {
+              "items": {
+                "properties": {
+                  "id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "job_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "author_actor_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "body": {
+                    "maxLength": 16384,
+                    "minLength": 1,
+                    "pattern": "^[^\\x00]*$",
+                    "type": "string"
+                  },
+                  "created_at": {
+                    "format": "date-time",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "job_id",
+                  "author_actor_id",
+                  "body",
+                  "created_at"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "next_cursor": {
+              "anyOf": [
+                {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "comments"
+          ],
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": true
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        }
+      },
+      {
+        "name": "cancel_job",
+        "description": "Cancel a non-terminal Job. Terminal Jobs return already_terminal and remain unchanged.",
+        "inputSchema": {
+          "properties": {
+            "job_id": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "agent_identity": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+            }
+          },
+          "required": [
+            "job_id"
+          ],
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "job": {
+              "properties": {
+                "id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "pipeline_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "project_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "state": {
+                  "enum": [
+                    "draft",
+                    "ready",
+                    "in_progress",
+                    "done",
+                    "failed",
+                    "blocked",
+                    "pending_review",
+                    "cancelled"
+                  ],
+                  "type": "string"
+                },
+                "title": {
+                  "maxLength": 512,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "description": {
+                  "anyOf": [
+                    {
+                      "maxLength": 16384,
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "contract": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "labels": {
+                  "items": {
+                    "maxLength": 128,
+                    "minLength": 1,
+                    "pattern": "^[a-z0-9][a-z0-9:_-]{0,127}$",
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "claimed_by_actor_id": {
+                  "anyOf": [
+                    {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "claimed_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "claim_heartbeat_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "created_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "created_by_actor_id": {
+                  "anyOf": [
+                    {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "id",
+                "pipeline_id",
+                "project_id",
+                "state",
+                "title",
+                "contract",
+                "created_at"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "job"
+          ],
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        }
+      },
+      {
         "name": "register_label",
         "description": "Register a Project-scoped Label for future Job attachment.",
         "inputSchema": {

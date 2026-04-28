@@ -21,8 +21,11 @@ from aq_api.models import (
     AttachLabelResponse,
     AuditLogPage,
     AuditQueryParams,
+    CancelJobResponse,
     ClonePipelineRequest,
     ClonePipelineResponse,
+    CommentOnJobRequest,
+    CommentOnJobResponse,
     CreateActorRequest,
     CreateActorResponse,
     CreateJobRequest,
@@ -38,6 +41,7 @@ from aq_api.models import (
     GetProjectResponse,
     HealthStatus,
     ListActorsResponse,
+    ListJobCommentsResponse,
     ListJobsResponse,
     ListPipelinesResponse,
     ListProjectsResponse,
@@ -52,6 +56,7 @@ from aq_api.models import (
     VersionInfo,
     WhoamiResponse,
 )
+from aq_api.models.job_comments import CommentBody
 from aq_api.models.jobs import JobState, JobTitle
 from aq_api.models.labels import LabelColor, LabelName
 from aq_api.models.pipelines import PipelineName
@@ -69,6 +74,9 @@ from aq_api.services.actors import get_self_by_id
 from aq_api.services.actors import list_actors as list_actor_service
 from aq_api.services.api_keys import revoke_api_key as revoke_api_key_service
 from aq_api.services.audit import query_audit_log as query_audit_log_service
+from aq_api.services.job_comments import comment_on_job as comment_on_job_service
+from aq_api.services.job_comments import list_job_comments as list_comments_service
+from aq_api.services.job_lifecycle import cancel_job as cancel_job_service
 from aq_api.services.jobs import create_job as create_job_service
 from aq_api.services.jobs import get_job as get_job_service
 from aq_api.services.jobs import list_jobs as list_job_service
@@ -573,6 +581,74 @@ def create_mcp_server() -> FastMCP:
                 data["description"] = description
             async with SessionLocal() as session:
                 return await update_job_service(session, job_id, data)
+
+    @server.tool(
+        description=(
+            "Add a durable Job comment. Audit rows record body_length only; "
+            "the body is stored in job_comments."
+        ),
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def comment_on_job(
+        job_id: UUID,
+        body: CommentBody,
+        agent_identity: AgentIdentity = None,
+    ) -> CommentOnJobResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = CommentOnJobRequest(body=body)
+            async with SessionLocal() as session:
+                return await comment_on_job_service(
+                    session,
+                    job_id,
+                    request,
+                    actor_id=actor_id,
+                )
+
+    @server.tool(
+        description=(
+            "List Job comments in FIFO order with opaque cursor pagination. "
+            "Read-only and unaudited."
+        ),
+        annotations={"readOnlyHint": True},
+    )
+    async def list_job_comments(
+        job_id: UUID,
+        limit: int = 50,
+        cursor: str | None = None,
+        agent_identity: AgentIdentity = None,
+    ) -> ListJobCommentsResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await list_comments_service(
+                    session,
+                    job_id,
+                    limit=limit,
+                    cursor=cursor,
+                )
+
+    @server.tool(
+        description=(
+            "Cancel a non-terminal Job. Terminal Jobs return already_terminal "
+            "and remain unchanged."
+        ),
+        annotations={"readOnlyHint": False, "destructiveHint": True},
+    )
+    async def cancel_job(
+        job_id: UUID,
+        agent_identity: AgentIdentity = None,
+    ) -> CancelJobResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await cancel_job_service(session, job_id)
 
     @server.tool(
         description="Register a Project-scoped Label for future Job attachment.",

@@ -631,6 +631,42 @@ def job_update(
     typer.echo(_patch_auth(f"/jobs/{job_id}", body, timeout, config))
 
 
+@job_app.command("comment")
+def job_comment(
+    job_id: Annotated[str, typer.Argument(help="Job UUID.")],
+    body: Annotated[str, typer.Option("--body")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Add a durable comment to a Job."""
+    typer.echo(_post_auth(f"/jobs/{job_id}/comments", {"body": body}, timeout, config))
+
+
+@job_app.command("comments")
+def job_comments(
+    job_id: Annotated[str, typer.Argument(help="Job UUID.")],
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+    limit: Annotated[int, typer.Option("--limit", min=1, max=100)] = 50,
+    cursor: Annotated[str | None, typer.Option("--cursor")] = None,
+) -> None:
+    """Print the paginated ListJobCommentsResponse JSON payload."""
+    params: QueryParams = {"limit": limit}
+    if cursor is not None:
+        params["cursor"] = cursor
+    typer.echo(_get_auth(f"/jobs/{job_id}/comments", timeout, config, params=params))
+
+
+@job_app.command("cancel")
+def job_cancel(
+    job_id: Annotated[str, typer.Argument(help="Job UUID.")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Cancel a non-terminal Job."""
+    typer.echo(_post_auth(f"/jobs/{job_id}/cancel", {}, timeout, config))
+
+
 app.add_typer(job_app, name="job")
 
 

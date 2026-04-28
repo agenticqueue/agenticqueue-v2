@@ -36,13 +36,14 @@ async def audited_op(
     except BusinessRuleException as exc:
         await session.rollback()
         try:
+            response_payload = audit.response_payload or {"error": exc.error_code}
             await record(
                 session,
                 op=op,
                 target_kind=target_kind,
                 target_id=audit.target_id,
                 request_payload=request_payload,
-                response_payload={"error": exc.error_code},
+                response_payload=response_payload,
                 error_code=exc.error_code,
             )
             await session.commit()

@@ -1,0 +1,761 @@
+{
+  "fixture": {
+    "projects": {
+      "rest": {
+        "project": {
+          "id": "[UUID_REDACTED]",
+          "name": "REST comment Project",
+          "slug": "parity-rest-comment-e174909d2762",
+          "description": null,
+          "archived_at": null,
+          "created_at": "2026-04-28T23:53:49.803366Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "cli": {
+        "project": {
+          "id": "[UUID_REDACTED]",
+          "name": "CLI comment Project",
+          "slug": "parity-cli-comment-e174909d2762",
+          "description": null,
+          "archived_at": null,
+          "created_at": "2026-04-28T23:53:50.199708Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "mcp": {
+        "project": {
+          "id": "[UUID_REDACTED]",
+          "name": "MCP comment Project",
+          "slug": "parity-mcp-comment-e174909d2762",
+          "description": null,
+          "archived_at": null,
+          "created_at": "2026-04-28T23:53:50.287605Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      }
+    },
+    "pipelines": {
+      "rest": {
+        "pipeline": {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "REST comment Pipeline",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-28T23:53:50.341249Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "cli": {
+        "pipeline": {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "CLI comment Pipeline",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-28T23:53:50.660097Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "mcp": {
+        "pipeline": {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "MCP comment Pipeline",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-28T23:53:50.738137Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      }
+    },
+    "pipeline_ids": {
+      "rest": "[UUID_REDACTED]",
+      "cli": "[UUID_REDACTED]",
+      "mcp": "[UUID_REDACTED]"
+    }
+  },
+  "jobs": {
+    "rest": {
+      "job": {
+        "id": "[UUID_REDACTED]",
+        "pipeline_id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "state": "ready",
+        "title": "REST Comment Job",
+        "description": null,
+        "contract": {
+          "contract_type": "coding-task",
+          "dod_items": [
+            {
+              "id": "comment-cancel-parity"
+            }
+          ]
+        },
+        "labels": [],
+        "claimed_by_actor_id": null,
+        "claimed_at": null,
+        "claim_heartbeat_at": null,
+        "created_at": "2026-04-28T23:53:50.797291Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    },
+    "cli": {
+      "job": {
+        "id": "[UUID_REDACTED]",
+        "pipeline_id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "state": "ready",
+        "title": "CLI Comment Job",
+        "description": null,
+        "contract": {
+          "contract_type": "coding-task",
+          "dod_items": [
+            {
+              "id": "comment-cancel-parity"
+            }
+          ]
+        },
+        "labels": [],
+        "claimed_by_actor_id": null,
+        "claimed_at": null,
+        "claim_heartbeat_at": null,
+        "created_at": "2026-04-28T23:53:51.265155Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    },
+    "mcp": {
+      "job": {
+        "id": "[UUID_REDACTED]",
+        "pipeline_id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "state": "ready",
+        "title": "MCP Comment Job",
+        "description": null,
+        "contract": {
+          "contract_type": "coding-task",
+          "dod_items": [
+            {
+              "id": "comment-cancel-parity"
+            }
+          ]
+        },
+        "labels": [],
+        "claimed_by_actor_id": null,
+        "claimed_at": null,
+        "claim_heartbeat_at": null,
+        "created_at": "2026-04-28T23:53:51.354784Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    }
+  },
+  "comments": {
+    "rest": {
+      "comment": {
+        "id": "[UUID_REDACTED]",
+        "job_id": "[UUID_REDACTED]",
+        "author_actor_id": "[UUID_REDACTED]",
+        "body": "REST durable note",
+        "created_at": "2026-04-28T23:53:51.410890Z"
+      }
+    },
+    "cli": {
+      "comment": {
+        "id": "[UUID_REDACTED]",
+        "job_id": "[UUID_REDACTED]",
+        "author_actor_id": "[UUID_REDACTED]",
+        "body": "CLI durable note",
+        "created_at": "2026-04-28T23:53:51.712754Z"
+      }
+    },
+    "mcp": {
+      "comment": {
+        "id": "[UUID_REDACTED]",
+        "job_id": "[UUID_REDACTED]",
+        "author_actor_id": "[UUID_REDACTED]",
+        "body": "MCP durable note",
+        "created_at": "2026-04-28T23:53:51.793777Z"
+      }
+    }
+  },
+  "comment_lists": {
+    "rest": {
+      "comments": [
+        {
+          "id": "[UUID_REDACTED]",
+          "job_id": "[UUID_REDACTED]",
+          "author_actor_id": "[UUID_REDACTED]",
+          "body": "REST durable note",
+          "created_at": "2026-04-28T23:53:51.410890Z"
+        }
+      ],
+      "next_cursor": null
+    },
+    "cli": {
+      "comments": [
+        {
+          "id": "[UUID_REDACTED]",
+          "job_id": "[UUID_REDACTED]",
+          "author_actor_id": "[UUID_REDACTED]",
+          "body": "CLI durable note",
+          "created_at": "2026-04-28T23:53:51.712754Z"
+        }
+      ],
+      "next_cursor": null
+    },
+    "mcp": {
+      "comments": [
+        {
+          "id": "[UUID_REDACTED]",
+          "job_id": "[UUID_REDACTED]",
+          "author_actor_id": "[UUID_REDACTED]",
+          "body": "MCP durable note",
+          "created_at": "2026-04-28T23:53:51.793777Z"
+        }
+      ],
+      "next_cursor": null
+    }
+  },
+  "cancels": {
+    "rest": {
+      "job": {
+        "id": "[UUID_REDACTED]",
+        "pipeline_id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "state": "cancelled",
+        "title": "REST Comment Job",
+        "description": null,
+        "contract": {
+          "dod_items": [
+            {
+              "id": "comment-cancel-parity"
+            }
+          ],
+          "contract_type": "coding-task"
+        },
+        "labels": [],
+        "claimed_by_actor_id": null,
+        "claimed_at": null,
+        "claim_heartbeat_at": null,
+        "created_at": "2026-04-28T23:53:50.797291Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    },
+    "cli": {
+      "job": {
+        "id": "[UUID_REDACTED]",
+        "pipeline_id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "state": "cancelled",
+        "title": "CLI Comment Job",
+        "description": null,
+        "contract": {
+          "dod_items": [
+            {
+              "id": "comment-cancel-parity"
+            }
+          ],
+          "contract_type": "coding-task"
+        },
+        "labels": [],
+        "claimed_by_actor_id": null,
+        "claimed_at": null,
+        "claim_heartbeat_at": null,
+        "created_at": "2026-04-28T23:53:51.265155Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    },
+    "mcp": {
+      "job": {
+        "id": "[UUID_REDACTED]",
+        "pipeline_id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "state": "cancelled",
+        "title": "MCP Comment Job",
+        "description": null,
+        "contract": {
+          "dod_items": [
+            {
+              "id": "comment-cancel-parity"
+            }
+          ],
+          "contract_type": "coding-task"
+        },
+        "labels": [],
+        "claimed_by_actor_id": null,
+        "claimed_at": null,
+        "claim_heartbeat_at": null,
+        "created_at": "2026-04-28T23:53:51.354784Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    }
+  },
+  "audit": {
+    "entries": [
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T23:53:52.714910Z",
+        "op": "cancel_job",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-comment",
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "job_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "job": {
+            "id": "[UUID_REDACTED]",
+            "state": "cancelled",
+            "title": "MCP Comment Job",
+            "labels": [],
+            "contract": {
+              "dod_items": [
+                {
+                  "id": "comment-cancel-parity"
+                }
+              ],
+              "contract_type": "coding-task"
+            },
+            "claimed_at": null,
+            "created_at": "2026-04-28T23:53:51.354784Z",
+            "project_id": "[UUID_REDACTED]",
+            "description": null,
+            "pipeline_id": "[UUID_REDACTED]",
+            "claim_heartbeat_at": null,
+            "claimed_by_actor_id": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T23:53:52.635220Z",
+        "op": "cancel_job",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "job_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "job": {
+            "id": "[UUID_REDACTED]",
+            "state": "cancelled",
+            "title": "CLI Comment Job",
+            "labels": [],
+            "contract": {
+              "dod_items": [
+                {
+                  "id": "comment-cancel-parity"
+                }
+              ],
+              "contract_type": "coding-task"
+            },
+            "claimed_at": null,
+            "created_at": "2026-04-28T23:53:51.265155Z",
+            "project_id": "[UUID_REDACTED]",
+            "description": null,
+            "pipeline_id": "[UUID_REDACTED]",
+            "claim_heartbeat_at": null,
+            "claimed_by_actor_id": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T23:53:52.314665Z",
+        "op": "cancel_job",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "job_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "job": {
+            "id": "[UUID_REDACTED]",
+            "state": "cancelled",
+            "title": "REST Comment Job",
+            "labels": [],
+            "contract": {
+              "dod_items": [
+                {
+                  "id": "comment-cancel-parity"
+                }
+              ],
+              "contract_type": "coding-task"
+            },
+            "claimed_at": null,
+            "created_at": "2026-04-28T23:53:50.797291Z",
+            "project_id": "[UUID_REDACTED]",
+            "description": null,
+            "pipeline_id": "[UUID_REDACTED]",
+            "claim_heartbeat_at": null,
+            "claimed_by_actor_id": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T23:53:51.793777Z",
+        "op": "comment_on_job",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-comment",
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "job_id": "[UUID_REDACTED]",
+          "body_length": 16
+        },
+        "response_payload": {
+          "comment_id": "[UUID_REDACTED]",
+          "body_length": 16
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T23:53:51.712754Z",
+        "op": "comment_on_job",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "job_id": "[UUID_REDACTED]",
+          "body_length": 16
+        },
+        "response_payload": {
+          "comment_id": "[UUID_REDACTED]",
+          "body_length": 16
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T23:53:51.410890Z",
+        "op": "comment_on_job",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "job_id": "[UUID_REDACTED]",
+          "body_length": 17
+        },
+        "response_payload": {
+          "comment_id": "[UUID_REDACTED]",
+          "body_length": 17
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T23:53:51.354784Z",
+        "op": "create_job",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-comment",
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "title": "MCP Comment Job",
+          "contract": {
+            "dod_items": [
+              {
+                "id": "comment-cancel-parity"
+              }
+            ],
+            "contract_type": "coding-task"
+          },
+          "pipeline_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "job": {
+            "id": "[UUID_REDACTED]",
+            "state": "ready",
+            "title": "MCP Comment Job",
+            "labels": [],
+            "contract": {
+              "dod_items": [
+                {
+                  "id": "comment-cancel-parity"
+                }
+              ],
+              "contract_type": "coding-task"
+            },
+            "claimed_at": null,
+            "created_at": "2026-04-28T23:53:51.354784Z",
+            "project_id": "[UUID_REDACTED]",
+            "description": null,
+            "pipeline_id": "[UUID_REDACTED]",
+            "claim_heartbeat_at": null,
+            "claimed_by_actor_id": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T23:53:51.265155Z",
+        "op": "create_job",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "title": "CLI Comment Job",
+          "contract": {
+            "dod_items": [
+              {
+                "id": "comment-cancel-parity"
+              }
+            ],
+            "contract_type": "coding-task"
+          },
+          "pipeline_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "job": {
+            "id": "[UUID_REDACTED]",
+            "state": "ready",
+            "title": "CLI Comment Job",
+            "labels": [],
+            "contract": {
+              "dod_items": [
+                {
+                  "id": "comment-cancel-parity"
+                }
+              ],
+              "contract_type": "coding-task"
+            },
+            "claimed_at": null,
+            "created_at": "2026-04-28T23:53:51.265155Z",
+            "project_id": "[UUID_REDACTED]",
+            "description": null,
+            "pipeline_id": "[UUID_REDACTED]",
+            "claim_heartbeat_at": null,
+            "claimed_by_actor_id": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T23:53:50.797291Z",
+        "op": "create_job",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "title": "REST Comment Job",
+          "contract": {
+            "dod_items": [
+              {
+                "id": "comment-cancel-parity"
+              }
+            ],
+            "contract_type": "coding-task"
+          },
+          "pipeline_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "job": {
+            "id": "[UUID_REDACTED]",
+            "state": "ready",
+            "title": "REST Comment Job",
+            "labels": [],
+            "contract": {
+              "dod_items": [
+                {
+                  "id": "comment-cancel-parity"
+                }
+              ],
+              "contract_type": "coding-task"
+            },
+            "claimed_at": null,
+            "created_at": "2026-04-28T23:53:50.797291Z",
+            "project_id": "[UUID_REDACTED]",
+            "description": null,
+            "pipeline_id": "[UUID_REDACTED]",
+            "claim_heartbeat_at": null,
+            "claimed_by_actor_id": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T23:53:50.738137Z",
+        "op": "create_pipeline",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-comment",
+        "target_kind": "pipeline",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "MCP comment Pipeline",
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "pipeline": {
+            "id": "[UUID_REDACTED]",
+            "name": "MCP comment Pipeline",
+            "created_at": "2026-04-28T23:53:50.738137Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": null,
+            "is_template": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "cloned_from_pipeline_id": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T23:53:50.660097Z",
+        "op": "create_pipeline",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "pipeline",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "CLI comment Pipeline",
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "pipeline": {
+            "id": "[UUID_REDACTED]",
+            "name": "CLI comment Pipeline",
+            "created_at": "2026-04-28T23:53:50.660097Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": null,
+            "is_template": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "cloned_from_pipeline_id": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T23:53:50.341249Z",
+        "op": "create_pipeline",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "pipeline",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "REST comment Pipeline",
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "pipeline": {
+            "id": "[UUID_REDACTED]",
+            "name": "REST comment Pipeline",
+            "created_at": "2026-04-28T23:53:50.341249Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": null,
+            "is_template": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "cloned_from_pipeline_id": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T23:53:50.287605Z",
+        "op": "create_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-comment",
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "MCP comment Project",
+          "slug": "parity-mcp-comment-e174909d2762",
+          "description": null
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "MCP comment Project",
+            "slug": "parity-mcp-comment-e174909d2762",
+            "created_at": "2026-04-28T23:53:50.287605Z",
+            "archived_at": null,
+            "description": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T23:53:50.199708Z",
+        "op": "create_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "CLI comment Project",
+          "slug": "parity-cli-comment-e174909d2762",
+          "description": null
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "CLI comment Project",
+            "slug": "parity-cli-comment-e174909d2762",
+            "created_at": "2026-04-28T23:53:50.199708Z",
+            "archived_at": null,
+            "description": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-28T23:53:49.803366Z",
+        "op": "create_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "REST comment Project",
+          "slug": "parity-rest-comment-e174909d2762",
+          "description": null
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "REST comment Project",
+            "slug": "parity-rest-comment-e174909d2762",
+            "created_at": "2026-04-28T23:53:49.803366Z",
+            "archived_at": null,
+            "description": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      }
+    ],
+    "next_cursor": null
+  }
+}

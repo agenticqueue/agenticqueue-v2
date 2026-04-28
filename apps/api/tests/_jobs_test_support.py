@@ -1,5 +1,6 @@
 import json
 import uuid
+from datetime import datetime, timedelta
 from uuid import UUID
 
 import psycopg
@@ -163,6 +164,37 @@ def insert_job(
     job_id = row[0]
     assert isinstance(job_id, UUID)
     return job_id
+
+
+def insert_comment(
+    conn: Connection[tuple[object, ...]],
+    *,
+    job_id: UUID,
+    author_actor_id: UUID,
+    body: str,
+    created_at_offset_seconds: int = 0,
+) -> UUID:
+    with conn.cursor() as cursor:
+        cursor.execute(
+            """
+            INSERT INTO job_comments (job_id, author_actor_id, body, created_at)
+            VALUES (%s, %s, %s, %s)
+            RETURNING id
+            """,
+            (
+                job_id,
+                author_actor_id,
+                body,
+                datetime.now().astimezone() + timedelta(
+                    seconds=created_at_offset_seconds
+                ),
+            ),
+        )
+        row = cursor.fetchone()
+    assert row is not None
+    comment_id = row[0]
+    assert isinstance(comment_id, UUID)
+    return comment_id
 
 
 def auth_headers(key: str) -> dict[str, str]:

@@ -915,6 +915,96 @@ def test_job_create_list_get_update_use_expected_paths(
     ]
 
 
+def test_job_comment_comments_and_cancel_use_expected_paths(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    job_id = "99999999-9999-4999-8999-999999999999"
+    comment_body = (
+        '{"comment":{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",'
+        '"job_id":"99999999-9999-4999-8999-999999999999",'
+        '"author_actor_id":"11111111-1111-4111-8111-111111111111",'
+        '"body":"Looks scoped.","created_at":"2026-04-27T01:00:00Z"}}'
+    )
+    comments_body = '{"comments":[],"next_cursor":"cursor-2"}'
+    cancel_body = (
+        '{"job":{"id":"99999999-9999-4999-8999-999999999999",'
+        '"pipeline_id":"77777777-7777-4777-8777-777777777777",'
+        '"project_id":"44444444-4444-4444-8444-444444444444",'
+        '"state":"cancelled","title":"Build","description":"Do it",'
+        '"contract":{"contract_type":"coding-task",'
+        '"dod_items":[{"id":"tests-pass"}]},'
+        '"labels":[],"claimed_by_actor_id":null,"claimed_at":null,'
+        '"claim_heartbeat_at":null,'
+        '"created_at":"2026-04-27T01:00:00Z",'
+        '"created_by_actor_id":"11111111-1111-4111-8111-111111111111"}}'
+    )
+    calls: list[tuple[str, str, dict[str, object] | None, float]] = []
+
+    def fake_post(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("POST", url, json, timeout))
+        response_body = cancel_body if url.endswith("/cancel") else comment_body
+        return _json_response(url, response_body, method="POST")
+
+    def fake_get(
+        url: str,
+        *,
+        headers: dict[str, str],
+        params: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("GET", url, params, timeout))
+        return _json_response(url, comments_body)
+
+    monkeypatch.setattr("aq_cli.main.httpx.post", fake_post)
+    monkeypatch.setattr("aq_cli.main.httpx.get", fake_get)
+
+    comment_result = runner.invoke(
+        app,
+        ["job", "comment", job_id, "--body", "Looks scoped."],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+    comments_result = runner.invoke(
+        app,
+        ["job", "comments", job_id, "--limit", "10", "--cursor", "cursor-1"],
+        env={API_URL_ENV: "http://api.test/", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+    cancel_result = runner.invoke(
+        app,
+        ["job", "cancel", job_id],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert comment_result.exit_code == 0
+    assert comments_result.exit_code == 0
+    assert cancel_result.exit_code == 0
+    assert comment_result.stdout == f"{comment_body}\n"
+    assert comments_result.stdout == f"{comments_body}\n"
+    assert cancel_result.stdout == f"{cancel_body}\n"
+    assert calls == [
+        (
+            "POST",
+            f"http://api.test/jobs/{job_id}/comments",
+            {"body": "Looks scoped."},
+            10.0,
+        ),
+        (
+            "GET",
+            f"http://api.test/jobs/{job_id}/comments",
+            {"limit": 10, "cursor": "cursor-1"},
+            5.0,
+        ),
+        ("POST", f"http://api.test/jobs/{job_id}/cancel", {}, 10.0),
+    ]
+
+
 def test_label_register_posts_body_and_prints_raw_json(
     monkeypatch: MonkeyPatch,
 ) -> None:
