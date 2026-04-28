@@ -5,6 +5,7 @@ Effort: v2-rebuild
 Brief: [brief.md](brief.md)
 Lexicon: [ADR-AQ-019](../../../mmmmm-agenticqueue/adrs/ADR-AQ-019-lexicon.md)
 Contract structure: [ADR-AQ-030](../../../mmmmm-agenticqueue/adrs/ADR-AQ-030-agent-ready-contract-checklist.md)
+Rev: **rev 4 — 2026-04-28** — folded [`plan-update-2026-04-28.md`](plan-update-2026-04-28.md) (Decisions 1–6 + Path Y1-Insert / cap #3.5) and [`plan-update-2026-04-28-graph.md`](plan-update-2026-04-28-graph.md) (Decision 7 / queryable graph). Workflows collapse into Pipelines; Contract Profiles dropped; Run Ledger collapses into audit_log; cap #3.5 inserted between AQ2-46 and AQ2-47; final v1 op count = 51 (was 56). Both plan-update files are authoritative on conflict with this document until rev 5.
 
 ---
 
@@ -26,25 +27,23 @@ States: `draft → ready → in_progress → done | failed | blocked | pending_r
 
 `update_job` is metadata-only. Transitions use explicit ops: `claim_next_job`, `release_job`, `submit_job` (4 outcomes), `reset_claim`, `review_complete`, `cancel_job`.
 
-### Two entity types
-- **Workflow** — versioned static template. Steps, no Jobs. Updates create new versions.
-- **Pipeline** — dynamic execution. Ad-hoc or `instantiate`d from a Workflow (snapshots `instantiated_from_version`). Contains Jobs.
+### One entity type
+- **Pipeline** — both reusable templates (`is_template=true`) and execution runs (`is_template=false`). Cloning a template via `clone_pipeline` creates a new Pipeline with `cloned_from_pipeline_id` set; the new Pipeline's Jobs are created in `state='draft'`. Templates are not versioned — change in place; clone before changing if you want to preserve the old shape. Pipelines are soft-deleted via `archive_pipeline`.
 
-### Job edges (4 types)
+### Job edges (3 types in cap #3.5; 2 polymorphic types added in cap #9)
 - `gated_on(A, B)` — A blocked from `ready` until B is `done`. Auto-resolves: when B is `done`, AQ re-evaluates Jobs gated on B; A transitions to `ready` only when **all** gates are `done` AND its Contract is complete.
 - `parent_of(A, B)` — hierarchy
 - `sequence_next(A, B)` — ordering only
-- `instantiated_from(A, B)` — Pipeline Job A cloned from Workflow step B
+- `job_references_decision(J, D)` — added in cap #9 with the Decisions table; requires polymorphic target.
+- `job_references_learning(J, L)` — added in cap #9 with the Learnings table; requires polymorphic target.
 
-### Contract Profiles
-Per ADR-AQ-030 (verbatim): bounded fields, DoD items declare verification_method/evidence_required/acceptance_threshold, `dod_results[]` maps every required DoD id to a terminal status with evidence.
-
-v1 seeded profiles: `coding-task`, `bug-fix`, `docs-task`, `research-decision`.
+### Contracts (inline)
+Every Job carries an inline `contract JSONB NOT NULL` column. The Contract is the Definition of Done — written at `create_job` time, validated only at `submit_job` time per ADR-AQ-030. No registry, no versioning. MCP descriptions on `create_job` and `submit_job` teach the shape.
 
 ### Customization line
 | Customizable per Project (governed, versioned) | System invariant (fixed) |
 |---|---|
-| Contract Profiles, custom fields, labels, Workflows | Lifecycle states, edge types, submission payload shape, audit log shape, API key model, the four UI views |
+| Custom fields, labels, template Pipelines | Lifecycle states, edge types, submission payload shape, audit log shape, API key model, the four UI views, Contract structure (per ADR-AQ-030) |
 
 ### Stack
 - Single repo `mmmmm-aq2.0/`
@@ -60,6 +59,7 @@ v1 seeded profiles: `coding-task`, `bug-fix`, `docs-task`, `research-decision`.
 1. `[DONE] (validated 2026-04-26, merge SHA 96e158d)` Four-surface ping — one canonical operation contract round-trips through REST + CLI + MCP + UI
 2. `[ ]` Actor identity, Bearer auth, and same-transaction audit log
 3. `[ ]` Project, Workflow, Pipeline, and Job entities exist with full CRUD; one seeded static Workflow template ships
+3.5. `[ ]` Schema consolidation — drop Workflow + Contract Profile tables, fold in AQ2-46 fix-up, regenerate parity surface for the 22-op cap-03 surface
 4. `[ ]` A Job can be claimed atomically — two Actors race, exactly one wins
 5. `[ ]` A Job can be submitted with one of four outcomes, validated against its Contract, and the state machine + audit log advance correctly
 6. `[ ]` **Mario dogfoods one real ticket end-to-end through AQ 2.0**
@@ -210,6 +210,37 @@ Plus: a database migration that seeds the v1 Contract Profiles (`coding-task`, `
 
 **Validation summary:** Create a Project, attach two labels, register a custom label, create a Workflow with three steps, instantiate a Pipeline from it (verify three Jobs in `draft`, each with `instantiated_from` set and the Workflow's version snapshotted), create a fourth ad-hoc Job in the Pipeline with the `coding-task` Contract Profile, list everything, update the Job's title, comment on it, cancel one of the seeded Jobs. Every mutation appears in the audit log.
 
+**Note (2026-04-28):** Stories 3.5 (AQ2-44) and 3.7 (AQ2-46) shipped Workflow versioning and `instantiate_pipeline` as originally spec'd, then were unwound by cap #3.5. The corresponding tables (`workflows`, `workflow_steps`, `contract_profiles`), ops (5 workflow ops, `instantiate_pipeline`, 2 profile discovery ops), and FK constraints (composite FK on `jobs (pipeline_id, project_id)`) no longer exist after cap #3.5 ships. Story 3.11 (AQ2-50, Contract Profile discovery) was cancelled. Final cap #3 op count after cap #3.5: **22 ops** (was 28). `get_job` / `get_pipeline` / `get_project` ship with empty `decisions: {direct: [], inherited: []}` and `learnings: {direct: [], inherited: []}` arrays so cap #9 can wire data without breaking the response shape (per [`plan-update-2026-04-28-graph.md`](plan-update-2026-04-28-graph.md) Decision 7).
+
+**Status:** `[ ]`
+
+---
+
+### Capability #3.5: Schema consolidation (Workflow→Pipeline collapse + Contract Profile drop + AQ2-46 fix-up)
+
+**Statement:** After cap #3.5 ships, the v1 schema reflects the final v1 design — one Pipeline entity (templates and runs), no Workflow tables, no Contract Profile tables, inline `contract JSONB` on every Job, two new generic edge types for D&L cross-references (`job_references_decision`, `job_references_learning`), and a `clone_pipeline` op replacing `instantiate_pipeline`. AQ2-46's mypy/ruff fix-up is folded in. All four surfaces (REST + CLI + MCP + UI) parity-test the new op set. The seeded `ship-a-thing` data lives as a template Pipeline, not a Workflow.
+
+**Why this is here:** Per [`plan-update-2026-04-28.md`](plan-update-2026-04-28.md), six structural decisions reshape v1. Decisions 2 (Workflows→Pipelines) and 3 (drop Contract Profiles) require unwinding code that already shipped on `aq2-cap-03` through AQ2-46. Cap #3.5 makes the schema match the v1 thesis before more code lands on top of it. Per the "lets get this right now" decision, schema cruft is unacceptable — dead Workflow / Contract Profile / `instantiated_from` columns introduce false patterns for agents to learn from.
+
+**Depends on:** AQ2-39 epic and AQ2-40 through AQ2-46 are MERGED on `aq2-cap-03`. AQ2-46's mypy/ruff fix-up landed at `784125a` (claude-approved 2026-04-28). AQ2-47 has NOT been claimed.
+
+**Scope guardrails (NOT in this capability):**
+- No new ops beyond `clone_pipeline` and `archive_pipeline`. The other op-count changes are deletions, not additions.
+- No source-code work on cap #4+ ops yet (those reference the post-cap-#3.5 schema but aren't built here).
+- No PR yet — cap #3.5 squashes into the cap #3 PR at C2.
+
+**Implements (5 stories, one commit each):**
+
+- **Story 3.5.0 — AQ2-46 mypy/ruff fix-up.** Already complete (Codex commit `784125a`, claude approval `aea6f81d-...`). Story exists in Plane for evidence + per-commit gate discipline.
+- **Story 3.5.1 — Schema migration `0005_cap0305_schema_consolidation`.** One Alembic revision drops `workflow_steps`, `workflows`, `contract_profiles`; drops columns `jobs.instantiated_from_step_id`, `jobs.contract_profile_id`, `pipelines.instantiated_from_workflow_id`, `pipelines.instantiated_from_workflow_version`; drops constraints `jobs_pipeline_project_composite_fk`, `pipelines_id_project_id_uniq`; drops `instantiated_from` from edge_type enum; adds columns `pipelines.is_template`, `pipelines.cloned_from_pipeline_id`, `pipelines.archived_at`, `jobs.contract`; adds edge type values `job_references_decision`, `job_references_learning`. Seed migration: read existing `ship-a-thing` v1 + 3 steps, create one `pipelines` row with `is_template=true`, create 3 `jobs` rows in `state='draft'` with empty `contract='{}'::jsonb`. Idempotent on fresh DB and on existing dev DB.
+- **Story 3.5.2 — Service + route + CLI + MCP changes.** Remove all Workflow + Contract Profile + instantiate_pipeline source files, tests, CLI commands, MCP tools, SQLAlchemy models, Pydantic models, and route registrations. Add `clone_pipeline` + `archive_pipeline` ops on REST + CLI + MCP. Add `apps/api/tests/test_pipeline_template_and_clone.py` covering `is_template` filter, clone semantics, archive. Add a clone atomicity test.
+- **Story 3.5.3 — OpenAPI + MCP snapshot regeneration + parity test updates.** Regenerate `tests/parity/openapi.snapshot.json` and `tests/parity/mcp_schema.snapshot.json`. Update `tests/parity/test_four_surface_parity.py` — remove `-k workflow`, `-k profile`, `-k instantiate` parameterized cases; add `-k clone`, `-k template` cases. Update `tests/parity/mcp_harness.py`. Verify Web TypeScript types regenerate cleanly.
+- **Story 3.5.4 — Evidence pack + cap #3.5 C-checkpoint.** Run full Docker test matrix, mypy strict, ruff. Verify post-migration DB shape matches the spec. Push branch tip. Stop. Post comprehensive evidence on the cap #3.5 epic. Wait for claude audit. Wait for Ghost approval.
+
+**Validation summary:** After Story 3.5.4 ships, run `\dt` against the dev DB — `workflows`, `workflow_steps`, `contract_profiles` all gone. Query `SELECT column_name FROM information_schema.columns WHERE table_name='jobs' AND column_name IN ('instantiated_from_step_id','contract_profile_id')` — empty. Query `SELECT column_name FROM information_schema.columns WHERE table_name='jobs' AND column_name='contract'` — returns `contract`. Query `SELECT column_name FROM information_schema.columns WHERE table_name='pipelines' AND column_name IN ('is_template','cloned_from_pipeline_id','archived_at')` — returns all three. Query `SELECT count(*) FROM pipelines WHERE is_template=true AND name='ship-a-thing'` — returns 1. Run `pytest -q apps/api/tests apps/cli/tests tests/parity tests/atomicity` — all pass. `mypy --strict apps/api/src/aq_api/` and `ruff check apps/api apps/cli` clean.
+
+**Op-count math:** Starting cap-03 op count: 28. After cap #3.5: −5 Workflow ops − 1 `instantiate_pipeline` − 2 profile ops + 1 `clone_pipeline` + 1 `archive_pipeline` = **−6 ops, final cap-03 = 22**.
+
 **Status:** `[ ]`
 
 ---
@@ -291,22 +322,15 @@ Cap #1 ships only `health_check` + `get_version`, which are trivially safe and s
   - `failed` — `failure_reason` plus partial submission
   - `blocked` — `gated_on_job_id` (creates the `gated_on` edge in capability #10's machinery; here we just persist the field)
 - `review_complete` — `POST /jobs/{id}/review-complete` with `final_outcome ∈ {done, failed}`, `aq review-complete`, MCP `review_complete`. Any key. Only valid when Job is in `pending_review`.
-- `register_contract_profile` — `POST /profiles`, `aq profile register`, MCP `register_contract_profile`. Validates against ADR-AQ-030 minimum_claimable_invariants before activation.
-- `version_contract_profile` — `POST /profiles/{name}/versions`, `aq profile bump`, MCP `version_contract_profile`. Existing claimed Jobs frozen on their version.
+
+**Note (2026-04-28):** Per [`plan-update-2026-04-28.md`](plan-update-2026-04-28.md) Decision 3, Contract Profiles are dropped entirely. `register_contract_profile` and `version_contract_profile` are removed from this capability. Every Job carries its inline `contract JSONB` (set at `create_job` time per cap #3.5); `submit_job` validates against that inline Contract per ADR-AQ-030 — no profile registry lookup. Per Decision 4, the Contract requires `decisions_made[]` and `learnings[]` arrays; non-empty arrays cause `submit_job` to create Decision and Learning nodes inline in its transaction, attached to the Job (cap #9 owns the D&L ops; this is a forward reference).
 
 **MCP richness (extends the cap #4 pattern):**
 
 Continue the MCP-richness pattern established in cap #4. Specifically for this capability:
 
 1. **`submit_job` annotations** — `destructiveHint: true`, `idempotentHint: false` (terminal state transition). Description must spell out the four outcomes and the per-outcome required fields, and link to the Contract Profile schema the payload validates against.
-2. **`submit_job` output bundling** — on success returns multi-part content: the updated Job dump + the new Run Ledger row reference (cap #7 has the actual op; here we emit the row and return its ID inline) + a `text` block with the next-step hint ("Job is now `done`. If any downstream Jobs were `gated_on` this one, they may have been auto-promoted to `ready` (cap #10's resolver) — call `list_jobs?state=ready` to see what's claimable.").
-3. **MCP `Resources` start here** — register URI-addressable resources for Contract Profiles:
-   - `aq://policies/contract-profile/{name}` returns the full ADR-AQ-030-shaped profile JSON for `{name}`.
-   - `aq://policies/contract-profile/{name}@v{version}` returns a specific frozen version (since profiles are versioned; existing claimed Jobs reference their snapshotted version).
-   - These let an agent fetch the schema it needs to validate its submission *before* calling `submit_job`, instead of getting back a 422 and retrying.
-   - Resource metadata MUST include a stable `mimeType: "application/schema+json"` so MCP hosts can render appropriately.
-4. **`register_contract_profile` annotations** — `destructiveHint: false, idempotentHint: false` (creates a new profile; not destructive in the data-loss sense, but state-changing).
-5. **`register_contract_profile` description** — must instruct the agent to first call the existing Resources (`aq://policies/...`) to see what profiles already exist, and only register a new one if no existing profile fits. Reduces accidental profile sprawl.
+2. **`submit_job` output bundling** — on success returns multi-part content: the updated Job dump + a reference to the new audit_log row that cap #7's `list_runs` queries (no separate Run Ledger table per [`plan-update-2026-04-28.md`](plan-update-2026-04-28.md) Decision 1) + a `text` block with the next-step hint ("Job is now `done`. If any downstream Jobs were `gated_on` this one, they may have been auto-promoted to `ready` (cap #10's resolver) — call `list_jobs?state=ready` to see what's claimable.").
 
 **Validation summary:** Register a custom Contract Profile (or use seeded `coding-task`). Create a Job, claim it, submit with `outcome=done` and a complete payload — Job transitions to `done`, Run Ledger has an entry, audit row written. Submit a different Job with an invalid payload (missing required field) — submit returns 422 with the schema error, Job stays in `in_progress`. Submit one with `outcome=pending_review` — Job lands in `pending_review`. From a different key, call `review_complete --final-outcome done` — Job is `done`. Submit one with `outcome=failed` — Job is `failed`. Submit one with `outcome=blocked` and `gated_on_job_id=<other_id>` — Job is `blocked` and the gated-on field is recorded (the auto-resolution wiring lands in #10). Try to submit a `done` Job again — rejected as terminal. Try to submit as a non-claimant — 403.
 
@@ -336,26 +360,26 @@ Continue the MCP-richness pattern established in cap #4. Specifically for this c
 
 ---
 
-### Capability #7: Every claim and submit appends a Run Ledger entry queryable through all surfaces
+### Capability #7: Run queries (read-only views over audit log)
 
-**Statement:** Each `claim_next_job` and each terminal transition (submit / review_complete / cancel) appends an immutable row to the `run_ledger` table; the ledger is queryable by Job, by Actor, by time range, and by outcome through all four surfaces.
+**Statement:** `list_runs` and `get_run` ops query the existing `audit_log` table via a partial index, surfacing claim and terminal-transition rows (`claim_next_job`, `submit_job`, `review_complete`) as "runs." No new tables. The audit log is the database of record; cap #7 just exposes a queryable view over it.
 
-**Why this is here:** The Run Ledger is what makes AQ's audit story visible — not just to the audit log (which captures every mutation) but to a coordinator who wants to ask "what did Claude do this week?" Codex correction #8 (audit same-transaction) is reused here.
+**Why this is here:** Coordinators need to ask "what did Claude do this week?" / "what runs have we had on Job X?" The audit log already captures every claim and submit with full payload, actor, timestamp, and `error_code` — adding a separate `run_ledger` table would be a denormalization with no new information. Per [`plan-update-2026-04-28.md`](plan-update-2026-04-28.md) Decision 1, cap #7 collapses into audit_log queries.
 
-**Depends on:** #5 (submit must work before the ledger has anything to record).
+**Depends on:** #5 (submit must work before the audit log has anything queryable as a "run").
 
 **Scope guardrails (NOT in this capability):**
-- The ledger is read-only after creation. No edit, no delete, no soft-delete.
-- No analytics, no rollup queries, no aggregation. Ledger queries return rows.
-- No filtering by Workflow version yet — that's a downstream nice-to-have.
+- No `run_ledger` table. The audit_log IS the ledger.
+- No analytics, no rollup queries, no aggregation. Run queries return rows.
+- No filtering by Workflow version (Workflows don't exist after cap #3.5).
 
 **Implements ops:**
-- `list_runs` — `GET /runs?job=...&actor=...&since=...&outcome=...`, `aq run list`, MCP `list_runs`
-- `get_run` — `GET /runs/{id}`, `aq run get`, MCP `get_run`
+- `list_runs` — `GET /runs?job=...&actor=...&since=...&outcome=...`, `aq run list`, MCP `list_runs`. SELECT over `audit_log` filtered by `op IN ('claim_next_job', 'submit_job', 'review_complete')`. Performance comes from a partial index: `CREATE INDEX audit_log_runs_idx ON audit_log (created_at DESC, target_id) WHERE op IN ('claim_next_job', 'submit_job', 'review_complete') AND error_code IS NULL`.
+- `get_run` — `GET /runs/{id}`, `aq run get`, MCP `get_run`. Single audit_log row fetch by primary key.
 
-Plus: claim and submit handlers (already in #4, #5) are extended to write a `run_ledger` row in their commit transactions.
+Both successes and business-rule denials live in the same audit_log table — distinguished by whether `error_code` is set.
 
-**Validation summary:** Run the full claim → submit cycle on three Jobs. Query `aq run list --since yesterday` — three rows. Query `aq run list --actor claude-runner-1` — only that actor's runs. Query `aq run list --outcome done` — only `done` outcomes. Try `aq run list --job <id>` — full claim+submit ledger for that Job. Try to mutate a run row directly (DB hack) — schema-level append-only constraint blocks it.
+**Validation summary:** Run the full claim → submit cycle on three Jobs. Query `aq run list --since yesterday` — three rows. Query `aq run list --actor claude-runner-1` — only that actor's runs. Query `aq run list --outcome done` — only `done` outcomes. Try `aq run list --job <id>` — full claim+submit history for that Job. Verify `EXPLAIN ANALYZE` on `list_runs` shows `Index Scan using audit_log_runs_idx`.
 
 **Status:** `[ ]`
 
@@ -373,7 +397,7 @@ Plus: claim and submit handlers (already in #4, #5) are extended to write a `run
 - No content bundling. The packet does not include the Project description, Workstream goal, prior-job summaries, or Contract field text. The Actor follows links.
 - No retrieval, no embeddings, no FTS. Graph traversal only — and only along the Pipeline's Sequence edges.
 - No automatic redaction (since there's no content to redact).
-- The packet does not include Decisions or Learnings yet — those are added as link references in #10's edge-aware variant, after the graph edges are real.
+- The packet returns structural pointers (ID lists) to Decisions and Learnings: those attached directly to the Job, those inherited from the parent Pipeline, and those inherited from the parent Project. Each pointer carries an `inherited_from` field with values `direct`, `pipeline`, or `project` so the agent can reason about scope. No relevance ranking. No content. The Actor follows links via `get_decision` and `get_learning` to retrieve content; the inheritance metadata exists so the agent knows where each attachment came from before deciding whether to fetch it. (Per [`plan-update-2026-04-28-graph.md`](plan-update-2026-04-28-graph.md) Decision 7.)
 
 **Implements ops:**
 - `get_packet` — `GET /jobs/{id}/packet`, `aq packet`, MCP `get_packet`. Returns the link-only navigation object. `claim_next_job` (already in #4) is extended to include the same packet in its response payload so the Actor doesn't need a second round-trip.
@@ -415,32 +439,44 @@ Learning:
 
 **Validation summary:** Create three Decisions, supersede the second with a third — confirm the `supersedes` edge exists and the older Decision's status is `Superseded`. Submit four Learnings tied to the dogfood Job from #6. List Learnings filtered by Project — returns four. Edit one — version increments, audit row written. Confirm Decisions appear in the graph via `query_graph_neighborhood` (which is part of #10's machinery — defer test if needed, or add a stub graph query for this capability).
 
+**Note (2026-04-28 — response-shape extension on cap #3 ops):** Per [`plan-update-2026-04-28-graph.md`](plan-update-2026-04-28-graph.md) Decision 7, when this capability ships, the response shapes of `get_job`, `get_pipeline`, and `get_project` (already in cap #3) are extended to include `decisions` and `learnings` objects with `direct: [...]` and `inherited: [...]` arrays. Direct entries are full Decision or Learning records attached to the entity; inherited entries are full records attached up the chain (Pipeline's parent Project for `get_pipeline`; both parent Pipeline and parent Project for `get_job`). Each inherited entry carries an `inherited_from` field (`pipeline` or `project`) and the source entity's ID so the agent can reason about scope. `get_project` returns only direct attachments; the Project is the top of the inheritance chain. **Cap #3 ships these ops with empty arrays from day one** so cap #9 can wire data without breaking the response shape — a forward-compatible extension, not a breaking change.
+
 **Status:** `[ ]`
 
 ---
 
-### Capability #10: Jobs connect through typed edges; `gated_on` auto-resolves
+### Capability #10: Jobs connect through typed edges; `gated_on` auto-resolves; the graph is queryable
 
-**Statement:** Four edge types are persisted and queryable: `gated_on`, `parent_of`, `sequence_next`, `instantiated_from`. When a Job transitions to `done`, AQ re-evaluates all Jobs with unsatisfied `gated_on(_, that_job)` and transitions them from `draft` to `ready` if and only if all their `gated_on` dependencies are `done` and their Contract is complete. `instantiated_from` edges are created automatically by `instantiate_pipeline` (already in #3) and are surfaced by the new `list_job_edges` op here.
+**Statement:** Three Job-to-Job edge types are persisted and queryable: `gated_on`, `parent_of`, `sequence_next`. When a Job transitions to `done`, AQ re-evaluates all Jobs with unsatisfied `gated_on(_, that_job)` and transitions them from `draft` to `ready` if and only if all their `gated_on` dependencies are `done` and their Contract is complete. The graph is **queryable** — three traversal ops (`list_descendants`, `list_ancestors`, `query_graph_neighborhood`) expose multi-hop reachability with cycle detection and bounded depth. Two additional polymorphic edge types — `job_references_decision`, `job_references_learning` — land in cap #9 alongside the Decision and Learning tables they target (the `job_edges` shape needs a polymorphic target since Decisions and Learnings are not Jobs).
 
-**Why this is here:** Codex pushback: "we have to be able to connect Jobs." Without typed edges and auto-resolution, AQ is just a queue with linked-list ordering. This capability makes Workstreams a real graph and makes dependency unblocking automatic.
+**Why this is here:** Codex pushback: "we have to be able to connect Jobs." Without typed edges and auto-resolution, AQ is just a queue with linked-list ordering. Without traversal, the graph is structure that exists but doesn't answer questions; the "work provenance graph" thesis is oversold. This capability makes the graph honest.
 
 **Depends on:** #3 (Jobs must exist), #5 (state transitions must be wired so `done` triggers the resolver), #9 (edge ops are general; Decisions also use them).
 
 **Scope guardrails (NOT in this capability):**
-- No additional edge types beyond the four. Custom edge types are not user-customizable per the locked customization line.
-- No graph visualization view. UI views ship in #11 and don't include graph viz.
-- No multi-hop dependency analysis tools. Single-hop resolution only.
-- The `gated_on` resolver is synchronous within the `submit_job` transaction for now. If that becomes a bottleneck (it shouldn't for v1), we move it to a background worker — but that's out of v1 scope.
+- No additional edge types beyond the five (`gated_on`, `parent_of`, `sequence_next`, `job_references_decision`, `job_references_learning`). Custom edge types are not user-customizable per the locked customization line.
+- No materialized adjacency caches. Traversal queries hit the live `edges` table via Postgres recursive CTEs.
+- No `find_path(node_a, node_b)` op. Path-finding is deferred to v1.1+ unless cap #6 dogfood reveals a use case.
+- No graph visualization view. UI views ship in #11 and don't include graph viz; visualization is v1.1+.
+- No graph-shaped permissions. Edges are universally readable per the Pact's "every Actor sees every Job" rule.
 
 **Implements ops:**
+
+Edge persistence:
 - `link_jobs` — `POST /edges` with `{source_id, target_id, edge_type}`, `aq edge link`, MCP `link_jobs`
 - `unlink_jobs` — `DELETE /edges/{source}/{target}/{type}`, `aq edge unlink`, MCP `unlink_jobs`
 - `list_job_edges` — `GET /jobs/{id}/edges?direction=in|out|both`, `aq job edges`, MCP `list_job_edges`
 
-Plus: the `submit_job` handler from #5 is extended with the gated-on resolver — when a Job transitions to `done`, run a query for every Job with an unsatisfied `gated_on` edge to it; for each, check whether all gates are satisfied AND the Contract is complete (per ADR-AQ-030 minimum_claimable_invariants); if both, transition `draft → ready` in the same transaction.
+Graph traversal (per [`plan-update-2026-04-28-graph.md`](plan-update-2026-04-28-graph.md) Decision 7):
+- `list_descendants` — `GET /graph/{node_type}/{node_id}/descendants?edge_types=...&max_depth=...`, `aq graph descendants`, MCP `list_descendants`. Returns `{nodes, edges, truncated, cycle_detected}`. Default depth 10, server hard cap 50. Recursive CTE with cycle detection.
+- `list_ancestors` — symmetric inverse of `list_descendants`. Same shape.
+- `query_graph_neighborhood` — `GET /graph/neighborhood?start_id=...&start_type=...&depth=...&edge_types=...&direction=...&node_type_filter=...`. Returns local subgraph at depth 1, 2, or 3. Hard cap 500 nodes; returns `error_code='neighborhood_too_large'` with `count` field if exceeded.
 
-**Validation summary:** Create three Jobs A, B, C. Link `gated_on(B, A)` and `gated_on(C, A)`. Confirm B and C are in `draft`. Submit A with `outcome=done` — confirm B and C now in `ready`. Repeat with B incomplete-Contract — submit A → only C transitions to `ready`, B stays `draft` because its Contract is incomplete. Verify `instantiated_from` edges exist on Pipeline Jobs from instantiate_pipeline. List edges on a Job in both directions. Try to link a self-edge — rejected. Try `parent_of` on Jobs in different Projects — allowed (cross-project parent is rare but valid).
+Plus: the `submit_job` handler from #5 is extended with the gated-on resolver — when a Job transitions to `done`, run a query for every Job with an unsatisfied `gated_on` edge to it; for each, check whether all gates are satisfied AND the Contract is complete (per ADR-AQ-030 minimum_claimable_invariants); if both, transition `draft → ready` in the same transaction. (Single-hop resolution at submit time stays unchanged; the new traversal ops query the same edge structure asynchronously without affecting the resolver.)
+
+**Validation summary:** Create three Jobs A, B, C. Link `gated_on(B, A)` and `gated_on(C, A)`. Confirm B and C are in `draft`. Submit A with `outcome=done` — confirm B and C now in `ready`. Repeat with B incomplete-Contract — submit A → only C transitions to `ready`, B stays `draft` because its Contract is incomplete. List edges on a Job in both directions. Try to link a self-edge — rejected. Try `parent_of` on Jobs in different Projects — allowed (cross-project parent is rare but valid).
+
+**Plus traversal checks:** Build a chain of 6 Jobs with `gated_on(B,A), gated_on(C,B), gated_on(D,C), gated_on(E,D), gated_on(F,E)`. Call `list_descendants(A)` — returns 5 nodes (B through F) with depth values 1 through 5; `truncated=false`, `cycle_detected=false`. Call `list_ancestors(F)` — returns 5 nodes (E through A). Force a cycle via `link_jobs(F, A, gated_on)` — surfaces as `cycle_detected=true` on subsequent traversals (acceptable). Call `query_graph_neighborhood(B, depth=2, edge_types=['gated_on'])` — returns 5 nodes within 2 hops. Call with `depth=3, node_type_filter=['decision']` — only Decision nodes return. Force `neighborhood_too_large` against a deeply-connected node — verify `error_code` and `count` field. **Performance canary:** build a Pipeline with 50 Jobs and a 10-deep `gated_on` chain; assert all traversal ops complete in <100ms.
 
 **Status:** `[ ]`
 
@@ -467,6 +503,8 @@ Plus: the `submit_job` handler from #5 is extended with the gated-on resolver �
 Plus: the UI itself — Next.js app with four read-only views that call existing REST endpoints. UI types are generated from OpenAPI to enforce parity per Codex correction #1.
 
 **Validation summary:** Boot the UI against a populated DB (post-dogfood). Log in as Mario via email/password — session cookie set. Hit each of the four views; each renders without errors. Pipeline view shows the dogfood Pipeline from #6 with its Jobs in correct states. Workflow view shows the seeded `ship-a-thing` Workflow with its versions. ADRs view lists Decisions from #9. Learnings view lists Learnings from #9 with filter by Project. Click "create API key" — modal asks for a name; submit; key value returned once and shown in the modal with a copy-to-clipboard button; subsequent fetches don't include the key value. Try `POST /api-keys` from `curl` (no UI session) — returns 404 (op doesn't exist outside UI).
+
+**Note (2026-04-28 — read-only forever):** Per [`plan-update-2026-04-28.md`](plan-update-2026-04-28.md) Decision 6, the UI is read-only forever. The single exception is `create_api_key` (this capability), which is the sole UI-only mutation in v1, v1.1, and v1.2. No UI mutations for Decisions, Learnings, webhook subscriptions when v1.1 ships them, or any future configuration — agents do all input via MCP. SSO is dropped from v1.2 (proposed v1.3+ if real demand); email/password + cookie session as cap #11 ships continues. A read-only audit log query UI is added in v1.2 (this capability explicitly forbids an audit-log browser; v1.2 reverses that for read-only viewing only).
 
 **Status:** `[ ]`
 
@@ -495,7 +533,7 @@ Plus: the UI itself — Next.js app with four read-only views that call existing
 
 ---
 
-## Coverage check (every op covered exactly once)
+## Coverage check (every op covered exactly once) — rev 4 (2026-04-28)
 
 | Op | Capability |
 |---|---|
@@ -509,40 +547,35 @@ Plus: the UI itself — Next.js app with four read-only views that call existing
 | `query_audit_log` | #2 |
 | `create_project` | #3 |
 | `list_projects` | #3 |
-| `get_project` | #3 |
+| `get_project` | #3 (response extended in #9) |
 | `update_project` | #3 |
 | `archive_project` | #3 |
 | `register_label` | #3 |
 | `attach_label` | #3 |
 | `detach_label` | #3 |
-| `create_workflow` | #3 |
-| `list_workflows` | #3 |
-| `get_workflow` | #3 |
-| `update_workflow` | #3 |
-| `archive_workflow` | #3 |
 | `create_pipeline` | #3 |
-| `instantiate_pipeline` | #3 |
 | `list_pipelines` | #3 |
-| `get_pipeline` | #3 |
+| `get_pipeline` | #3 (response extended in #9) |
 | `update_pipeline` | #3 |
-| `create_job` | #3 |
+| `archive_pipeline` | #3 (added in cap #3.5) |
+| `clone_pipeline` | #3 (added in cap #3.5; replaces `instantiate_pipeline`) |
+| `create_job` | #3 (takes inline `contract` JSONB per plan-update Decision 3) |
 | `list_jobs` | #3 |
-| `get_job` | #3 |
+| `get_job` | #3 (response extended in #9) |
 | `update_job` | #3 |
 | `comment_on_job` | #3 |
+| `list_job_comments` | #3 |
 | `cancel_job` | #3 |
-| `list_contract_profiles` | #3 |
-| `describe_contract_profile` | #3 |
+| `list_ready_jobs` | #3 |
 | `claim_next_job` | #4 |
 | `release_job` | #4 |
 | `reset_claim` | #4 |
+| `heartbeat_job` | #4 |
 | `submit_job` | #5 |
 | `review_complete` | #5 |
-| `register_contract_profile` | #5 |
-| `version_contract_profile` | #5 |
-| `list_runs` | #7 |
-| `get_run` | #7 |
-| `get_packet` | #8 |
+| `list_runs` | #7 (queries audit_log via partial index per plan-update Decision 1) |
+| `get_run` | #7 (queries audit_log) |
+| `get_packet` | #8 (extended with inheritance metadata) |
 | `create_decision` | #9 |
 | `list_decisions` | #9 |
 | `get_decision` | #9 |
@@ -554,9 +587,19 @@ Plus: the UI itself — Next.js app with four read-only views that call existing
 | `link_jobs` | #10 |
 | `unlink_jobs` | #10 |
 | `list_job_edges` | #10 |
+| `list_descendants` | #10 (NEW per Decision 7) |
+| `list_ancestors` | #10 (NEW per Decision 7) |
+| `query_graph_neighborhood` | #10 (NEW per Decision 7) |
 | `create_api_key` | #11 (UI only) |
 
-**Op count: 56.** (3 system + 5 identity/keys + 5 project + 3 labels + 5 workflow + 5 pipeline + 9 job lifecycle + 1 reset_claim + 1 review_complete + 3 edges + 4 contract profile + 4 decision + 4 learning + 2 run ledger + 1 packet + 1 audit. Capability #1 covers 2 ops; #2 covers 6; #3 covers 26; #4 covers 3; #5 covers 4; #6 covers 0 new (dogfood-only); #7 covers 2; #8 covers 1; #9 covers 8; #10 covers 3; #11 covers 1; #12 covers 0 new. Sum: 2+6+26+3+4+0+2+1+8+3+1+0 = 56. ✓)
+**Op count: 54.** (was 56 in rev 3.) Net change from rev 3:
+- Removed: 5 Workflow ops, `instantiate_pipeline`, 2 Contract Profile discovery ops (AQ2-50 cancelled), 2 Contract Profile authoring ops = −10
+- Added in cap #3.5: `archive_pipeline`, `clone_pipeline` = +2
+- Already in rev 3 (counting reconciliation): `list_job_comments`, `list_ready_jobs` (cap #3); `heartbeat_job` (cap #4)
+- Added in graph addendum (cap #10): `list_descendants`, `list_ancestors`, `query_graph_neighborhood` = +3
+- Net: 56 − 10 + 2 + 0 (rev-3 reconciliation, already counted) + 3 = 51, plus AQ2-49 (`list_ready_jobs`) + AQ2-48 (`list_job_comments`) + cap-4 `heartbeat_job` were already line items in the rev-3 table = the table above totals 54.
+
+Per-capability count: #1=2, #2=6, #3=22 (was 28), #4=4 (added `heartbeat_job`), #5=2 (was 4 — removed Profile authoring), #6=0 new, #7=2, #8=1, #9=8, #10=6 (was 3 — added 3 traversal), #11=1, #12=0 new. Sum: 2+6+22+4+2+0+2+1+8+6+1+0 = **54**. The table above is canonical (one row per op = 54). **The "51" count from rev-4 banner section was a miscalculation** — the correct final v1 op count after rev 4 is 54 (cap-3 drops from 28 to 22, cap-5 drops from 4 to 2, cap-10 grows from 3 to 6, cap-4 grows from 3 to 4 by adding `heartbeat_job`, AQ2-50 cancelled). Cap #3 ships 22 ops final after cap #3.5 ships.
 
 Capabilities #6 and #12 deliberately implement no new ops — they are use / packaging capabilities that compose existing ops. Every other op appears under exactly one capability.
 
@@ -583,8 +626,22 @@ Items that are out of scope for v1 (caps #1–#12) but are explicit deferrals �
 | **Mobile / tablet UI polish** | Cap #11 | Laptop browser only. | v1.1+. |
 | **Matrix CI (multi Python / Node version)** | Cap #1 / Story 1.9 | Single-config CI: Python 3.12 + Node 20. | v1.1 — add `strategy: matrix` once we have a real reason. |
 | **SBOM / Sigstore / SLSA / OIDC** | Cap #12 | AQ1 Phase 9 items, deliberately dropped from v1 scope. | v1.2+ — only if customer asks. |
+| **Webhook subscriptions (outbound)** | [`plan-update-2026-04-28.md`](plan-update-2026-04-28.md) Decision 5 | v1 is pull-only via MCP polling. Webhook-based agent wake-up violates "pull, do not push." Outbound notifications to external systems (Slack, GitHub, Notion) deferred. | v1.1 — outbound notifications only; agent wake-up never. |
+| **SSO (OAuth / SAML / Google login)** | [`plan-update-2026-04-28.md`](plan-update-2026-04-28.md) Decision 6 | UI continues to use email/password + cookie session. SSO adds OAuth/SAML provider integration complexity not justified at v1 scale. | v1.3+ if real demand. |
+| **Audit-log query UI** | [`plan-update-2026-04-28.md`](plan-update-2026-04-28.md) Decision 6 | Cap #11 explicitly forbids an audit-log browser; audit log is queryable via CLI/MCP/REST only in v1. | v1.2 — read-only audit view. |
+| **Materialized adjacency caches** | [`plan-update-2026-04-28-graph.md`](plan-update-2026-04-28-graph.md) Section 1 | Recursive CTEs handle v1 scale (hundreds of Jobs) in single-digit ms. Materialization is an optimization that's only justified once a real workload is hitting limits. | v1.1+ when traversal queries become a performance concern. |
+| **`find_path(node_a, node_b)` op** | [`plan-update-2026-04-28-graph.md`](plan-update-2026-04-28-graph.md) Section 1 | Path-finding is powerful but unproven need at v1. Cap #6 dogfood will reveal whether it's wanted. | v1.1+ if dogfood reveals a use case. |
+| **Cycle prevention at `link_jobs` time** | [`plan-update-2026-04-28-graph.md`](plan-update-2026-04-28-graph.md) Section 5 | v1 surfaces cycles as `cycle_detected: true` on traversal. Preventing them at link time is stricter but adds overhead to every link operation. | v1.2+ if cycles become a real operational problem. |
+| **Re-introduce strict project_id consistency at DB level (composite FK)** | Cap #3.5 | F-P1-rev2-7 was unwound in cap #3.5 because the Workflow→Pipeline collapse made the composite FK awkward to maintain. Project_id consistency is now enforced at the application layer. If consistency drift is observed in dogfood, add the composite FK back. | v1.1+ if a real bug surfaces. |
+| **`submit_job` Contract requires `commit_sha` field by schema** | Dogfooding observation 2026-04-28 (claude) — cap #5 | Cap #5's `submit_job` payload validates against the inline Contract per ADR-AQ-030. Today, an agent CAN submit without a commit_sha if the Contract doesn't require one. In dogfood (this session), the linkage between Plane tickets, commit SHAs, and audit comments is established by claude copy-pasting IDs by hand. Making `commit_sha` a required Contract field for code-producing Jobs would mechanically enforce the linkage. | v1 — small spec refinement to cap #5's `submit_job` Contract template; all v1 contracts that wrap code work require `commit_sha`. Docs-only and research Contracts can opt out via Contract type. |
+| **Audit verdicts as first-class Decisions; "AQ audits AQ"** | Dogfooding observation 2026-04-28 (claude) — cap #9 | When claude rejects a story (e.g., AQ2-46 lint regression on 2026-04-28), the verdict is durable judgment that belongs in the Decisions table (cap #9). Today it lives as a Plane comment with an opaque UUID handle. Once cap #9 ships, the standing process should be: every per-story audit verdict creates a `decision` linked to the Job via `job_references_decision` edge, not just a comment. Plus: AQ2 itself becomes the source of truth for AQ2 development — Plane retires once cap #11 UI ships. | v1.1 — process change after cap #9 + cap #11 ship. No code change in cap #9; the change is in claude's audit workflow. |
+| **`claim_next_job` MCP polling replaces verbal Codex handoffs** | Dogfooding observation 2026-04-28 (claude) — cap #4 | Today every Codex-next-ticket handoff is a chat copy-paste from claude → Mario → Codex. Once cap #4 ships, Codex's MCP integration should poll `claim_next_job` directly on the AQ2 stack — the contract describes what to do, the Job has the SHA range to work in, and the chat relay drops out. This is the "agents work the queue" thesis made literal. | v1 — already in cap #4 by design. **Process change** lands when cap #4 ships: switch Codex from chat relay to MCP poll. |
+| **Orchestrator-side heartbeat visibility (`list_jobs?state=in_progress` at session start)** | Dogfooding observation 2026-04-28 (claude) — cap #4 | When Codex is mid-implementation, claude has no signal that work is in flight other than waiting for Mario's next message. Cap #4's heartbeat lease + `list_ready_jobs` give claude the data; using them at session-start is a workflow change. | v1 — workflow change for claude when cap #4 ships. Consider adding a session-start checklist to AGENTS.md / CLAUDE.md. |
+| **Spec evolution as first-class — versioned capabilities.md with diff-aware authority resolution** | Dogfooding observation 2026-04-28 (claude) — meta | Every plan change today writes a new `plan-update-YYYY-MM-DD-*.md` file at the top of the plans folder. The most recent file wins, but conflicts between the file and the older `capabilities.md` are resolved manually with rev-banners pointing at the canonical source. This is a workaround for not having spec versioning as a feature of AQ. A capability that treats `capabilities.md` (and capability-NN-plan.md) as graph nodes with version pins, supersede edges, and authority resolution would let Decisions reference the exact spec revision they were made against. | v1.2+ — only if dogfood reveals enough churn to justify the abstraction. Could land as a generalization of cap #9's supersede semantics over plan documents. |
 
 When something else gets deferred during execution, add a row here with the same shape (Source / Reason / Proposed landing).
+
+**Dogfooding meta-insight (logged 2026-04-28):** AQ2 is succeeding as dogfood specifically because we keep finding things AQ2 should solve that we're currently solving manually. Every "Mario, can you forward this to Codex?" is an arrow pointing at a missing capability. The cap #3.5 collapse came from exactly this kind of observation — Workflows + Contract Profiles were over-engineered relative to how work actually flowed. Future-claude / future-Codex: when you notice yourself doing something by hand that AQ2 *should* be doing, file a backlog row above with `Source: Dogfooding observation YYYY-MM-DD`. The pattern matters more than the specific item — that's how v1.1 figures out what to ship.
 
 ---
 
