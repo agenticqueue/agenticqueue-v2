@@ -4,6 +4,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastmcp import FastMCP
+from fastmcp.tools.tool import ToolResult
 from pydantic import Field
 
 from aq_api._health import current_health_status
@@ -35,6 +36,7 @@ from aq_api.models import (
     GetProjectResponse,
     GetWorkflowResponse,
     HealthStatus,
+    InstantiatePipelineRequest,
     ListActorsResponse,
     ListPipelinesResponse,
     ListProjectsResponse,
@@ -68,6 +70,9 @@ from aq_api.services.actors import get_self_by_id
 from aq_api.services.actors import list_actors as list_actor_service
 from aq_api.services.api_keys import revoke_api_key as revoke_api_key_service
 from aq_api.services.audit import query_audit_log as query_audit_log_service
+from aq_api.services.instantiate import (
+    instantiate_pipeline as instantiate_pipeline_service,
+)
 from aq_api.services.labels import attach_label as attach_label_service
 from aq_api.services.labels import detach_label as detach_label_service
 from aq_api.services.labels import register_label as register_label_service
@@ -485,6 +490,47 @@ def create_mcp_server() -> FastMCP:
                     request,
                     actor_id=actor_id,
                 )
+
+    @server.tool(
+        description=(
+            "Instantiate a Pipeline snapshot from the latest non-archived "
+            "Workflow slug family and create ready Jobs for each step."
+        ),
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def instantiate_pipeline(
+        workflow_slug: ProjectSlug,
+        project_id: UUID,
+        pipeline_name: PipelineName,
+        agent_identity: AgentIdentity = None,
+    ) -> ToolResult:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = InstantiatePipelineRequest(
+                project_id=project_id,
+                pipeline_name=pipeline_name,
+            )
+            async with SessionLocal() as session:
+                response = await instantiate_pipeline_service(
+                    session,
+                    workflow_slug,
+                    request,
+                    actor_id=actor_id,
+                )
+        message = (
+            f"Instantiated Pipeline {response.pipeline.name} from Workflow "
+            f"{workflow_slug} v{response.pipeline.instantiated_from_workflow_version}. "
+            f"{len(response.jobs)} Jobs created in state='ready' and immediately "
+            "claimable. Each Job's contract_profile_id was set from its source "
+            "step's default profile. Required next: optionally attach_label for "
+            "routing, or hand off to cap #4's claim_next_job."
+        )
+        return ToolResult(
+            content=message,
+            structured_content=response.model_dump(mode="json"),
+        )
 
     @server.tool(
         description="List Pipelines with opaque cursor pagination.",

@@ -2235,6 +2235,56 @@
         }
       },
       {
+        "name": "instantiate_pipeline",
+        "description": "Instantiate a Pipeline snapshot from the latest non-archived Workflow slug family and create ready Jobs for each step.",
+        "inputSchema": {
+          "properties": {
+            "workflow_slug": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+              "type": "string"
+            },
+            "project_id": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "pipeline_name": {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            "agent_identity": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+            }
+          },
+          "required": [
+            "workflow_slug",
+            "project_id",
+            "pipeline_name"
+          ],
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        }
+      },
+      {
         "name": "list_pipelines",
         "description": "List Pipelines with opaque cursor pagination.",
         "inputSchema": {

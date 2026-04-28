@@ -108,6 +108,26 @@ def _call_mcp_tool(
     api_key: str,
     arguments: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    result = _call_mcp_tool_result(
+        mcp_base_url,
+        tool_name,
+        request_id,
+        api_key=api_key,
+        arguments=arguments,
+    )
+    structured_content = result["structuredContent"]
+    assert isinstance(structured_content, dict)
+    return structured_content
+
+
+def _call_mcp_tool_result(
+    mcp_base_url: str,
+    tool_name: str,
+    request_id: int,
+    *,
+    api_key: str,
+    arguments: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     payload = _post_mcp(
         mcp_base_url,
         "tools/call",
@@ -117,9 +137,8 @@ def _call_mcp_tool(
     )
     result = payload["result"]
     assert result["isError"] is False
-    structured_content = result["structuredContent"]
-    assert isinstance(structured_content, dict)
-    return structured_content
+    assert isinstance(result["structuredContent"], dict)
+    return result
 
 
 def _run_cli(
@@ -1136,6 +1155,185 @@ def test_pipeline_ops_match_rest_cli_mcp_and_audit(
         "audit": audit,
     }
     (artifact_dir / "pipelines-parity.txt").write_text(
+        redact_evidence(_json_text(artifact)),
+        encoding="utf-8",
+    )
+
+
+def test_instantiate_pipeline_matches_rest_cli_mcp_and_audit(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    founder_actor_id: str,
+    artifact_dir: Path,
+    redact_evidence: Any,
+) -> None:
+    suffix = uuid.uuid4().hex[:12]
+    auth = {"Authorization": f"Bearer {founder_key}"}
+    profile_id = _contract_profile_id()
+    workflow_slug = f"parity-instantiate-{suffix}"
+    steps_v1 = _workflow_steps(profile_id, "scope", "build")
+    steps_v2 = _workflow_steps(profile_id, "scope", "build", "verify")
+
+    create_workflow_response = httpx.post(
+        f"{api_base_url}/workflows",
+        headers=auth,
+        json={
+            "name": "Parity Instantiate Workflow",
+            "slug": workflow_slug,
+            "steps": steps_v1,
+        },
+        timeout=10,
+    )
+    create_workflow_response.raise_for_status()
+    workflow_v1 = create_workflow_response.json()["workflow"]
+    update_workflow_response = httpx.patch(
+        f"{api_base_url}/workflows/{workflow_v1['id']}",
+        headers=auth,
+        json={
+            "name": "Parity Instantiate Workflow v2",
+            "steps": steps_v2,
+        },
+        timeout=10,
+    )
+    update_workflow_response.raise_for_status()
+    workflow_v2 = update_workflow_response.json()["workflow"]
+
+    rest_project_response = httpx.post(
+        f"{api_base_url}/projects",
+        headers=auth,
+        json={
+            "name": "REST Instantiate Project",
+            "slug": f"parity-rest-instantiate-{suffix}",
+        },
+        timeout=10,
+    )
+    rest_project_response.raise_for_status()
+    rest_project_id = rest_project_response.json()["project"]["id"]
+
+    cli_project = _run_cli(
+        [
+            "project",
+            "create",
+            "--name",
+            "CLI Instantiate Project",
+            "--slug",
+            f"parity-cli-instantiate-{suffix}",
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    cli_project_id = cli_project["project"]["id"]
+
+    mcp_project = _call_mcp_tool(
+        mcp_base_url,
+        "create_project",
+        51,
+        api_key=founder_key,
+        arguments={
+            "name": "MCP Instantiate Project",
+            "slug": f"parity-mcp-instantiate-{suffix}",
+            "agent_identity": "parity-instantiate",
+        },
+    )
+    mcp_project_id = mcp_project["project"]["id"]
+
+    rest_response = httpx.post(
+        f"{api_base_url}/pipelines/from-workflow/{workflow_slug}",
+        headers=auth,
+        json={
+            "project_id": rest_project_id,
+            "pipeline_name": "REST Instantiated",
+        },
+        timeout=10,
+    )
+    rest_response.raise_for_status()
+    rest_payload = rest_response.json()
+
+    cli_payload = _run_cli(
+        [
+            "pipeline",
+            "instantiate",
+            "--workflow",
+            workflow_slug,
+            "--project",
+            cli_project_id,
+            "--name",
+            "CLI Instantiated",
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+
+    mcp_result = _call_mcp_tool_result(
+        mcp_base_url,
+        "instantiate_pipeline",
+        52,
+        api_key=founder_key,
+        arguments={
+            "workflow_slug": workflow_slug,
+            "project_id": mcp_project_id,
+            "pipeline_name": "MCP Instantiated",
+            "agent_identity": "parity-instantiate",
+        },
+    )
+    mcp_payload = mcp_result["structuredContent"]
+
+    for payload, project_id in (
+        (rest_payload, rest_project_id),
+        (cli_payload, cli_project_id),
+        (mcp_payload, mcp_project_id),
+    ):
+        assert payload["pipeline"]["project_id"] == project_id
+        assert payload["pipeline"]["instantiated_from_workflow_id"] == workflow_v2["id"]
+        assert payload["pipeline"]["instantiated_from_workflow_version"] == 2
+        assert len(payload["jobs"]) == 3
+        assert [job["title"] for job in payload["jobs"]] == ["scope", "build", "verify"]
+        assert all(job["state"] == "ready" for job in payload["jobs"])
+        assert all(job["project_id"] == project_id for job in payload["jobs"])
+        assert all(
+            job["instantiated_from_step_id"] is not None
+            for job in payload["jobs"]
+        )
+        assert all(job["contract_profile_id"] == profile_id for job in payload["jobs"])
+
+    text_blocks = [
+        item["text"]
+        for item in mcp_result["content"]
+        if isinstance(item, dict) and item.get("type") == "text"
+    ]
+    assert len(text_blocks) == 1
+    assert "state='ready'" in text_blocks[0]
+    assert "claim_next_job" in text_blocks[0]
+    assert workflow_slug in text_blocks[0]
+
+    audit = _get_json(
+        f"{api_base_url}/audit",
+        api_key=founder_key,
+        params={"actor": founder_actor_id, "limit": 50},
+    )
+    instantiate_ops = [
+        row["op"] for row in audit["entries"] if row["op"] == "instantiate_pipeline"
+    ]
+    assert instantiate_ops.count("instantiate_pipeline") == 3
+
+    artifact = {
+        "workflow_v1": workflow_v1,
+        "workflow_v2": workflow_v2,
+        "projects": {
+            "rest": rest_project_response.json(),
+            "cli": cli_project,
+            "mcp": mcp_project,
+        },
+        "rest": rest_payload,
+        "cli": cli_payload,
+        "mcp": {
+            "structuredContent": mcp_payload,
+            "content": mcp_result["content"],
+        },
+        "audit": audit,
+    }
+    (artifact_dir / "instantiate-parity.txt").write_text(
         redact_evidence(_json_text(artifact)),
         encoding="utf-8",
     )

@@ -567,6 +567,25 @@ def pipeline_create(
     typer.echo(_post_auth("/pipelines", body, timeout, config))
 
 
+@pipeline_app.command("instantiate")
+def pipeline_instantiate(
+    workflow_slug: Annotated[str, typer.Option("--workflow")],
+    project_id: Annotated[str, typer.Option("--project")],
+    name: Annotated[str, typer.Option("--name")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Instantiate a Pipeline snapshot from the latest Workflow family version."""
+    typer.echo(
+        _post_auth(
+            f"/pipelines/from-workflow/{workflow_slug}",
+            {"project_id": project_id, "pipeline_name": name},
+            timeout,
+            config,
+        )
+    )
+
+
 @pipeline_app.command("list")
 def pipeline_list(
     timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,

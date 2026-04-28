@@ -1436,6 +1436,71 @@
         }
       }
     },
+    "/pipelines/from-workflow/{workflow_slug}": {
+      "post": {
+        "summary": "Instantiate Pipeline",
+        "operationId": "instantiate_pipeline_pipelines_from_workflow__workflow_slug__post",
+        "parameters": [
+          {
+            "name": "workflow_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workflow Slug"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstantiatePipelineRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstantiatePipelineResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/pipelines/{pipeline_id}": {
       "get": {
         "summary": "Get Pipeline",
@@ -2139,6 +2204,192 @@
           "timestamp"
         ],
         "title": "HealthStatus"
+      },
+      "InstantiatePipelineRequest": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id"
+          },
+          "pipeline_name": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Pipeline Name"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "project_id",
+          "pipeline_name"
+        ],
+        "title": "InstantiatePipelineRequest"
+      },
+      "InstantiatePipelineResponse": {
+        "properties": {
+          "pipeline": {
+            "$ref": "#/components/schemas/Pipeline"
+          },
+          "jobs": {
+            "items": {
+              "$ref": "#/components/schemas/Job"
+            },
+            "type": "array",
+            "title": "Jobs"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "pipeline",
+          "jobs"
+        ],
+        "title": "InstantiatePipelineResponse"
+      },
+      "Job": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "pipeline_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Pipeline Id"
+          },
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "ready",
+              "in_progress",
+              "done",
+              "failed",
+              "blocked",
+              "pending_review",
+              "cancelled"
+            ],
+            "title": "State"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16384
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "contract_profile_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Contract Profile Id"
+          },
+          "instantiated_from_step_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instantiated From Step Id"
+          },
+          "labels": {
+            "items": {
+              "type": "string",
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[a-z0-9][a-z0-9:_-]{0,127}$"
+            },
+            "type": "array",
+            "title": "Labels"
+          },
+          "claimed_by_actor_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claimed By Actor Id"
+          },
+          "claimed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claimed At"
+          },
+          "claim_heartbeat_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claim Heartbeat At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "created_by_actor_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By Actor Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "pipeline_id",
+          "project_id",
+          "state",
+          "title",
+          "contract_profile_id",
+          "created_at"
+        ],
+        "title": "Job"
       },
       "Label": {
         "properties": {

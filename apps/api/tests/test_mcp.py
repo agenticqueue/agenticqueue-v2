@@ -35,6 +35,7 @@ async def test_mcp_tools_return_shared_contract_payloads() -> None:
             "update_workflow",
             "archive_workflow",
             "create_pipeline",
+            "instantiate_pipeline",
             "list_pipelines",
             "get_pipeline",
             "update_pipeline",
@@ -86,6 +87,9 @@ async def test_mcp_tools_return_shared_contract_payloads() -> None:
         assert tool_by_name["create_pipeline"].annotations is not None
         assert tool_by_name["create_pipeline"].annotations.readOnlyHint is False
         assert tool_by_name["create_pipeline"].annotations.destructiveHint is False
+        assert tool_by_name["instantiate_pipeline"].annotations is not None
+        assert tool_by_name["instantiate_pipeline"].annotations.readOnlyHint is False
+        assert tool_by_name["instantiate_pipeline"].annotations.destructiveHint is False
         assert tool_by_name["list_pipelines"].annotations is not None
         assert tool_by_name["list_pipelines"].annotations.readOnlyHint is True
         assert tool_by_name["get_pipeline"].annotations is not None

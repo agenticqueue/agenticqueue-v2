@@ -12,12 +12,17 @@ from aq_api.models import (
     CreatePipelineRequest,
     CreatePipelineResponse,
     GetPipelineResponse,
+    InstantiatePipelineRequest,
+    InstantiatePipelineResponse,
     ListPipelinesResponse,
     UpdatePipelineResponse,
 )
 from aq_api.models.auth import AQModel
 from aq_api.models.db import Actor as DbActor
 from aq_api.models.pipelines import PipelineName
+from aq_api.services.instantiate import (
+    instantiate_pipeline as instantiate_pipeline_service,
+)
 from aq_api.services.pipelines import (
     InvalidPipelineCursorError,
     PipelineNotFoundError,
@@ -54,6 +59,27 @@ async def create_pipeline(
 ) -> CreatePipelineResponse | JSONResponse:
     try:
         return await create_pipeline_service(session, request, actor_id=actor.id)
+    except BusinessRuleException as exc:
+        return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)
+
+
+@router.post(
+    "/pipelines/from-workflow/{workflow_slug}",
+    response_model=InstantiatePipelineResponse,
+)
+async def instantiate_pipeline(
+    workflow_slug: str,
+    request: InstantiatePipelineRequest,
+    actor: AuthenticatedActor,
+    session: SessionDep,
+) -> InstantiatePipelineResponse | JSONResponse:
+    try:
+        return await instantiate_pipeline_service(
+            session,
+            workflow_slug,
+            request,
+            actor_id=actor.id,
+        )
     except BusinessRuleException as exc:
         return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)
 
