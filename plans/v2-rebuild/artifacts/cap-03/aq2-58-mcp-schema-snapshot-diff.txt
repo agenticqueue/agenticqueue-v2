@@ -1,0 +1,1233 @@
+diff --git a/tests/parity/mcp_schema.snapshot.json b/tests/parity/mcp_schema.snapshot.json
+index ee0c9f8..1c31f13 100644
+--- a/tests/parity/mcp_schema.snapshot.json
++++ b/tests/parity/mcp_schema.snapshot.json
+@@ -1371,49 +1371,19 @@
+         }
+       },
+       {
+-        "name": "create_workflow",
+-        "description": "Create Workflow v1 with an ordered set of step definitions.",
++        "name": "create_pipeline",
++        "description": "Create an ad-hoc Pipeline in a Project.",
+         "inputSchema": {
+           "properties": {
++            "project_id": {
++              "format": "uuid",
++              "type": "string"
++            },
+             "name": {
+               "maxLength": 256,
+               "minLength": 1,
+               "type": "string"
+             },
+-            "slug": {
+-              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+-              "type": "string"
+-            },
+-            "steps": {
+-              "items": {
+-                "properties": {
+-                  "name": {
+-                    "maxLength": 128,
+-                    "minLength": 1,
+-                    "type": "string"
+-                  },
+-                  "ordinal": {
+-                    "minimum": 1,
+-                    "type": "integer"
+-                  },
+-                  "default_contract_profile_id": {
+-                    "format": "uuid",
+-                    "type": "string"
+-                  },
+-                  "step_edges": {
+-                    "additionalProperties": true,
+-                    "type": "object"
+-                  }
+-                },
+-                "required": [
+-                  "name",
+-                  "ordinal",
+-                  "default_contract_profile_id"
+-                ],
+-                "type": "object"
+-              },
+-              "type": "array"
+-            },
+             "agent_identity": {
+               "anyOf": [
+                 {
+@@ -1430,22 +1400,21 @@
+             }
+           },
+           "required": [
+-            "name",
+-            "slug",
+-            "steps"
++            "project_id",
++            "name"
+           ],
+           "type": "object"
+         },
+         "outputSchema": {
+           "properties": {
+-            "workflow": {
++            "pipeline": {
+               "properties": {
+                 "id": {
+                   "format": "uuid",
+                   "type": "string"
+                 },
+-                "slug": {
+-                  "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
++                "project_id": {
++                  "format": "uuid",
+                   "type": "string"
+                 },
+                 "name": {
+@@ -1453,19 +1422,10 @@
+                   "minLength": 1,
+                   "type": "string"
+                 },
+-                "version": {
+-                  "minimum": 1,
+-                  "type": "integer"
+-                },
+-                "is_archived": {
+-                  "default": false,
++                "is_template": {
+                   "type": "boolean"
+                 },
+-                "created_at": {
+-                  "format": "date-time",
+-                  "type": "string"
+-                },
+-                "created_by_actor_id": {
++                "cloned_from_pipeline_id": {
+                   "anyOf": [
+                     {
+                       "format": "uuid",
+@@ -1477,10 +1437,10 @@
+                   ],
+                   "default": null
+                 },
+-                "supersedes_workflow_id": {
++                "archived_at": {
+                   "anyOf": [
+                     {
+-                      "format": "uuid",
++                      "format": "date-time",
+                       "type": "string"
+                     },
+                     {
+@@ -1489,59 +1449,35 @@
+                   ],
+                   "default": null
+                 },
+-                "steps": {
+-                  "items": {
+-                    "properties": {
+-                      "id": {
+-                        "format": "uuid",
+-                        "type": "string"
+-                      },
+-                      "workflow_id": {
+-                        "format": "uuid",
+-                        "type": "string"
+-                      },
+-                      "name": {
+-                        "maxLength": 128,
+-                        "minLength": 1,
+-                        "type": "string"
+-                      },
+-                      "ordinal": {
+-                        "minimum": 1,
+-                        "type": "integer"
+-                      },
+-                      "default_contract_profile_id": {
+-                        "format": "uuid",
+-                        "type": "string"
+-                      },
+-                      "step_edges": {
+-                        "additionalProperties": true,
+-                        "type": "object"
+-                      }
++                "created_at": {
++                  "format": "date-time",
++                  "type": "string"
++                },
++                "created_by_actor_id": {
++                  "anyOf": [
++                    {
++                      "format": "uuid",
++                      "type": "string"
+                     },
+-                    "required": [
+-                      "id",
+-                      "workflow_id",
+-                      "name",
+-                      "ordinal",
+-                      "default_contract_profile_id"
+-                    ],
+-                    "type": "object"
+-                  },
+-                  "type": "array"
++                    {
++                      "type": "null"
++                    }
++                  ],
++                  "default": null
+                 }
+               },
+               "required": [
+                 "id",
+-                "slug",
++                "project_id",
+                 "name",
+-                "version",
++                "is_template",
+                 "created_at"
+               ],
+               "type": "object"
+             }
+           },
+           "required": [
+-            "workflow"
++            "pipeline"
+           ],
+           "type": "object"
+         },
+@@ -1556,8 +1492,8 @@
+         }
+       },
+       {
+-        "name": "list_workflows",
+-        "description": "List Workflows with opaque cursor pagination. Archived Workflow versions are excluded unless include_archived is true.",
++        "name": "list_pipelines",
++        "description": "List Pipelines with opaque cursor pagination.",
+         "inputSchema": {
+           "properties": {
+             "limit": {
+@@ -1575,10 +1511,6 @@
+               ],
+               "default": null
+             },
+-            "include_archived": {
+-              "default": false,
+-              "type": "boolean"
+-            },
+             "agent_identity": {
+               "anyOf": [
+                 {
+@@ -1598,15 +1530,15 @@
+         },
+         "outputSchema": {
+           "properties": {
+-            "workflows": {
++            "pipelines": {
+               "items": {
+                 "properties": {
+                   "id": {
+                     "format": "uuid",
+                     "type": "string"
+                   },
+-                  "slug": {
+-                    "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
++                  "project_id": {
++                    "format": "uuid",
+                     "type": "string"
+                   },
+                   "name": {
+@@ -1614,19 +1546,10 @@
+                     "minLength": 1,
+                     "type": "string"
+                   },
+-                  "version": {
+-                    "minimum": 1,
+-                    "type": "integer"
+-                  },
+-                  "is_archived": {
+-                    "default": false,
++                  "is_template": {
+                     "type": "boolean"
+                   },
+-                  "created_at": {
+-                    "format": "date-time",
+-                    "type": "string"
+-                  },
+-                  "created_by_actor_id": {
++                  "cloned_from_pipeline_id": {
+                     "anyOf": [
+                       {
+                         "format": "uuid",
+@@ -1638,10 +1561,10 @@
+                     ],
+                     "default": null
+                   },
+-                  "supersedes_workflow_id": {
++                  "archived_at": {
+                     "anyOf": [
+                       {
+-                        "format": "uuid",
++                        "format": "date-time",
+                         "type": "string"
+                       },
+                       {
+@@ -1650,52 +1573,28 @@
+                     ],
+                     "default": null
+                   },
+-                  "steps": {
+-                    "items": {
+-                      "properties": {
+-                        "id": {
+-                          "format": "uuid",
+-                          "type": "string"
+-                        },
+-                        "workflow_id": {
+-                          "format": "uuid",
+-                          "type": "string"
+-                        },
+-                        "name": {
+-                          "maxLength": 128,
+-                          "minLength": 1,
+-                          "type": "string"
+-                        },
+-                        "ordinal": {
+-                          "minimum": 1,
+-                          "type": "integer"
+-                        },
+-                        "default_contract_profile_id": {
+-                          "format": "uuid",
+-                          "type": "string"
+-                        },
+-                        "step_edges": {
+-                          "additionalProperties": true,
+-                          "type": "object"
+-                        }
++                  "created_at": {
++                    "format": "date-time",
++                    "type": "string"
++                  },
++                  "created_by_actor_id": {
++                    "anyOf": [
++                      {
++                        "format": "uuid",
++                        "type": "string"
+                       },
+-                      "required": [
+-                        "id",
+-                        "workflow_id",
+-                        "name",
+-                        "ordinal",
+-                        "default_contract_profile_id"
+-                      ],
+-                      "type": "object"
+-                    },
+-                    "type": "array"
++                      {
++                        "type": "null"
++                      }
++                    ],
++                    "default": null
+                   }
+                 },
+                 "required": [
+                   "id",
+-                  "slug",
++                  "project_id",
+                   "name",
+-                  "version",
++                  "is_template",
+                   "created_at"
+                 ],
+                 "type": "object"
+@@ -1716,7 +1615,7 @@
+             }
+           },
+           "required": [
+-            "workflows"
++            "pipelines"
+           ],
+           "type": "object"
+         },
+@@ -1730,11 +1629,11 @@
+         }
+       },
+       {
+-        "name": "get_workflow",
+-        "description": "Return one Workflow version by UUID.",
++        "name": "get_pipeline",
++        "description": "Return one Pipeline by UUID.",
+         "inputSchema": {
+           "properties": {
+-            "workflow_id": {
++            "pipeline_id": {
+               "format": "uuid",
+               "type": "string"
+             },
+@@ -1754,20 +1653,20 @@
+             }
+           },
+           "required": [
+-            "workflow_id"
++            "pipeline_id"
+           ],
+           "type": "object"
+         },
+         "outputSchema": {
+           "properties": {
+-            "workflow": {
++            "pipeline": {
+               "properties": {
+                 "id": {
+                   "format": "uuid",
+                   "type": "string"
+                 },
+-                "slug": {
+-                  "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
++                "project_id": {
++                  "format": "uuid",
+                   "type": "string"
+                 },
+                 "name": {
+@@ -1775,19 +1674,10 @@
+                   "minLength": 1,
+                   "type": "string"
+                 },
+-                "version": {
+-                  "minimum": 1,
+-                  "type": "integer"
+-                },
+-                "is_archived": {
+-                  "default": false,
++                "is_template": {
+                   "type": "boolean"
+                 },
+-                "created_at": {
+-                  "format": "date-time",
+-                  "type": "string"
+-                },
+-                "created_by_actor_id": {
++                "cloned_from_pipeline_id": {
+                   "anyOf": [
+                     {
+                       "format": "uuid",
+@@ -1799,10 +1689,10 @@
+                   ],
+                   "default": null
+                 },
+-                "supersedes_workflow_id": {
++                "archived_at": {
+                   "anyOf": [
+                     {
+-                      "format": "uuid",
++                      "format": "date-time",
+                       "type": "string"
+                     },
+                     {
+@@ -1811,59 +1701,35 @@
+                   ],
+                   "default": null
+                 },
+-                "steps": {
+-                  "items": {
+-                    "properties": {
+-                      "id": {
+-                        "format": "uuid",
+-                        "type": "string"
+-                      },
+-                      "workflow_id": {
+-                        "format": "uuid",
+-                        "type": "string"
+-                      },
+-                      "name": {
+-                        "maxLength": 128,
+-                        "minLength": 1,
+-                        "type": "string"
+-                      },
+-                      "ordinal": {
+-                        "minimum": 1,
+-                        "type": "integer"
+-                      },
+-                      "default_contract_profile_id": {
+-                        "format": "uuid",
+-                        "type": "string"
+-                      },
+-                      "step_edges": {
+-                        "additionalProperties": true,
+-                        "type": "object"
+-                      }
++                "created_at": {
++                  "format": "date-time",
++                  "type": "string"
++                },
++                "created_by_actor_id": {
++                  "anyOf": [
++                    {
++                      "format": "uuid",
++                      "type": "string"
+                     },
+-                    "required": [
+-                      "id",
+-                      "workflow_id",
+-                      "name",
+-                      "ordinal",
+-                      "default_contract_profile_id"
+-                    ],
+-                    "type": "object"
+-                  },
+-                  "type": "array"
++                    {
++                      "type": "null"
++                    }
++                  ],
++                  "default": null
+                 }
+               },
+               "required": [
+                 "id",
+-                "slug",
++                "project_id",
+                 "name",
+-                "version",
++                "is_template",
+                 "created_at"
+               ],
+               "type": "object"
+             }
+           },
+           "required": [
+-            "workflow"
++            "pipeline"
+           ],
+           "type": "object"
+         },
+@@ -1877,11 +1743,11 @@
+         }
+       },
+       {
+-        "name": "update_workflow",
+-        "description": "Create the next Workflow version from a latest Workflow UUID. The prior row and prior steps are retained unchanged.",
++        "name": "update_pipeline",
++        "description": "Update mutable Pipeline metadata by UUID.",
+         "inputSchema": {
+           "properties": {
+-            "workflow_id": {
++            "pipeline_id": {
+               "format": "uuid",
+               "type": "string"
+             },
+@@ -1890,36 +1756,6 @@
+               "minLength": 1,
+               "type": "string"
+             },
+-            "steps": {
+-              "items": {
+-                "properties": {
+-                  "name": {
+-                    "maxLength": 128,
+-                    "minLength": 1,
+-                    "type": "string"
+-                  },
+-                  "ordinal": {
+-                    "minimum": 1,
+-                    "type": "integer"
+-                  },
+-                  "default_contract_profile_id": {
+-                    "format": "uuid",
+-                    "type": "string"
+-                  },
+-                  "step_edges": {
+-                    "additionalProperties": true,
+-                    "type": "object"
+-                  }
+-                },
+-                "required": [
+-                  "name",
+-                  "ordinal",
+-                  "default_contract_profile_id"
+-                ],
+-                "type": "object"
+-              },
+-              "type": "array"
+-            },
+             "agent_identity": {
+               "anyOf": [
+                 {
+@@ -1936,22 +1772,21 @@
+             }
+           },
+           "required": [
+-            "workflow_id",
+-            "name",
+-            "steps"
++            "pipeline_id",
++            "name"
+           ],
+           "type": "object"
+         },
+         "outputSchema": {
+           "properties": {
+-            "workflow": {
++            "pipeline": {
+               "properties": {
+                 "id": {
+                   "format": "uuid",
+                   "type": "string"
+                 },
+-                "slug": {
+-                  "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
++                "project_id": {
++                  "format": "uuid",
+                   "type": "string"
+                 },
+                 "name": {
+@@ -1959,19 +1794,10 @@
+                   "minLength": 1,
+                   "type": "string"
+                 },
+-                "version": {
+-                  "minimum": 1,
+-                  "type": "integer"
+-                },
+-                "is_archived": {
+-                  "default": false,
++                "is_template": {
+                   "type": "boolean"
+                 },
+-                "created_at": {
+-                  "format": "date-time",
+-                  "type": "string"
+-                },
+-                "created_by_actor_id": {
++                "cloned_from_pipeline_id": {
+                   "anyOf": [
+                     {
+                       "format": "uuid",
+@@ -1983,10 +1809,10 @@
+                   ],
+                   "default": null
+                 },
+-                "supersedes_workflow_id": {
++                "archived_at": {
+                   "anyOf": [
+                     {
+-                      "format": "uuid",
++                      "format": "date-time",
+                       "type": "string"
+                     },
+                     {
+@@ -1995,59 +1821,35 @@
+                   ],
+                   "default": null
+                 },
+-                "steps": {
+-                  "items": {
+-                    "properties": {
+-                      "id": {
+-                        "format": "uuid",
+-                        "type": "string"
+-                      },
+-                      "workflow_id": {
+-                        "format": "uuid",
+-                        "type": "string"
+-                      },
+-                      "name": {
+-                        "maxLength": 128,
+-                        "minLength": 1,
+-                        "type": "string"
+-                      },
+-                      "ordinal": {
+-                        "minimum": 1,
+-                        "type": "integer"
+-                      },
+-                      "default_contract_profile_id": {
+-                        "format": "uuid",
+-                        "type": "string"
+-                      },
+-                      "step_edges": {
+-                        "additionalProperties": true,
+-                        "type": "object"
+-                      }
++                "created_at": {
++                  "format": "date-time",
++                  "type": "string"
++                },
++                "created_by_actor_id": {
++                  "anyOf": [
++                    {
++                      "format": "uuid",
++                      "type": "string"
+                     },
+-                    "required": [
+-                      "id",
+-                      "workflow_id",
+-                      "name",
+-                      "ordinal",
+-                      "default_contract_profile_id"
+-                    ],
+-                    "type": "object"
+-                  },
+-                  "type": "array"
++                    {
++                      "type": "null"
++                    }
++                  ],
++                  "default": null
+                 }
+               },
+               "required": [
+                 "id",
+-                "slug",
++                "project_id",
+                 "name",
+-                "version",
++                "is_template",
+                 "created_at"
+               ],
+               "type": "object"
+             }
+           },
+           "required": [
+-            "workflow"
++            "pipeline"
+           ],
+           "type": "object"
+         },
+@@ -2062,68 +1864,12 @@
+         }
+       },
+       {
+-        "name": "archive_workflow",
+-        "description": "Archive every version in a Workflow slug family.",
++        "name": "clone_pipeline",
++        "description": "Clone a Pipeline and copy its Jobs as ready Jobs with the same contracts, labels, titles, and descriptions.",
+         "inputSchema": {
+           "properties": {
+-            "slug": {
+-              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+-              "type": "string"
+-            },
+-            "agent_identity": {
+-              "anyOf": [
+-                {
+-                  "maxLength": 200,
+-                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+-                  "type": "string"
+-                },
+-                {
+-                  "type": "null"
+-                }
+-              ],
+-              "default": null,
+-              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+-            }
+-          },
+-          "required": [
+-            "slug"
+-          ],
+-          "type": "object"
+-        },
+-        "outputSchema": {
+-          "properties": {
+-            "slug": {
+-              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+-              "type": "string"
+-            },
+-            "archived_count": {
+-              "minimum": 0,
+-              "type": "integer"
+-            }
+-          },
+-          "required": [
+-            "slug",
+-            "archived_count"
+-          ],
+-          "type": "object"
+-        },
+-        "annotations": {
+-          "readOnlyHint": false,
+-          "destructiveHint": true
+-        },
+-        "_meta": {
+-          "_fastmcp": {
+-            "tags": []
+-          }
+-        }
+-      },
+-      {
+-        "name": "create_pipeline",
+-        "description": "Create an ad-hoc Pipeline in a Project without a Workflow link.",
+-        "inputSchema": {
+-          "properties": {
+-            "project_id": {
+-              "format": "uuid",
++            "source_id": {
++              "format": "uuid",
+               "type": "string"
+             },
+             "name": {
+@@ -2147,7 +1893,7 @@
+             }
+           },
+           "required": [
+-            "project_id",
++            "source_id",
+             "name"
+           ],
+           "type": "object"
+@@ -2169,7 +1915,10 @@
+                   "minLength": 1,
+                   "type": "string"
+                 },
+-                "instantiated_from_workflow_id": {
++                "is_template": {
++                  "type": "boolean"
++                },
++                "cloned_from_pipeline_id": {
+                   "anyOf": [
+                     {
+                       "format": "uuid",
+@@ -2181,11 +1930,11 @@
+                   ],
+                   "default": null
+                 },
+-                "instantiated_from_workflow_version": {
++                "archived_at": {
+                   "anyOf": [
+                     {
+-                      "minimum": 1,
+-                      "type": "integer"
++                      "format": "date-time",
++                      "type": "string"
+                     },
+                     {
+                       "type": "null"
+@@ -2214,132 +1963,70 @@
+                 "id",
+                 "project_id",
+                 "name",
++                "is_template",
+                 "created_at"
+               ],
+               "type": "object"
+-            }
+-          },
+-          "required": [
+-            "pipeline"
+-          ],
+-          "type": "object"
+-        },
+-        "annotations": {
+-          "readOnlyHint": false,
+-          "destructiveHint": false
+-        },
+-        "_meta": {
+-          "_fastmcp": {
+-            "tags": []
+-          }
+-        }
+-      },
+-      {
+-        "name": "instantiate_pipeline",
+-        "description": "Instantiate a Pipeline snapshot from the latest non-archived Workflow slug family and create ready Jobs for each step.",
+-        "inputSchema": {
+-          "properties": {
+-            "workflow_slug": {
+-              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+-              "type": "string"
+-            },
+-            "project_id": {
+-              "format": "uuid",
+-              "type": "string"
+-            },
+-            "pipeline_name": {
+-              "maxLength": 256,
+-              "minLength": 1,
+-              "type": "string"
+-            },
+-            "agent_identity": {
+-              "anyOf": [
+-                {
+-                  "maxLength": 200,
+-                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+-                  "type": "string"
+-                },
+-                {
+-                  "type": "null"
+-                }
+-              ],
+-              "default": null,
+-              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+-            }
+-          },
+-          "required": [
+-            "workflow_slug",
+-            "project_id",
+-            "pipeline_name"
+-          ],
+-          "type": "object"
+-        },
+-        "annotations": {
+-          "readOnlyHint": false,
+-          "destructiveHint": false
+-        },
+-        "_meta": {
+-          "_fastmcp": {
+-            "tags": []
+-          }
+-        }
+-      },
+-      {
+-        "name": "list_pipelines",
+-        "description": "List Pipelines with opaque cursor pagination.",
+-        "inputSchema": {
+-          "properties": {
+-            "limit": {
+-              "default": 50,
+-              "type": "integer"
+             },
+-            "cursor": {
+-              "anyOf": [
+-                {
+-                  "type": "string"
+-                },
+-                {
+-                  "type": "null"
+-                }
+-              ],
+-              "default": null
+-            },
+-            "agent_identity": {
+-              "anyOf": [
+-                {
+-                  "maxLength": 200,
+-                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+-                  "type": "string"
+-                },
+-                {
+-                  "type": "null"
+-                }
+-              ],
+-              "default": null,
+-              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+-            }
+-          },
+-          "type": "object"
+-        },
+-        "outputSchema": {
+-          "properties": {
+-            "pipelines": {
++            "jobs": {
+               "items": {
+                 "properties": {
+                   "id": {
+                     "format": "uuid",
+                     "type": "string"
+                   },
++                  "pipeline_id": {
++                    "format": "uuid",
++                    "type": "string"
++                  },
+                   "project_id": {
+                     "format": "uuid",
+                     "type": "string"
+                   },
+-                  "name": {
+-                    "maxLength": 256,
++                  "state": {
++                    "enum": [
++                      "draft",
++                      "ready",
++                      "in_progress",
++                      "done",
++                      "failed",
++                      "blocked",
++                      "pending_review",
++                      "cancelled"
++                    ],
++                    "type": "string"
++                  },
++                  "title": {
++                    "maxLength": 512,
+                     "minLength": 1,
+                     "type": "string"
+                   },
+-                  "instantiated_from_workflow_id": {
++                  "description": {
++                    "anyOf": [
++                      {
++                        "maxLength": 16384,
++                        "type": "string"
++                      },
++                      {
++                        "type": "null"
++                      }
++                    ],
++                    "default": null
++                  },
++                  "contract": {
++                    "additionalProperties": true,
++                    "type": "object"
++                  },
++                  "labels": {
++                    "items": {
++                      "maxLength": 128,
++                      "minLength": 1,
++                      "pattern": "^[a-z0-9][a-z0-9:_-]{0,127}$",
++                      "type": "string"
++                    },
++                    "type": "array"
++                  },
++                  "claimed_by_actor_id": {
+                     "anyOf": [
+                       {
+                         "format": "uuid",
+@@ -2351,11 +2038,23 @@
+                     ],
+                     "default": null
+                   },
+-                  "instantiated_from_workflow_version": {
++                  "claimed_at": {
++                    "anyOf": [
++                      {
++                        "format": "date-time",
++                        "type": "string"
++                      },
++                      {
++                        "type": "null"
++                      }
++                    ],
++                    "default": null
++                  },
++                  "claim_heartbeat_at": {
+                     "anyOf": [
+                       {
+-                        "minimum": 1,
+-                        "type": "integer"
++                        "format": "date-time",
++                        "type": "string"
+                       },
+                       {
+                         "type": "null"
+@@ -2382,34 +2081,27 @@
+                 },
+                 "required": [
+                   "id",
++                  "pipeline_id",
+                   "project_id",
+-                  "name",
++                  "state",
++                  "title",
++                  "contract",
+                   "created_at"
+                 ],
+                 "type": "object"
+               },
+               "type": "array"
+-            },
+-            "next_cursor": {
+-              "anyOf": [
+-                {
+-                  "minLength": 1,
+-                  "type": "string"
+-                },
+-                {
+-                  "type": "null"
+-                }
+-              ],
+-              "default": null
+             }
+           },
+           "required": [
+-            "pipelines"
++            "pipeline",
++            "jobs"
+           ],
+           "type": "object"
+         },
+         "annotations": {
+-          "readOnlyHint": true
++          "readOnlyHint": false,
++          "destructiveHint": false
+         },
+         "_meta": {
+           "_fastmcp": {
+@@ -2418,8 +2110,8 @@
+         }
+       },
+       {
+-        "name": "get_pipeline",
+-        "description": "Return one Pipeline by UUID.",
++        "name": "archive_pipeline",
++        "description": "Archive a Pipeline by setting archived_at; Jobs are retained.",
+         "inputSchema": {
+           "properties": {
+             "pipeline_id": {
+@@ -2463,35 +2155,10 @@
+                   "minLength": 1,
+                   "type": "string"
+                 },
+-                "instantiated_from_workflow_id": {
+-                  "anyOf": [
+-                    {
+-                      "format": "uuid",
+-                      "type": "string"
+-                    },
+-                    {
+-                      "type": "null"
+-                    }
+-                  ],
+-                  "default": null
+-                },
+-                "instantiated_from_workflow_version": {
+-                  "anyOf": [
+-                    {
+-                      "minimum": 1,
+-                      "type": "integer"
+-                    },
+-                    {
+-                      "type": "null"
+-                    }
+-                  ],
+-                  "default": null
+-                },
+-                "created_at": {
+-                  "format": "date-time",
+-                  "type": "string"
++                "is_template": {
++                  "type": "boolean"
+                 },
+-                "created_by_actor_id": {
++                "cloned_from_pipeline_id": {
+                   "anyOf": [
+                     {
+                       "format": "uuid",
+@@ -2502,87 +2169,11 @@
+                     }
+                   ],
+                   "default": null
+-                }
+-              },
+-              "required": [
+-                "id",
+-                "project_id",
+-                "name",
+-                "created_at"
+-              ],
+-              "type": "object"
+-            }
+-          },
+-          "required": [
+-            "pipeline"
+-          ],
+-          "type": "object"
+-        },
+-        "annotations": {
+-          "readOnlyHint": true
+-        },
+-        "_meta": {
+-          "_fastmcp": {
+-            "tags": []
+-          }
+-        }
+-      },
+-      {
+-        "name": "update_pipeline",
+-        "description": "Update mutable Pipeline metadata by UUID.",
+-        "inputSchema": {
+-          "properties": {
+-            "pipeline_id": {
+-              "format": "uuid",
+-              "type": "string"
+-            },
+-            "name": {
+-              "maxLength": 256,
+-              "minLength": 1,
+-              "type": "string"
+-            },
+-            "agent_identity": {
+-              "anyOf": [
+-                {
+-                  "maxLength": 200,
+-                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+-                  "type": "string"
+-                },
+-                {
+-                  "type": "null"
+-                }
+-              ],
+-              "default": null,
+-              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+-            }
+-          },
+-          "required": [
+-            "pipeline_id",
+-            "name"
+-          ],
+-          "type": "object"
+-        },
+-        "outputSchema": {
+-          "properties": {
+-            "pipeline": {
+-              "properties": {
+-                "id": {
+-                  "format": "uuid",
+-                  "type": "string"
+                 },
+-                "project_id": {
+-                  "format": "uuid",
+-                  "type": "string"
+-                },
+-                "name": {
+-                  "maxLength": 256,
+-                  "minLength": 1,
+-                  "type": "string"
+-                },
+-                "instantiated_from_workflow_id": {
++                "archived_at": {
+                   "anyOf": [
+                     {
+-                      "format": "uuid",
++                      "format": "date-time",
+                       "type": "string"
+                     },
+                     {
+@@ -2591,18 +2182,6 @@
+                   ],
+                   "default": null
+                 },
+-                "instantiated_from_workflow_version": {
+-                  "anyOf": [
+-                    {
+-                      "minimum": 1,
+-                      "type": "integer"
+-                    },
+-                    {
+-                      "type": "null"
+-                    }
+-                  ],
+-                  "default": null
+-                },
+                 "created_at": {
+                   "format": "date-time",
+                   "type": "string"
+@@ -2624,6 +2203,7 @@
+                 "id",
+                 "project_id",
+                 "name",
++                "is_template",
+                 "created_at"
+               ],
+               "type": "object"
+@@ -2636,7 +2216,7 @@
+         },
+         "annotations": {
+           "readOnlyHint": false,
+-          "destructiveHint": false
++          "destructiveHint": true
+         },
+         "_meta": {
+           "_fastmcp": {

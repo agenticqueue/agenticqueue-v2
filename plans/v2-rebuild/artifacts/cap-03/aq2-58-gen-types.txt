@@ -1,0 +1,6 @@
+
+> @agenticqueue/web@0.1.0 gen:types D:\mmmmm\mmmmm-aq2.0\apps\web
+> openapi-typescript ../../tests/parity/openapi.snapshot.json -o app/types/api.ts
+
+✨ openapi-typescript 7.13.0
+🚀 ../../tests/parity/openapi.snapshot.json → app/types/api.ts [56.3ms]

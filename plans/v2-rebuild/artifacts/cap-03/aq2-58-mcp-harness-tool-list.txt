@@ -1,0 +1,5 @@
+
+tests\parity\mcp_harness.py:28:    "create_pipeline",
+tests\parity\mcp_harness.py:29:    "list_pipelines",
+tests\parity\mcp_harness.py:32:    "clone_pipeline",
+tests\parity\mcp_harness.py:33:    "archive_pipeline",

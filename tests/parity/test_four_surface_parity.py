@@ -218,6 +218,133 @@ def _insert_pipeline_job(project_id: str, actor_id: str, title: str) -> str:
     return str(job_row[0])
 
 
+def _insert_pipeline_for_listing(
+    project_id: str,
+    actor_id: str,
+    name: str,
+    *,
+    is_template: bool,
+) -> str:
+    with psycopg.connect(_direct_conninfo(), autocommit=True) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO pipelines
+                    (project_id, name, is_template, created_by_actor_id)
+                VALUES (%s, %s, %s, %s)
+                RETURNING id
+                """,
+                (project_id, name, is_template, actor_id),
+            )
+            row = cursor.fetchone()
+    assert row is not None
+    return str(row[0])
+
+
+def _create_pipeline_triplet(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    *,
+    label: str,
+    mcp_request_start: int,
+) -> dict[str, Any]:
+    suffix = uuid.uuid4().hex[:12]
+    auth = {"Authorization": f"Bearer {founder_key}"}
+
+    rest_project_response = httpx.post(
+        f"{api_base_url}/projects",
+        headers=auth,
+        json={
+            "name": f"REST {label} Project",
+            "slug": f"parity-rest-{label}-{suffix}",
+        },
+        timeout=10,
+    )
+    rest_project_response.raise_for_status()
+    rest_project = rest_project_response.json()
+
+    cli_project = _run_cli(
+        [
+            "project",
+            "create",
+            "--name",
+            f"CLI {label} Project",
+            "--slug",
+            f"parity-cli-{label}-{suffix}",
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+
+    mcp_project = _call_mcp_tool(
+        mcp_base_url,
+        "create_project",
+        mcp_request_start,
+        api_key=founder_key,
+        arguments={
+            "name": f"MCP {label} Project",
+            "slug": f"parity-mcp-{label}-{suffix}",
+            "agent_identity": f"parity-{label}",
+        },
+    )
+
+    rest_create_response = httpx.post(
+        f"{api_base_url}/pipelines",
+        headers=auth,
+        json={
+            "project_id": rest_project["project"]["id"],
+            "name": f"REST {label} Pipeline",
+        },
+        timeout=10,
+    )
+    rest_create_response.raise_for_status()
+    rest_pipeline = rest_create_response.json()
+
+    cli_pipeline = _run_cli(
+        [
+            "pipeline",
+            "create",
+            "--project",
+            cli_project["project"]["id"],
+            "--name",
+            f"CLI {label} Pipeline",
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+
+    mcp_pipeline = _call_mcp_tool(
+        mcp_base_url,
+        "create_pipeline",
+        mcp_request_start + 1,
+        api_key=founder_key,
+        arguments={
+            "project_id": mcp_project["project"]["id"],
+            "name": f"MCP {label} Pipeline",
+            "agent_identity": f"parity-{label}",
+        },
+    )
+
+    return {
+        "projects": {
+            "rest": rest_project,
+            "cli": cli_project,
+            "mcp": mcp_project,
+        },
+        "pipelines": {
+            "rest": rest_pipeline,
+            "cli": cli_pipeline,
+            "mcp": mcp_pipeline,
+        },
+        "pipeline_ids": {
+            "rest": rest_pipeline["pipeline"]["id"],
+            "cli": cli_pipeline["pipeline"]["id"],
+            "mcp": mcp_pipeline["pipeline"]["id"],
+        },
+    }
+
+
 def _pnpm_executable() -> str:
     executable = shutil.which("pnpm") or shutil.which("pnpm.cmd")
     if executable is None:
@@ -998,6 +1125,249 @@ def test_pipeline_ops_match_rest_cli_mcp_and_audit(
         "audit": audit,
     }
     (artifact_dir / "pipelines-parity.txt").write_text(
+        redact_evidence(_json_text(artifact)),
+        encoding="utf-8",
+    )
+
+
+def test_clone_pipeline_matches_rest_cli_mcp_and_audit(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    founder_actor_id: str,
+    artifact_dir: Path,
+    redact_evidence: Any,
+) -> None:
+    auth = {"Authorization": f"Bearer {founder_key}"}
+    fixture = _create_pipeline_triplet(
+        api_base_url,
+        mcp_base_url,
+        founder_key,
+        label="clone",
+        mcp_request_start=60,
+    )
+    pipeline_ids = fixture["pipeline_ids"]
+
+    rest_clone_response = httpx.post(
+        f"{api_base_url}/pipelines/{pipeline_ids['rest']}/clone",
+        headers=auth,
+        json={"name": "REST Clone Pipeline"},
+        timeout=10,
+    )
+    rest_clone_response.raise_for_status()
+    rest_clone = rest_clone_response.json()
+    cli_clone = _run_cli(
+        [
+            "pipeline",
+            "clone",
+            "--source-id",
+            pipeline_ids["cli"],
+            "--name",
+            "CLI Clone Pipeline",
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_clone = _call_mcp_tool(
+        mcp_base_url,
+        "clone_pipeline",
+        62,
+        api_key=founder_key,
+        arguments={
+            "source_id": pipeline_ids["mcp"],
+            "name": "MCP Clone Pipeline",
+            "agent_identity": "parity-clone",
+        },
+    )
+
+    for payload, source_id in (
+        (rest_clone, pipeline_ids["rest"]),
+        (cli_clone, pipeline_ids["cli"]),
+        (mcp_clone, pipeline_ids["mcp"]),
+    ):
+        assert payload["pipeline"]["is_template"] is False
+        assert payload["pipeline"]["cloned_from_pipeline_id"] == source_id
+        assert payload["pipeline"]["archived_at"] is None
+        assert payload["jobs"] == []
+
+    audit = _get_json(
+        f"{api_base_url}/audit",
+        api_key=founder_key,
+        params={"actor": founder_actor_id, "limit": 50},
+    )
+    clone_ops = [row["op"] for row in audit["entries"] if row["op"] == "clone_pipeline"]
+    assert len(clone_ops) == 3
+
+    artifact = {
+        "fixture": fixture,
+        "clones": {"rest": rest_clone, "cli": cli_clone, "mcp": mcp_clone},
+        "audit": audit,
+    }
+    (artifact_dir / "clone-pipeline-parity.txt").write_text(
+        redact_evidence(_json_text(artifact)),
+        encoding="utf-8",
+    )
+
+
+def test_template_pipeline_is_excluded_from_default_pipeline_lists(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    founder_actor_id: str,
+    artifact_dir: Path,
+    redact_evidence: Any,
+) -> None:
+    suffix = uuid.uuid4().hex[:12]
+    auth = {"Authorization": f"Bearer {founder_key}"}
+    project_response = httpx.post(
+        f"{api_base_url}/projects",
+        headers=auth,
+        json={
+            "name": "Template List Project",
+            "slug": f"parity-template-{suffix}",
+        },
+        timeout=10,
+    )
+    project_response.raise_for_status()
+    project = project_response.json()["project"]
+    project_id = project["id"]
+    visible_pipeline_id = _insert_pipeline_for_listing(
+        project_id,
+        founder_actor_id,
+        "Visible Pipeline",
+        is_template=False,
+    )
+    template_pipeline_id = _insert_pipeline_for_listing(
+        project_id,
+        founder_actor_id,
+        "Hidden Template Pipeline",
+        is_template=True,
+    )
+
+    rest_list = _get_json(
+        f"{api_base_url}/pipelines",
+        api_key=founder_key,
+        params={"limit": 200},
+    )
+    cli_list = _run_cli(
+        ["pipeline", "list", "--limit", "200"],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_list = _call_mcp_tool(
+        mcp_base_url,
+        "list_pipelines",
+        70,
+        api_key=founder_key,
+        arguments={"limit": 200, "agent_identity": "parity-template"},
+    )
+
+    for page in (rest_list, cli_list, mcp_list):
+        listed_ids = {pipeline["id"] for pipeline in page["pipelines"]}
+        assert visible_pipeline_id in listed_ids
+        assert template_pipeline_id not in listed_ids
+
+    artifact = {
+        "project": project,
+        "visible_pipeline_id": visible_pipeline_id,
+        "template_pipeline_id": template_pipeline_id,
+        "lists": {"rest": rest_list, "cli": cli_list, "mcp": mcp_list},
+    }
+    (artifact_dir / "template-pipeline-parity.txt").write_text(
+        redact_evidence(_json_text(artifact)),
+        encoding="utf-8",
+    )
+
+
+def test_archive_pipeline_matches_rest_cli_mcp_and_audit(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    founder_actor_id: str,
+    artifact_dir: Path,
+    redact_evidence: Any,
+) -> None:
+    auth = {"Authorization": f"Bearer {founder_key}"}
+    fixture = _create_pipeline_triplet(
+        api_base_url,
+        mcp_base_url,
+        founder_key,
+        label="archive",
+        mcp_request_start=80,
+    )
+    pipeline_ids = fixture["pipeline_ids"]
+
+    rest_archive_response = httpx.post(
+        f"{api_base_url}/pipelines/{pipeline_ids['rest']}/archive",
+        headers=auth,
+        timeout=10,
+    )
+    rest_archive_response.raise_for_status()
+    rest_archive = rest_archive_response.json()
+    cli_archive = _run_cli(
+        ["pipeline", "archive", pipeline_ids["cli"]],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_archive = _call_mcp_tool(
+        mcp_base_url,
+        "archive_pipeline",
+        82,
+        api_key=founder_key,
+        arguments={
+            "pipeline_id": pipeline_ids["mcp"],
+            "agent_identity": "parity-archive",
+        },
+    )
+
+    for payload, pipeline_id in (
+        (rest_archive, pipeline_ids["rest"]),
+        (cli_archive, pipeline_ids["cli"]),
+        (mcp_archive, pipeline_ids["mcp"]),
+    ):
+        assert payload["pipeline"]["id"] == pipeline_id
+        assert payload["pipeline"]["archived_at"] is not None
+
+    rest_list = _get_json(
+        f"{api_base_url}/pipelines",
+        api_key=founder_key,
+        params={"limit": 200},
+    )
+    cli_list = _run_cli(
+        ["pipeline", "list", "--limit", "200"],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_list = _call_mcp_tool(
+        mcp_base_url,
+        "list_pipelines",
+        83,
+        api_key=founder_key,
+        arguments={"limit": 200, "agent_identity": "parity-archive"},
+    )
+    archived_ids = set(pipeline_ids.values())
+    for page in (rest_list, cli_list, mcp_list):
+        assert archived_ids.isdisjoint(
+            {pipeline["id"] for pipeline in page["pipelines"]}
+        )
+
+    audit = _get_json(
+        f"{api_base_url}/audit",
+        api_key=founder_key,
+        params={"actor": founder_actor_id, "limit": 50},
+    )
+    archive_ops = [
+        row["op"] for row in audit["entries"] if row["op"] == "archive_pipeline"
+    ]
+    assert len(archive_ops) == 3
+
+    artifact = {
+        "fixture": fixture,
+        "archives": {"rest": rest_archive, "cli": cli_archive, "mcp": mcp_archive},
+        "lists": {"rest": rest_list, "cli": cli_list, "mcp": mcp_list},
+        "audit": audit,
+    }
+    (artifact_dir / "archive-pipeline-parity.txt").write_text(
         redact_evidence(_json_text(artifact)),
         encoding="utf-8",
     )

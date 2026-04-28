@@ -1371,755 +1371,8 @@
         }
       },
       {
-        "name": "create_workflow",
-        "description": "Create Workflow v1 with an ordered set of step definitions.",
-        "inputSchema": {
-          "properties": {
-            "name": {
-              "maxLength": 256,
-              "minLength": 1,
-              "type": "string"
-            },
-            "slug": {
-              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
-              "type": "string"
-            },
-            "steps": {
-              "items": {
-                "properties": {
-                  "name": {
-                    "maxLength": 128,
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  "ordinal": {
-                    "minimum": 1,
-                    "type": "integer"
-                  },
-                  "default_contract_profile_id": {
-                    "format": "uuid",
-                    "type": "string"
-                  },
-                  "step_edges": {
-                    "additionalProperties": true,
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "name",
-                  "ordinal",
-                  "default_contract_profile_id"
-                ],
-                "type": "object"
-              },
-              "type": "array"
-            },
-            "agent_identity": {
-              "anyOf": [
-                {
-                  "maxLength": 200,
-                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null,
-              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
-            }
-          },
-          "required": [
-            "name",
-            "slug",
-            "steps"
-          ],
-          "type": "object"
-        },
-        "outputSchema": {
-          "properties": {
-            "workflow": {
-              "properties": {
-                "id": {
-                  "format": "uuid",
-                  "type": "string"
-                },
-                "slug": {
-                  "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
-                  "type": "string"
-                },
-                "name": {
-                  "maxLength": 256,
-                  "minLength": 1,
-                  "type": "string"
-                },
-                "version": {
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "is_archived": {
-                  "default": false,
-                  "type": "boolean"
-                },
-                "created_at": {
-                  "format": "date-time",
-                  "type": "string"
-                },
-                "created_by_actor_id": {
-                  "anyOf": [
-                    {
-                      "format": "uuid",
-                      "type": "string"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "default": null
-                },
-                "supersedes_workflow_id": {
-                  "anyOf": [
-                    {
-                      "format": "uuid",
-                      "type": "string"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "default": null
-                },
-                "steps": {
-                  "items": {
-                    "properties": {
-                      "id": {
-                        "format": "uuid",
-                        "type": "string"
-                      },
-                      "workflow_id": {
-                        "format": "uuid",
-                        "type": "string"
-                      },
-                      "name": {
-                        "maxLength": 128,
-                        "minLength": 1,
-                        "type": "string"
-                      },
-                      "ordinal": {
-                        "minimum": 1,
-                        "type": "integer"
-                      },
-                      "default_contract_profile_id": {
-                        "format": "uuid",
-                        "type": "string"
-                      },
-                      "step_edges": {
-                        "additionalProperties": true,
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "workflow_id",
-                      "name",
-                      "ordinal",
-                      "default_contract_profile_id"
-                    ],
-                    "type": "object"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "id",
-                "slug",
-                "name",
-                "version",
-                "created_at"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "workflow"
-          ],
-          "type": "object"
-        },
-        "annotations": {
-          "readOnlyHint": false,
-          "destructiveHint": false
-        },
-        "_meta": {
-          "_fastmcp": {
-            "tags": []
-          }
-        }
-      },
-      {
-        "name": "list_workflows",
-        "description": "List Workflows with opaque cursor pagination. Archived Workflow versions are excluded unless include_archived is true.",
-        "inputSchema": {
-          "properties": {
-            "limit": {
-              "default": 50,
-              "type": "integer"
-            },
-            "cursor": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null
-            },
-            "include_archived": {
-              "default": false,
-              "type": "boolean"
-            },
-            "agent_identity": {
-              "anyOf": [
-                {
-                  "maxLength": 200,
-                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null,
-              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
-            }
-          },
-          "type": "object"
-        },
-        "outputSchema": {
-          "properties": {
-            "workflows": {
-              "items": {
-                "properties": {
-                  "id": {
-                    "format": "uuid",
-                    "type": "string"
-                  },
-                  "slug": {
-                    "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
-                    "type": "string"
-                  },
-                  "name": {
-                    "maxLength": 256,
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  "version": {
-                    "minimum": 1,
-                    "type": "integer"
-                  },
-                  "is_archived": {
-                    "default": false,
-                    "type": "boolean"
-                  },
-                  "created_at": {
-                    "format": "date-time",
-                    "type": "string"
-                  },
-                  "created_by_actor_id": {
-                    "anyOf": [
-                      {
-                        "format": "uuid",
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "default": null
-                  },
-                  "supersedes_workflow_id": {
-                    "anyOf": [
-                      {
-                        "format": "uuid",
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "default": null
-                  },
-                  "steps": {
-                    "items": {
-                      "properties": {
-                        "id": {
-                          "format": "uuid",
-                          "type": "string"
-                        },
-                        "workflow_id": {
-                          "format": "uuid",
-                          "type": "string"
-                        },
-                        "name": {
-                          "maxLength": 128,
-                          "minLength": 1,
-                          "type": "string"
-                        },
-                        "ordinal": {
-                          "minimum": 1,
-                          "type": "integer"
-                        },
-                        "default_contract_profile_id": {
-                          "format": "uuid",
-                          "type": "string"
-                        },
-                        "step_edges": {
-                          "additionalProperties": true,
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "workflow_id",
-                        "name",
-                        "ordinal",
-                        "default_contract_profile_id"
-                      ],
-                      "type": "object"
-                    },
-                    "type": "array"
-                  }
-                },
-                "required": [
-                  "id",
-                  "slug",
-                  "name",
-                  "version",
-                  "created_at"
-                ],
-                "type": "object"
-              },
-              "type": "array"
-            },
-            "next_cursor": {
-              "anyOf": [
-                {
-                  "minLength": 1,
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null
-            }
-          },
-          "required": [
-            "workflows"
-          ],
-          "type": "object"
-        },
-        "annotations": {
-          "readOnlyHint": true
-        },
-        "_meta": {
-          "_fastmcp": {
-            "tags": []
-          }
-        }
-      },
-      {
-        "name": "get_workflow",
-        "description": "Return one Workflow version by UUID.",
-        "inputSchema": {
-          "properties": {
-            "workflow_id": {
-              "format": "uuid",
-              "type": "string"
-            },
-            "agent_identity": {
-              "anyOf": [
-                {
-                  "maxLength": 200,
-                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null,
-              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
-            }
-          },
-          "required": [
-            "workflow_id"
-          ],
-          "type": "object"
-        },
-        "outputSchema": {
-          "properties": {
-            "workflow": {
-              "properties": {
-                "id": {
-                  "format": "uuid",
-                  "type": "string"
-                },
-                "slug": {
-                  "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
-                  "type": "string"
-                },
-                "name": {
-                  "maxLength": 256,
-                  "minLength": 1,
-                  "type": "string"
-                },
-                "version": {
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "is_archived": {
-                  "default": false,
-                  "type": "boolean"
-                },
-                "created_at": {
-                  "format": "date-time",
-                  "type": "string"
-                },
-                "created_by_actor_id": {
-                  "anyOf": [
-                    {
-                      "format": "uuid",
-                      "type": "string"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "default": null
-                },
-                "supersedes_workflow_id": {
-                  "anyOf": [
-                    {
-                      "format": "uuid",
-                      "type": "string"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "default": null
-                },
-                "steps": {
-                  "items": {
-                    "properties": {
-                      "id": {
-                        "format": "uuid",
-                        "type": "string"
-                      },
-                      "workflow_id": {
-                        "format": "uuid",
-                        "type": "string"
-                      },
-                      "name": {
-                        "maxLength": 128,
-                        "minLength": 1,
-                        "type": "string"
-                      },
-                      "ordinal": {
-                        "minimum": 1,
-                        "type": "integer"
-                      },
-                      "default_contract_profile_id": {
-                        "format": "uuid",
-                        "type": "string"
-                      },
-                      "step_edges": {
-                        "additionalProperties": true,
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "workflow_id",
-                      "name",
-                      "ordinal",
-                      "default_contract_profile_id"
-                    ],
-                    "type": "object"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "id",
-                "slug",
-                "name",
-                "version",
-                "created_at"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "workflow"
-          ],
-          "type": "object"
-        },
-        "annotations": {
-          "readOnlyHint": true
-        },
-        "_meta": {
-          "_fastmcp": {
-            "tags": []
-          }
-        }
-      },
-      {
-        "name": "update_workflow",
-        "description": "Create the next Workflow version from a latest Workflow UUID. The prior row and prior steps are retained unchanged.",
-        "inputSchema": {
-          "properties": {
-            "workflow_id": {
-              "format": "uuid",
-              "type": "string"
-            },
-            "name": {
-              "maxLength": 256,
-              "minLength": 1,
-              "type": "string"
-            },
-            "steps": {
-              "items": {
-                "properties": {
-                  "name": {
-                    "maxLength": 128,
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  "ordinal": {
-                    "minimum": 1,
-                    "type": "integer"
-                  },
-                  "default_contract_profile_id": {
-                    "format": "uuid",
-                    "type": "string"
-                  },
-                  "step_edges": {
-                    "additionalProperties": true,
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "name",
-                  "ordinal",
-                  "default_contract_profile_id"
-                ],
-                "type": "object"
-              },
-              "type": "array"
-            },
-            "agent_identity": {
-              "anyOf": [
-                {
-                  "maxLength": 200,
-                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null,
-              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
-            }
-          },
-          "required": [
-            "workflow_id",
-            "name",
-            "steps"
-          ],
-          "type": "object"
-        },
-        "outputSchema": {
-          "properties": {
-            "workflow": {
-              "properties": {
-                "id": {
-                  "format": "uuid",
-                  "type": "string"
-                },
-                "slug": {
-                  "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
-                  "type": "string"
-                },
-                "name": {
-                  "maxLength": 256,
-                  "minLength": 1,
-                  "type": "string"
-                },
-                "version": {
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "is_archived": {
-                  "default": false,
-                  "type": "boolean"
-                },
-                "created_at": {
-                  "format": "date-time",
-                  "type": "string"
-                },
-                "created_by_actor_id": {
-                  "anyOf": [
-                    {
-                      "format": "uuid",
-                      "type": "string"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "default": null
-                },
-                "supersedes_workflow_id": {
-                  "anyOf": [
-                    {
-                      "format": "uuid",
-                      "type": "string"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "default": null
-                },
-                "steps": {
-                  "items": {
-                    "properties": {
-                      "id": {
-                        "format": "uuid",
-                        "type": "string"
-                      },
-                      "workflow_id": {
-                        "format": "uuid",
-                        "type": "string"
-                      },
-                      "name": {
-                        "maxLength": 128,
-                        "minLength": 1,
-                        "type": "string"
-                      },
-                      "ordinal": {
-                        "minimum": 1,
-                        "type": "integer"
-                      },
-                      "default_contract_profile_id": {
-                        "format": "uuid",
-                        "type": "string"
-                      },
-                      "step_edges": {
-                        "additionalProperties": true,
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "workflow_id",
-                      "name",
-                      "ordinal",
-                      "default_contract_profile_id"
-                    ],
-                    "type": "object"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "id",
-                "slug",
-                "name",
-                "version",
-                "created_at"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "workflow"
-          ],
-          "type": "object"
-        },
-        "annotations": {
-          "readOnlyHint": false,
-          "destructiveHint": false
-        },
-        "_meta": {
-          "_fastmcp": {
-            "tags": []
-          }
-        }
-      },
-      {
-        "name": "archive_workflow",
-        "description": "Archive every version in a Workflow slug family.",
-        "inputSchema": {
-          "properties": {
-            "slug": {
-              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
-              "type": "string"
-            },
-            "agent_identity": {
-              "anyOf": [
-                {
-                  "maxLength": 200,
-                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null,
-              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
-            }
-          },
-          "required": [
-            "slug"
-          ],
-          "type": "object"
-        },
-        "outputSchema": {
-          "properties": {
-            "slug": {
-              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
-              "type": "string"
-            },
-            "archived_count": {
-              "minimum": 0,
-              "type": "integer"
-            }
-          },
-          "required": [
-            "slug",
-            "archived_count"
-          ],
-          "type": "object"
-        },
-        "annotations": {
-          "readOnlyHint": false,
-          "destructiveHint": true
-        },
-        "_meta": {
-          "_fastmcp": {
-            "tags": []
-          }
-        }
-      },
-      {
         "name": "create_pipeline",
-        "description": "Create an ad-hoc Pipeline in a Project without a Workflow link.",
+        "description": "Create an ad-hoc Pipeline in a Project.",
         "inputSchema": {
           "properties": {
             "project_id": {
@@ -2169,7 +1422,10 @@
                   "minLength": 1,
                   "type": "string"
                 },
-                "instantiated_from_workflow_id": {
+                "is_template": {
+                  "type": "boolean"
+                },
+                "cloned_from_pipeline_id": {
                   "anyOf": [
                     {
                       "format": "uuid",
@@ -2181,11 +1437,11 @@
                   ],
                   "default": null
                 },
-                "instantiated_from_workflow_version": {
+                "archived_at": {
                   "anyOf": [
                     {
-                      "minimum": 1,
-                      "type": "integer"
+                      "format": "date-time",
+                      "type": "string"
                     },
                     {
                       "type": "null"
@@ -2214,6 +1470,7 @@
                 "id",
                 "project_id",
                 "name",
+                "is_template",
                 "created_at"
               ],
               "type": "object"
@@ -2221,56 +1478,6 @@
           },
           "required": [
             "pipeline"
-          ],
-          "type": "object"
-        },
-        "annotations": {
-          "readOnlyHint": false,
-          "destructiveHint": false
-        },
-        "_meta": {
-          "_fastmcp": {
-            "tags": []
-          }
-        }
-      },
-      {
-        "name": "instantiate_pipeline",
-        "description": "Instantiate a Pipeline snapshot from the latest non-archived Workflow slug family and create ready Jobs for each step.",
-        "inputSchema": {
-          "properties": {
-            "workflow_slug": {
-              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
-              "type": "string"
-            },
-            "project_id": {
-              "format": "uuid",
-              "type": "string"
-            },
-            "pipeline_name": {
-              "maxLength": 256,
-              "minLength": 1,
-              "type": "string"
-            },
-            "agent_identity": {
-              "anyOf": [
-                {
-                  "maxLength": 200,
-                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null,
-              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
-            }
-          },
-          "required": [
-            "workflow_slug",
-            "project_id",
-            "pipeline_name"
           ],
           "type": "object"
         },
@@ -2339,7 +1546,10 @@
                     "minLength": 1,
                     "type": "string"
                   },
-                  "instantiated_from_workflow_id": {
+                  "is_template": {
+                    "type": "boolean"
+                  },
+                  "cloned_from_pipeline_id": {
                     "anyOf": [
                       {
                         "format": "uuid",
@@ -2351,11 +1561,11 @@
                     ],
                     "default": null
                   },
-                  "instantiated_from_workflow_version": {
+                  "archived_at": {
                     "anyOf": [
                       {
-                        "minimum": 1,
-                        "type": "integer"
+                        "format": "date-time",
+                        "type": "string"
                       },
                       {
                         "type": "null"
@@ -2384,6 +1594,7 @@
                   "id",
                   "project_id",
                   "name",
+                  "is_template",
                   "created_at"
                 ],
                 "type": "object"
@@ -2463,7 +1674,10 @@
                   "minLength": 1,
                   "type": "string"
                 },
-                "instantiated_from_workflow_id": {
+                "is_template": {
+                  "type": "boolean"
+                },
+                "cloned_from_pipeline_id": {
                   "anyOf": [
                     {
                       "format": "uuid",
@@ -2475,11 +1689,11 @@
                   ],
                   "default": null
                 },
-                "instantiated_from_workflow_version": {
+                "archived_at": {
                   "anyOf": [
                     {
-                      "minimum": 1,
-                      "type": "integer"
+                      "format": "date-time",
+                      "type": "string"
                     },
                     {
                       "type": "null"
@@ -2508,6 +1722,7 @@
                 "id",
                 "project_id",
                 "name",
+                "is_template",
                 "created_at"
               ],
               "type": "object"
@@ -2579,7 +1794,10 @@
                   "minLength": 1,
                   "type": "string"
                 },
-                "instantiated_from_workflow_id": {
+                "is_template": {
+                  "type": "boolean"
+                },
+                "cloned_from_pipeline_id": {
                   "anyOf": [
                     {
                       "format": "uuid",
@@ -2591,11 +1809,11 @@
                   ],
                   "default": null
                 },
-                "instantiated_from_workflow_version": {
+                "archived_at": {
                   "anyOf": [
                     {
-                      "minimum": 1,
-                      "type": "integer"
+                      "format": "date-time",
+                      "type": "string"
                     },
                     {
                       "type": "null"
@@ -2624,6 +1842,7 @@
                 "id",
                 "project_id",
                 "name",
+                "is_template",
                 "created_at"
               ],
               "type": "object"
@@ -2637,6 +1856,367 @@
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        }
+      },
+      {
+        "name": "clone_pipeline",
+        "description": "Clone a Pipeline and copy its Jobs as ready Jobs with the same contracts, labels, titles, and descriptions.",
+        "inputSchema": {
+          "properties": {
+            "source_id": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "name": {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            "agent_identity": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+            }
+          },
+          "required": [
+            "source_id",
+            "name"
+          ],
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "pipeline": {
+              "properties": {
+                "id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "project_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "name": {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "is_template": {
+                  "type": "boolean"
+                },
+                "cloned_from_pipeline_id": {
+                  "anyOf": [
+                    {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "archived_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "created_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "created_by_actor_id": {
+                  "anyOf": [
+                    {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "id",
+                "project_id",
+                "name",
+                "is_template",
+                "created_at"
+              ],
+              "type": "object"
+            },
+            "jobs": {
+              "items": {
+                "properties": {
+                  "id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "pipeline_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "project_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "state": {
+                    "enum": [
+                      "draft",
+                      "ready",
+                      "in_progress",
+                      "done",
+                      "failed",
+                      "blocked",
+                      "pending_review",
+                      "cancelled"
+                    ],
+                    "type": "string"
+                  },
+                  "title": {
+                    "maxLength": 512,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "description": {
+                    "anyOf": [
+                      {
+                        "maxLength": 16384,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null
+                  },
+                  "contract": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "labels": {
+                    "items": {
+                      "maxLength": 128,
+                      "minLength": 1,
+                      "pattern": "^[a-z0-9][a-z0-9:_-]{0,127}$",
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "claimed_by_actor_id": {
+                    "anyOf": [
+                      {
+                        "format": "uuid",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null
+                  },
+                  "claimed_at": {
+                    "anyOf": [
+                      {
+                        "format": "date-time",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null
+                  },
+                  "claim_heartbeat_at": {
+                    "anyOf": [
+                      {
+                        "format": "date-time",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null
+                  },
+                  "created_at": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "created_by_actor_id": {
+                    "anyOf": [
+                      {
+                        "format": "uuid",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null
+                  }
+                },
+                "required": [
+                  "id",
+                  "pipeline_id",
+                  "project_id",
+                  "state",
+                  "title",
+                  "contract",
+                  "created_at"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "pipeline",
+            "jobs"
+          ],
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        }
+      },
+      {
+        "name": "archive_pipeline",
+        "description": "Archive a Pipeline by setting archived_at; Jobs are retained.",
+        "inputSchema": {
+          "properties": {
+            "pipeline_id": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "agent_identity": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+            }
+          },
+          "required": [
+            "pipeline_id"
+          ],
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "pipeline": {
+              "properties": {
+                "id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "project_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "name": {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "is_template": {
+                  "type": "boolean"
+                },
+                "cloned_from_pipeline_id": {
+                  "anyOf": [
+                    {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "archived_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "created_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "created_by_actor_id": {
+                  "anyOf": [
+                    {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "id",
+                "project_id",
+                "name",
+                "is_template",
+                "created_at"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "pipeline"
+          ],
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true
         },
         "_meta": {
           "_fastmcp": {
