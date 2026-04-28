@@ -1,0 +1,7 @@
+$ docker compose exec -T api uv run mypy --strict apps/api/src/aq_api/
+Bytecode compiled 4121 files in 137ms
+Success: no issues found in 38 source files
+
+$ docker compose exec -T api uv run ruff check apps/api apps/cli
+Bytecode compiled 4121 files in 182ms
+All checks passed!

@@ -110,7 +110,8 @@ def test_setup_posts_and_writes_redacted_cli_summary(
     config_path = tmp_path / "config.toml"
     body = (
         '{"actor_id":"11111111-1111-4111-8111-111111111111",'
-        '"founder_key":"aq2_founder_contract_test_key"}'
+        '"founder_key":"aq2_founder_contract_test_key",'
+        '"bootstrap_project_id":"44444444-4444-4444-8444-444444444444"}'
     )
     calls: list[tuple[str, dict[str, object], float]] = []
 
@@ -523,8 +524,8 @@ def test_pipeline_create_and_list_use_expected_payloads(
     body = (
         '{"pipeline":{"id":"77777777-7777-4777-8777-777777777777",'
         '"project_id":"44444444-4444-4444-8444-444444444444",'
-        '"name":"hotfix-2026-04-28","instantiated_from_workflow_id":null,'
-        '"instantiated_from_workflow_version":null,'
+        '"name":"hotfix-2026-04-28","is_template":false,'
+        '"cloned_from_pipeline_id":null,"archived_at":null,'
         '"created_at":"2026-04-27T01:00:00Z",'
         '"created_by_actor_id":"11111111-1111-4111-8111-111111111111"}}'
     )
@@ -609,8 +610,8 @@ def test_pipeline_get_and_update_use_expected_paths(
     body = (
         '{"pipeline":{"id":"77777777-7777-4777-8777-777777777777",'
         '"project_id":"44444444-4444-4444-8444-444444444444",'
-        '"name":"hotfix-2026-04-28","instantiated_from_workflow_id":null,'
-        '"instantiated_from_workflow_version":null,'
+        '"name":"hotfix-2026-04-28","is_template":false,'
+        '"cloned_from_pipeline_id":null,"archived_at":null,'
         '"created_at":"2026-04-27T01:00:00Z",'
         '"created_by_actor_id":"11111111-1111-4111-8111-111111111111"}}'
     )
@@ -664,29 +665,37 @@ def test_pipeline_get_and_update_use_expected_paths(
     ]
 
 
-def test_pipeline_instantiate_uses_expected_path_and_payload(
+def test_pipeline_clone_and_archive_use_expected_paths(
     monkeypatch: MonkeyPatch,
 ) -> None:
-    project_id = "44444444-4444-4444-8444-444444444444"
-    workflow_slug = "ship-a-thing"
+    source_id = "77777777-7777-4777-8777-777777777777"
+    clone_id = "88888888-8888-4888-8888-888888888888"
     body = (
-        '{"pipeline":{"id":"77777777-7777-4777-8777-777777777777",'
+        '{"pipeline":{"id":"88888888-8888-4888-8888-888888888888",'
         '"project_id":"44444444-4444-4444-8444-444444444444",'
-        '"name":"fix-the-thing","instantiated_from_workflow_id":'
-        '"88888888-8888-4888-8888-888888888888",'
-        '"instantiated_from_workflow_version":2,'
+        '"name":"customer-ship","is_template":false,'
+        '"cloned_from_pipeline_id":"77777777-7777-4777-8777-777777777777",'
+        '"archived_at":null,'
         '"created_at":"2026-04-27T01:00:00Z",'
         '"created_by_actor_id":"11111111-1111-4111-8111-111111111111"},'
         '"jobs":[{"id":"99999999-9999-4999-8999-999999999999",'
-        '"pipeline_id":"77777777-7777-4777-8777-777777777777",'
+        '"pipeline_id":"88888888-8888-4888-8888-888888888888",'
         '"project_id":"44444444-4444-4444-8444-444444444444",'
         '"state":"ready","title":"scope","description":null,'
-        '"contract_profile_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",'
-        '"instantiated_from_step_id":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",'
+        '"contract":{"contract_type":"scoping","dod_items":[{"id":"scope"}]},'
         '"labels":[],"claimed_by_actor_id":null,"claimed_at":null,'
         '"claim_heartbeat_at":null,'
         '"created_at":"2026-04-27T01:00:00Z",'
         '"created_by_actor_id":"11111111-1111-4111-8111-111111111111"}]}'
+    )
+    archive_body = (
+        '{"pipeline":{"id":"88888888-8888-4888-8888-888888888888",'
+        '"project_id":"44444444-4444-4444-8444-444444444444",'
+        '"name":"customer-ship","is_template":false,'
+        '"cloned_from_pipeline_id":"77777777-7777-4777-8777-777777777777",'
+        '"archived_at":"2026-04-27T02:00:00Z",'
+        '"created_at":"2026-04-27T01:00:00Z",'
+        '"created_by_actor_id":"11111111-1111-4111-8111-111111111111"}}'
     )
     calls: list[tuple[str, dict[str, str], dict[str, object], float]] = []
 
@@ -698,35 +707,44 @@ def test_pipeline_instantiate_uses_expected_path_and_payload(
         timeout: float,
     ) -> httpx.Response:
         calls.append((url, headers, json, timeout))
-        return _json_response(url, body, method="POST")
+        response_body = archive_body if url.endswith("/archive") else body
+        return _json_response(url, response_body, method="POST")
 
     monkeypatch.setattr("aq_cli.main.httpx.post", fake_post)
 
-    result = runner.invoke(
+    clone_result = runner.invoke(
         app,
         [
             "pipeline",
-            "instantiate",
-            "--workflow",
-            workflow_slug,
-            "--project",
-            project_id,
+            "clone",
+            "--source-id",
+            source_id,
             "--name",
-            "fix-the-thing",
+            "customer-ship",
         ],
         env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
     )
+    archive_result = runner.invoke(
+        app,
+        ["pipeline", "archive", clone_id],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
 
-    assert result.exit_code == 0
-    assert result.stdout == f"{body}\n"
+    assert clone_result.exit_code == 0
+    assert archive_result.exit_code == 0
+    assert clone_result.stdout == f"{body}\n"
+    assert archive_result.stdout == f"{archive_body}\n"
     assert calls == [
         (
-            f"http://api.test/pipelines/from-workflow/{workflow_slug}",
+            f"http://api.test/pipelines/{source_id}/clone",
             {"Authorization": "Bearer aq2_cli_contract_key"},
-            {
-                "project_id": project_id,
-                "pipeline_name": "fix-the-thing",
-            },
+            {"name": "customer-ship"},
+            10.0,
+        ),
+        (
+            f"http://api.test/pipelines/{clone_id}/archive",
+            {"Authorization": "Bearer aq2_cli_contract_key"},
+            {},
             10.0,
         )
     ]

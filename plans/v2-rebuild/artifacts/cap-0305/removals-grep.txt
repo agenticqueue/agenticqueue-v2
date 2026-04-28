@@ -1,0 +1,13 @@
+AQ2-57 removal grep evidence
+
+Deleted file existence checks:
+apps/api/src/aq_api/services/workflows.py: False
+apps/api/src/aq_api/routes/workflows.py: False
+apps/api/src/aq_api/services/instantiate.py: False
+apps/api/tests/test_workflows_versioning.py: False
+apps/api/tests/test_workflows_archive.py: False
+apps/api/tests/test_instantiate_pipeline.py: False
+apps/api/tests/test_instantiate_atomicity.py: False
+
+Dropped symbol grep across API/CLI/parity Python files:
+No matches.

@@ -34,8 +34,7 @@ class Job(AQModel):
     state: JobState
     title: JobTitle
     description: Description = None
-    contract_profile_id: UUID
-    instantiated_from_step_id: UUID | None = None
+    contract: dict[str, object]
     labels: list[LabelName] = Field(default_factory=list)
     claimed_by_actor_id: UUID | None = None
     claimed_at: datetime | None = None
@@ -64,7 +63,7 @@ class CreateJobRequest(AQModel):
     pipeline_id: UUID
     title: JobTitle
     description: Description = None
-    contract_profile_id: UUID
+    contract: dict[str, object]
 
 
 class CreateJobResponse(AQModel):

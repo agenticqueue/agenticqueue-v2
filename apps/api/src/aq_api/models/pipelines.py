@@ -4,8 +4,12 @@ from uuid import UUID
 
 from pydantic import Field, field_validator
 
-from aq_api.models.auth import AQModel, coerce_utc_datetime
-from aq_api.models.projects import Cursor, Name
+from aq_api.models.auth import (
+    AQModel,
+    coerce_optional_utc_datetime,
+    coerce_utc_datetime,
+)
+from aq_api.models.projects import Cursor
 
 PipelineName = Annotated[str, Field(min_length=1, max_length=256)]
 
@@ -14,8 +18,9 @@ class Pipeline(AQModel):
     id: UUID
     project_id: UUID
     name: PipelineName
-    instantiated_from_workflow_id: UUID | None = None
-    instantiated_from_workflow_version: int | None = Field(default=None, ge=1)
+    is_template: bool
+    cloned_from_pipeline_id: UUID | None = None
+    archived_at: datetime | None = None
     created_at: datetime
     created_by_actor_id: UUID | None = None
 
@@ -23,6 +28,11 @@ class Pipeline(AQModel):
     @classmethod
     def created_at_must_be_utc(cls, value: object) -> datetime:
         return coerce_utc_datetime(value)
+
+    @field_validator("archived_at", mode="before")
+    @classmethod
+    def archived_at_must_be_utc(cls, value: object) -> datetime | None:
+        return coerce_optional_utc_datetime(value)
 
 
 class CreatePipelineRequest(AQModel):
@@ -51,16 +61,19 @@ class UpdatePipelineResponse(AQModel):
     pipeline: Pipeline
 
 
-class InstantiatePipelineRequest(AQModel):
-    project_id: UUID
-    pipeline_name: Name
+class ClonePipelineRequest(AQModel):
+    name: PipelineName
 
 
-class InstantiatePipelineResponse(AQModel):
+class ClonePipelineResponse(AQModel):
     pipeline: Pipeline
     jobs: list["Job"]
 
 
+class ArchivePipelineResponse(AQModel):
+    pipeline: Pipeline
+
+
 from aq_api.models.jobs import Job  # noqa: E402
 
-InstantiatePipelineResponse.model_rebuild()
+ClonePipelineResponse.model_rebuild()

@@ -20,7 +20,6 @@ from aq_api.routes.labels import router as labels_router
 from aq_api.routes.pipelines import router as pipelines_router
 from aq_api.routes.projects import router as projects_router
 from aq_api.routes.setup import router as setup_router
-from aq_api.routes.workflows import router as workflows_router
 
 # OpenAPI uses the same env-driven version path as the runtime `/version` surface.
 app = FastAPI(
@@ -75,7 +74,6 @@ app.include_router(api_keys_router)
 app.include_router(audit_router)
 app.include_router(projects_router)
 app.include_router(labels_router)
-app.include_router(workflows_router)
 app.include_router(pipelines_router)
 
 

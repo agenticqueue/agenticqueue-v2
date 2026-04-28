@@ -158,24 +158,6 @@ def _auth_headers(key: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {key}"}
 
 
-def _pipeline_workflow_links(
-    conn: Connection[tuple[object, ...]],
-    pipeline_id: UUID,
-) -> tuple[UUID | None, int | None]:
-    with conn.cursor() as cursor:
-        cursor.execute(
-            """
-            SELECT instantiated_from_workflow_id, instantiated_from_workflow_version
-            FROM pipelines
-            WHERE id = %s
-            """,
-            (pipeline_id,),
-        )
-        row = cursor.fetchone()
-    assert row is not None
-    return row[0], row[1]
-
-
 def _audit_rows(conn: Connection[tuple[object, ...]]) -> list[dict[str, object]]:
     with conn.cursor() as cursor:
         cursor.execute(
@@ -223,6 +205,11 @@ async def test_pipeline_routes_missing_bearer_returns_byte_equal_401(
             f"/pipelines/{pipeline_id}",
             json={"name": "No Auth Update"},
         ),
+        await async_client.post(
+            f"/pipelines/{pipeline_id}/clone",
+            json={"name": "No Auth Clone"},
+        ),
+        await async_client.post(f"/pipelines/{pipeline_id}/archive"),
     ]
 
     for response in responses:
@@ -255,11 +242,11 @@ async def test_pipeline_rest_ops_create_list_get_update_and_cross_actor_visibili
     created = CreatePipelineResponse.model_validate(create_response.json())
     assert created.pipeline.project_id == project_id
     assert created.pipeline.name == "hotfix-2026-04-28"
-    assert created.pipeline.instantiated_from_workflow_id is None
-    assert created.pipeline.instantiated_from_workflow_version is None
+    assert created.pipeline.is_template is False
+    assert created.pipeline.cloned_from_pipeline_id is None
+    assert created.pipeline.archived_at is None
     assert created.pipeline.created_by_actor_id == actor_id
     assert created.pipeline.created_at.tzinfo == UTC
-    assert _pipeline_workflow_links(conn, created.pipeline.id) == (None, None)
 
     list_response = await async_client.get(
         "/pipelines",

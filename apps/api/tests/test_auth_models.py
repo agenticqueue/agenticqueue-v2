@@ -16,6 +16,7 @@ from pydantic import ValidationError
 
 ACTOR_ID = UUID("11111111-1111-4111-8111-111111111111")
 API_KEY_ID = UUID("22222222-2222-4222-8222-222222222222")
+PROJECT_ID = UUID("33333333-3333-4333-8333-333333333333")
 PLAINTEXT_KEY = "aq2_plaintext_contract_test_key"
 
 
@@ -85,7 +86,11 @@ def test_api_key_display_model_never_dumps_key_material() -> None:
 
 
 def test_plaintext_key_fields_do_not_leak_in_repr() -> None:
-    setup = SetupResponse(actor_id=ACTOR_ID, founder_key=PLAINTEXT_KEY)
+    setup = SetupResponse(
+        actor_id=ACTOR_ID,
+        founder_key=PLAINTEXT_KEY,
+        bootstrap_project_id=PROJECT_ID,
+    )
     created = CreateActorResponse(
         actor=_actor(),
         api_key=_api_key(),

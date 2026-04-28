@@ -110,18 +110,6 @@ def _auth_headers(key: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {key}"}
 
 
-def _contract_profile_id(conn: Connection[tuple[object, ...]]) -> UUID:
-    with conn.cursor() as cursor:
-        cursor.execute(
-            "SELECT id FROM contract_profiles WHERE name = 'coding-task' LIMIT 1"
-        )
-        row = cursor.fetchone()
-    assert row is not None
-    profile_id = row[0]
-    assert isinstance(profile_id, UUID)
-    return profile_id
-
-
 def _insert_project_pipeline_job(
     conn: Connection[tuple[object, ...]],
     actor_id: UUID,
@@ -129,7 +117,6 @@ def _insert_project_pipeline_job(
     project_slug: str,
     job_title: str,
 ) -> tuple[UUID, UUID]:
-    contract_profile_id = _contract_profile_id(conn)
     with conn.cursor() as cursor:
         cursor.execute(
             """
@@ -165,13 +152,20 @@ def _insert_project_pipeline_job(
                     project_id,
                     state,
                     title,
-                    contract_profile_id,
+                    contract,
                     created_by_actor_id
                 )
-            VALUES (%s, %s, 'ready', %s, %s, %s)
+            VALUES (
+                %s,
+                %s,
+                'ready',
+                %s,
+                '{"contract_type":"coding-task","dod_items":[{"id":"test"}]}'::jsonb,
+                %s
+            )
             RETURNING id
             """,
-            (pipeline_id, project_id, job_title, contract_profile_id, actor_id),
+            (pipeline_id, project_id, job_title, actor_id),
         )
         job_row = cursor.fetchone()
         assert job_row is not None

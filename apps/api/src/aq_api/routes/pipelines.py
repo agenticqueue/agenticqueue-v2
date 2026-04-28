@@ -9,24 +9,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from aq_api._audit import BusinessRuleException
 from aq_api._auth import current_actor
 from aq_api.models import (
+    ArchivePipelineResponse,
+    ClonePipelineRequest,
+    ClonePipelineResponse,
     CreatePipelineRequest,
     CreatePipelineResponse,
     GetPipelineResponse,
-    InstantiatePipelineRequest,
-    InstantiatePipelineResponse,
     ListPipelinesResponse,
     UpdatePipelineResponse,
 )
 from aq_api.models.auth import AQModel
 from aq_api.models.db import Actor as DbActor
 from aq_api.models.pipelines import PipelineName
-from aq_api.services.instantiate import (
-    instantiate_pipeline as instantiate_pipeline_service,
-)
 from aq_api.services.pipelines import (
     InvalidPipelineCursorError,
     PipelineNotFoundError,
 )
+from aq_api.services.pipelines import archive_pipeline as archive_pipeline_service
+from aq_api.services.pipelines import clone_pipeline as clone_pipeline_service
 from aq_api.services.pipelines import create_pipeline as create_pipeline_service
 from aq_api.services.pipelines import get_pipeline as get_pipeline_service
 from aq_api.services.pipelines import list_pipelines as list_pipelines_service
@@ -59,27 +59,6 @@ async def create_pipeline(
 ) -> CreatePipelineResponse | JSONResponse:
     try:
         return await create_pipeline_service(session, request, actor_id=actor.id)
-    except BusinessRuleException as exc:
-        return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)
-
-
-@router.post(
-    "/pipelines/from-workflow/{workflow_slug}",
-    response_model=InstantiatePipelineResponse,
-)
-async def instantiate_pipeline(
-    workflow_slug: str,
-    request: InstantiatePipelineRequest,
-    actor: AuthenticatedActor,
-    session: SessionDep,
-) -> InstantiatePipelineResponse | JSONResponse:
-    try:
-        return await instantiate_pipeline_service(
-            session,
-            workflow_slug,
-            request,
-            actor_id=actor.id,
-        )
     except BusinessRuleException as exc:
         return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)
 
@@ -126,5 +105,35 @@ async def update_pipeline(
             pipeline_id,
             request.model_dump(mode="json", exclude_unset=True),
         )
+    except BusinessRuleException as exc:
+        return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)
+
+
+@router.post("/pipelines/{pipeline_id}/clone", response_model=ClonePipelineResponse)
+async def clone_pipeline(
+    pipeline_id: UUID,
+    request: ClonePipelineRequest,
+    actor: AuthenticatedActor,
+    session: SessionDep,
+) -> ClonePipelineResponse | JSONResponse:
+    try:
+        return await clone_pipeline_service(
+            session,
+            pipeline_id,
+            request,
+            actor_id=actor.id,
+        )
+    except BusinessRuleException as exc:
+        return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)
+
+
+@router.post("/pipelines/{pipeline_id}/archive", response_model=ArchivePipelineResponse)
+async def archive_pipeline(
+    pipeline_id: UUID,
+    _actor: AuthenticatedActor,
+    session: SessionDep,
+) -> ArchivePipelineResponse | JSONResponse:
+    try:
+        return await archive_pipeline_service(session, pipeline_id)
     except BusinessRuleException as exc:
         return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)

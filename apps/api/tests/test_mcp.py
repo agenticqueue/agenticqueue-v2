@@ -29,13 +29,9 @@ async def test_mcp_tools_return_shared_contract_payloads() -> None:
             "get_project",
             "update_project",
             "archive_project",
-            "create_workflow",
-            "list_workflows",
-            "get_workflow",
-            "update_workflow",
-            "archive_workflow",
             "create_pipeline",
-            "instantiate_pipeline",
+            "clone_pipeline",
+            "archive_pipeline",
             "list_pipelines",
             "get_pipeline",
             "update_pipeline",
@@ -71,25 +67,15 @@ async def test_mcp_tools_return_shared_contract_payloads() -> None:
         assert tool_by_name["archive_project"].annotations is not None
         assert tool_by_name["archive_project"].annotations.readOnlyHint is False
         assert tool_by_name["archive_project"].annotations.destructiveHint is False
-        assert tool_by_name["create_workflow"].annotations is not None
-        assert tool_by_name["create_workflow"].annotations.readOnlyHint is False
-        assert tool_by_name["create_workflow"].annotations.destructiveHint is False
-        assert tool_by_name["list_workflows"].annotations is not None
-        assert tool_by_name["list_workflows"].annotations.readOnlyHint is True
-        assert tool_by_name["get_workflow"].annotations is not None
-        assert tool_by_name["get_workflow"].annotations.readOnlyHint is True
-        assert tool_by_name["update_workflow"].annotations is not None
-        assert tool_by_name["update_workflow"].annotations.readOnlyHint is False
-        assert tool_by_name["update_workflow"].annotations.destructiveHint is False
-        assert tool_by_name["archive_workflow"].annotations is not None
-        assert tool_by_name["archive_workflow"].annotations.readOnlyHint is False
-        assert tool_by_name["archive_workflow"].annotations.destructiveHint is True
         assert tool_by_name["create_pipeline"].annotations is not None
         assert tool_by_name["create_pipeline"].annotations.readOnlyHint is False
         assert tool_by_name["create_pipeline"].annotations.destructiveHint is False
-        assert tool_by_name["instantiate_pipeline"].annotations is not None
-        assert tool_by_name["instantiate_pipeline"].annotations.readOnlyHint is False
-        assert tool_by_name["instantiate_pipeline"].annotations.destructiveHint is False
+        assert tool_by_name["clone_pipeline"].annotations is not None
+        assert tool_by_name["clone_pipeline"].annotations.readOnlyHint is False
+        assert tool_by_name["clone_pipeline"].annotations.destructiveHint is False
+        assert tool_by_name["archive_pipeline"].annotations is not None
+        assert tool_by_name["archive_pipeline"].annotations.readOnlyHint is False
+        assert tool_by_name["archive_pipeline"].annotations.destructiveHint is True
         assert tool_by_name["list_pipelines"].annotations is not None
         assert tool_by_name["list_pipelines"].annotations.readOnlyHint is True
         assert tool_by_name["get_pipeline"].annotations is not None

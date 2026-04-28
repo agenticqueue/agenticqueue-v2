@@ -7,7 +7,6 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Index,
-    Integer,
     LargeBinary,
     PrimaryKeyConstraint,
     Text,
@@ -192,100 +191,6 @@ class Label(Base):
         server_default=text("now()"),
     )
     archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-
-
-class Workflow(Base):
-    __tablename__ = "workflows"
-    __table_args__ = (
-        UniqueConstraint("slug", "version", name="workflows_slug_version_key"),
-    )
-
-    id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        primary_key=True,
-        server_default=text("gen_random_uuid()"),
-    )
-    slug: Mapped[str] = mapped_column(Text, nullable=False)
-    name: Mapped[str] = mapped_column(Text, nullable=False)
-    version: Mapped[int] = mapped_column(Integer, nullable=False)
-    is_archived: Mapped[bool] = mapped_column(
-        Boolean,
-        nullable=False,
-        server_default=text("false"),
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=text("now()"),
-    )
-    created_by_actor_id: Mapped[UUID | None] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("actors.id", ondelete="RESTRICT"),
-    )
-    supersedes_workflow_id: Mapped[UUID | None] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("workflows.id", ondelete="RESTRICT"),
-    )
-
-
-class ContractProfile(Base):
-    __tablename__ = "contract_profiles"
-    __table_args__ = (
-        UniqueConstraint("name", "version", name="contract_profiles_name_version_key"),
-    )
-
-    id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        primary_key=True,
-    )
-    name: Mapped[str] = mapped_column(Text, nullable=False)
-    version: Mapped[int] = mapped_column(Integer, nullable=False)
-    description: Mapped[str | None] = mapped_column(Text)
-    required_dod_ids: Mapped[list[str]] = mapped_column(
-        JSONB,
-        nullable=False,
-        server_default=text("'[]'::jsonb"),
-    )
-    schema_: Mapped[dict[str, object]] = mapped_column(
-        "schema",
-        JSONB,
-        nullable=False,
-        server_default=text("'{}'::jsonb"),
-    )
-
-
-class WorkflowStep(Base):
-    __tablename__ = "workflow_steps"
-    __table_args__ = (
-        UniqueConstraint(
-            "workflow_id",
-            "ordinal",
-            name="workflow_steps_workflow_ordinal_key",
-        ),
-    )
-
-    id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        primary_key=True,
-        server_default=text("gen_random_uuid()"),
-    )
-    workflow_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("workflows.id", ondelete="CASCADE"),
-        nullable=False,
-    )
-    name: Mapped[str] = mapped_column(Text, nullable=False)
-    ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
-    default_contract_profile_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("contract_profiles.id", ondelete="RESTRICT"),
-        nullable=False,
-    )
-    step_edges: Mapped[dict[str, object]] = mapped_column(
-        JSONB,
-        nullable=False,
-        server_default=text("'{}'::jsonb"),
-    )
 
 
 class Pipeline(Base):

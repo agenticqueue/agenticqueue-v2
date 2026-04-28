@@ -41,7 +41,6 @@ actor_app = typer.Typer(add_completion=False, help="Actor identity commands.")
 key_app = typer.Typer(add_completion=False, help="API key commands.")
 project_app = typer.Typer(add_completion=False, help="Project commands.")
 label_app = typer.Typer(add_completion=False, help="Label commands.")
-workflow_app = typer.Typer(add_completion=False, help="Workflow commands.")
 pipeline_app = typer.Typer(add_completion=False, help="Pipeline commands.")
 SLUG_CHARS_RE = re.compile(r"[^a-z0-9]+")
 
@@ -256,16 +255,6 @@ def _slug_from_name(name: str) -> str:
     return slug[:63].strip("-") or "project"
 
 
-def _parse_steps_json(steps_json: str) -> list[object]:
-    try:
-        steps = json.loads(steps_json)
-    except json.JSONDecodeError as exc:
-        _fail("invalid_steps_json", "--steps-json", message=str(exc))
-    if not isinstance(steps, list):
-        _fail("invalid_steps_json", "--steps-json", message="expected JSON array")
-    return steps
-
-
 @app.command()
 def health(timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS) -> None:
     """Print the HealthStatus JSON payload."""
@@ -476,85 +465,6 @@ def project_archive(
 app.add_typer(project_app, name="project")
 
 
-@workflow_app.command("create")
-def workflow_create(
-    name: Annotated[str, typer.Option("--name")],
-    steps_json: Annotated[
-        str,
-        typer.Option("--steps-json", help="JSON array of WorkflowStepInput objects."),
-    ],
-    slug: Annotated[str | None, typer.Option("--slug")] = None,
-    timeout: TimeoutOption = 10.0,
-    config: ConfigPathOption = None,
-) -> None:
-    """Create Workflow v1 with its step definitions."""
-    body: dict[str, object] = {
-        "name": name,
-        "slug": slug or _slug_from_name(name),
-        "steps": _parse_steps_json(steps_json),
-    }
-    typer.echo(_post_auth("/workflows", body, timeout, config))
-
-
-@workflow_app.command("list")
-def workflow_list(
-    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
-    config: ConfigPathOption = None,
-    limit: Annotated[int, typer.Option("--limit", min=1, max=200)] = 50,
-    cursor: Annotated[str | None, typer.Option("--cursor")] = None,
-    include_archived: Annotated[bool, typer.Option("--include-archived")] = False,
-) -> None:
-    """Print the paginated ListWorkflowsResponse JSON payload."""
-    params: QueryParams = {"limit": limit}
-    if cursor is not None:
-        params["cursor"] = cursor
-    if include_archived:
-        params["include_archived"] = True
-    typer.echo(_get_auth("/workflows", timeout, config, params=params))
-
-
-@workflow_app.command("get")
-def workflow_get(
-    workflow_id: Annotated[str, typer.Argument(help="Workflow UUID.")],
-    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
-    config: ConfigPathOption = None,
-) -> None:
-    """Print one Workflow JSON payload."""
-    typer.echo(_get_auth(f"/workflows/{workflow_id}", timeout, config))
-
-
-@workflow_app.command("update")
-def workflow_update(
-    workflow_id: Annotated[str, typer.Argument(help="Workflow UUID.")],
-    name: Annotated[str, typer.Option("--name")],
-    steps_json: Annotated[
-        str,
-        typer.Option("--steps-json", help="JSON array of WorkflowStepInput objects."),
-    ],
-    timeout: TimeoutOption = 10.0,
-    config: ConfigPathOption = None,
-) -> None:
-    """Create the next Workflow version from a full replacement step payload."""
-    body: dict[str, object] = {
-        "name": name,
-        "steps": _parse_steps_json(steps_json),
-    }
-    typer.echo(_patch_auth(f"/workflows/{workflow_id}", body, timeout, config))
-
-
-@workflow_app.command("archive")
-def workflow_archive(
-    slug: Annotated[str, typer.Argument(help="Workflow slug family.")],
-    timeout: TimeoutOption = 10.0,
-    config: ConfigPathOption = None,
-) -> None:
-    """Archive every version in a Workflow slug family."""
-    typer.echo(_post_auth(f"/workflows/{slug}/archive", {}, timeout, config))
-
-
-app.add_typer(workflow_app, name="workflow")
-
-
 @pipeline_app.command("create")
 def pipeline_create(
     project_id: Annotated[str, typer.Option("--project")],
@@ -565,25 +475,6 @@ def pipeline_create(
     """Create an ad-hoc Pipeline in a Project."""
     body: dict[str, object] = {"project_id": project_id, "name": name}
     typer.echo(_post_auth("/pipelines", body, timeout, config))
-
-
-@pipeline_app.command("instantiate")
-def pipeline_instantiate(
-    workflow_slug: Annotated[str, typer.Option("--workflow")],
-    project_id: Annotated[str, typer.Option("--project")],
-    name: Annotated[str, typer.Option("--name")],
-    timeout: TimeoutOption = 10.0,
-    config: ConfigPathOption = None,
-) -> None:
-    """Instantiate a Pipeline snapshot from the latest Workflow family version."""
-    typer.echo(
-        _post_auth(
-            f"/pipelines/from-workflow/{workflow_slug}",
-            {"project_id": project_id, "pipeline_name": name},
-            timeout,
-            config,
-        )
-    )
 
 
 @pipeline_app.command("list")
@@ -626,6 +517,34 @@ def pipeline_update(
             config,
         )
     )
+
+
+@pipeline_app.command("clone")
+def pipeline_clone(
+    source_id: Annotated[str, typer.Option("--source-id")],
+    name: Annotated[str, typer.Option("--name")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Clone a Pipeline and copy its Jobs as ready work."""
+    typer.echo(
+        _post_auth(
+            f"/pipelines/{source_id}/clone",
+            {"name": name},
+            timeout,
+            config,
+        )
+    )
+
+
+@pipeline_app.command("archive")
+def pipeline_archive(
+    pipeline_id: Annotated[str, typer.Argument(help="Pipeline UUID.")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Archive a Pipeline with a soft-delete timestamp."""
+    typer.echo(_post_auth(f"/pipelines/{pipeline_id}/archive", {}, timeout, config))
 
 
 app.add_typer(pipeline_app, name="pipeline")

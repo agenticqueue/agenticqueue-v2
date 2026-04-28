@@ -16,6 +16,8 @@ from psycopg import Connection
 DATABASE_URL_SYNC = os.environ.get("DATABASE_URL_SYNC")
 ALREADY_SETUP_BODY = b'{"error":"already_setup"}'
 FOUNDER_ACTOR_NAME = "founder"
+BOOTSTRAP_PROJECT_SLUG = "default"
+BOOTSTRAP_PROJECT_DESCRIPTION = "AQ default project for first-run installs."
 
 pytestmark = pytest.mark.skipif(
     not DATABASE_URL_SYNC,
@@ -58,7 +60,32 @@ def _truncate_cap02_state(conn: Connection[tuple[object, ...]]) -> None:
                 SELECT id FROM actors WHERE name = %s
             )
             """,
-            (FOUNDER_ACTOR_NAME,),
+                (FOUNDER_ACTOR_NAME,),
+        )
+        cursor.execute(
+            """
+            DELETE FROM jobs
+            WHERE pipeline_id IN (
+                SELECT pipelines.id
+                FROM pipelines
+                JOIN projects ON projects.id = pipelines.project_id
+                WHERE projects.slug = %s
+            )
+            """,
+            (BOOTSTRAP_PROJECT_SLUG,),
+        )
+        cursor.execute(
+            """
+            DELETE FROM pipelines
+            WHERE project_id IN (
+                SELECT id FROM projects WHERE slug = %s
+            )
+            """,
+            (BOOTSTRAP_PROJECT_SLUG,),
+        )
+        cursor.execute(
+            "DELETE FROM projects WHERE slug = %s",
+            (BOOTSTRAP_PROJECT_SLUG,),
         )
         cursor.execute(
             """
@@ -111,6 +138,44 @@ def _api_key_count(conn: Connection[tuple[object, ...]]) -> int:
     return int(row[0])
 
 
+def _insert_founder_project_without_template(
+    conn: Connection[tuple[object, ...]],
+) -> tuple[UUID, UUID]:
+    with conn.cursor() as cursor:
+        cursor.execute(
+            """
+            INSERT INTO actors (name, kind)
+            VALUES (%s, 'human')
+            RETURNING id
+            """,
+            (FOUNDER_ACTOR_NAME,),
+        )
+        actor_row = cursor.fetchone()
+        assert actor_row is not None
+        actor_id = actor_row[0]
+        assert isinstance(actor_id, UUID)
+
+        cursor.execute(
+            """
+            INSERT INTO projects
+                (name, slug, description, created_by_actor_id)
+            VALUES (%s, %s, %s, %s)
+            RETURNING id
+            """,
+            (
+                BOOTSTRAP_PROJECT_SLUG,
+                BOOTSTRAP_PROJECT_SLUG,
+                BOOTSTRAP_PROJECT_DESCRIPTION,
+                actor_id,
+            ),
+        )
+        project_row = cursor.fetchone()
+        assert project_row is not None
+        project_id = project_row[0]
+        assert isinstance(project_id, UUID)
+    return actor_id, project_id
+
+
 def _founder_row(
     conn: Connection[tuple[object, ...]],
 ) -> tuple[UUID, str, str, str, str]:
@@ -135,8 +200,63 @@ def _founder_row(
     return actor_id, actor_name, actor_kind, key_hash, prefix
 
 
+def _bootstrap_shape(conn: Connection[tuple[object, ...]]) -> dict[str, object]:
+    with conn.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT id
+            FROM projects
+            WHERE slug = 'default'
+              AND name = 'default'
+              AND description = 'AQ default project for first-run installs.'
+            """
+        )
+        project_row = cursor.fetchone()
+        assert project_row is not None
+        project_id = project_row[0]
+        assert isinstance(project_id, UUID)
+
+        cursor.execute(
+            """
+            SELECT id
+            FROM pipelines
+            WHERE project_id = %s
+              AND name = 'ship-a-thing'
+              AND is_template = true
+            """,
+            (project_id,),
+        )
+        pipeline_row = cursor.fetchone()
+        assert pipeline_row is not None
+        pipeline_id = pipeline_row[0]
+        assert isinstance(pipeline_id, UUID)
+
+        cursor.execute(
+            """
+            SELECT count(*),
+                   bool_and(state = 'ready'),
+                   bool_and(contract ? 'dod_items'),
+                   bool_and(jsonb_array_length(contract->'dod_items') > 0)
+            FROM jobs
+            WHERE project_id = %s
+              AND pipeline_id = %s
+            """,
+            (project_id, pipeline_id),
+        )
+        job_row = cursor.fetchone()
+    assert job_row is not None
+    return {
+        "project_id": project_id,
+        "pipeline_id": pipeline_id,
+        "job_count": int(job_row[0]),
+        "all_ready": bool(job_row[1]),
+        "all_have_dod_items": bool(job_row[2]),
+        "all_dod_items_nonempty": bool(job_row[3]),
+    }
+
+
 @pytest.mark.asyncio
-async def test_setup_first_call_creates_founder_actor_and_returns_key(
+async def test_setup_first_call_bootstraps_project_template_and_returns_key(
     conn: Connection[tuple[object, ...]],
     async_client: httpx.AsyncClient,
 ) -> None:
@@ -155,6 +275,12 @@ async def test_setup_first_call_creates_founder_actor_and_returns_key(
     assert actor_kind == "human"
     assert bool(PASSWORD_HASHER.verify(key_hash, founder_key))
     assert prefix == founder_key[:8]
+    bootstrap = _bootstrap_shape(conn)
+    assert setup_response.bootstrap_project_id == bootstrap["project_id"]
+    assert bootstrap["job_count"] == 3
+    assert bootstrap["all_ready"] is True
+    assert bootstrap["all_have_dod_items"] is True
+    assert bootstrap["all_dod_items_nonempty"] is True
 
 
 @pytest.mark.asyncio
@@ -170,6 +296,29 @@ async def test_setup_second_call_returns_409_already_setup(
     assert second.content == ALREADY_SETUP_BODY
     assert _actor_count(conn) == 1
     assert _api_key_count(conn) == 1
+    assert _bootstrap_shape(conn)["job_count"] == 3
+
+
+@pytest.mark.asyncio
+async def test_setup_existing_founder_project_backfills_template_before_409(
+    conn: Connection[tuple[object, ...]],
+    async_client: httpx.AsyncClient,
+) -> None:
+    _actor_id, project_id = _insert_founder_project_without_template(conn)
+
+    response = await async_client.post("/setup", json={})
+
+    assert response.status_code == 409
+    assert response.content == ALREADY_SETUP_BODY
+    bootstrap = _bootstrap_shape(conn)
+    assert bootstrap["project_id"] == project_id
+    assert bootstrap["job_count"] == 3
+    assert bootstrap["all_ready"] is True
+    assert bootstrap["all_have_dod_items"] is True
+    assert bootstrap["all_dod_items_nonempty"] is True
+    assert _actor_count(conn) == 1
+    assert _api_key_count(conn) == 0
+    assert _audit_count(conn) == 0
 
 
 @pytest.mark.asyncio

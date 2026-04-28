@@ -151,26 +151,6 @@ def cleanup_cap03_state(
         )
         cursor.execute(
             """
-            SELECT id
-            FROM workflows
-            WHERE slug LIKE %s
-               OR created_by_actor_id IN (
-                    SELECT id FROM actors WHERE name LIKE %s
-               )
-            ORDER BY slug ASC, version DESC, id DESC
-            """,
-            (project_like, actor_like),
-        )
-        workflow_ids = [row[0] for row in cursor.fetchall()]
-        for workflow_id in workflow_ids:
-            cursor.execute(
-                "DELETE FROM workflow_steps WHERE workflow_id = %s",
-                (workflow_id,),
-            )
-        for workflow_id in workflow_ids:
-            cursor.execute("DELETE FROM workflows WHERE id = %s", (workflow_id,))
-        cursor.execute(
-            """
             DELETE FROM api_keys
             WHERE actor_id IN (SELECT id FROM actors WHERE name LIKE %s)
                OR revoked_by_actor_id IN (

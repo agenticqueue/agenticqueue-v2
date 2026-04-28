@@ -4,7 +4,6 @@ from typing import Annotated
 from uuid import UUID
 
 from fastmcp import FastMCP
-from fastmcp.tools.tool import ToolResult
 from pydantic import Field
 
 from aq_api._health import current_health_status
@@ -16,31 +15,28 @@ from aq_api._request_context import (
 from aq_api._version import VERSION_INFO
 from aq_api.models import (
     ActorKind,
+    ArchivePipelineResponse,
     ArchiveProjectResponse,
-    ArchiveWorkflowResponse,
     AttachLabelRequest,
     AttachLabelResponse,
     AuditLogPage,
     AuditQueryParams,
+    ClonePipelineRequest,
+    ClonePipelineResponse,
     CreateActorRequest,
     CreateActorResponse,
     CreatePipelineRequest,
     CreatePipelineResponse,
     CreateProjectRequest,
     CreateProjectResponse,
-    CreateWorkflowRequest,
-    CreateWorkflowResponse,
     DetachLabelRequest,
     DetachLabelResponse,
     GetPipelineResponse,
     GetProjectResponse,
-    GetWorkflowResponse,
     HealthStatus,
-    InstantiatePipelineRequest,
     ListActorsResponse,
     ListPipelinesResponse,
     ListProjectsResponse,
-    ListWorkflowsResponse,
     RegisterLabelRequest,
     RegisterLabelResponse,
     RevokeApiKeyResponse,
@@ -48,11 +44,8 @@ from aq_api.models import (
     UpdatePipelineResponse,
     UpdateProjectRequest,
     UpdateProjectResponse,
-    UpdateWorkflowRequest,
-    UpdateWorkflowResponse,
     VersionInfo,
     WhoamiResponse,
-    WorkflowStepInput,
 )
 from aq_api.models.labels import LabelColor, LabelName
 from aq_api.models.pipelines import PipelineName
@@ -70,12 +63,11 @@ from aq_api.services.actors import get_self_by_id
 from aq_api.services.actors import list_actors as list_actor_service
 from aq_api.services.api_keys import revoke_api_key as revoke_api_key_service
 from aq_api.services.audit import query_audit_log as query_audit_log_service
-from aq_api.services.instantiate import (
-    instantiate_pipeline as instantiate_pipeline_service,
-)
 from aq_api.services.labels import attach_label as attach_label_service
 from aq_api.services.labels import detach_label as detach_label_service
 from aq_api.services.labels import register_label as register_label_service
+from aq_api.services.pipelines import archive_pipeline as archive_pipeline_service
+from aq_api.services.pipelines import clone_pipeline as clone_pipeline_service
 from aq_api.services.pipelines import create_pipeline as create_pipeline_service
 from aq_api.services.pipelines import get_pipeline as get_pipeline_service
 from aq_api.services.pipelines import list_pipelines as list_pipeline_service
@@ -85,11 +77,6 @@ from aq_api.services.projects import create_project as create_project_service
 from aq_api.services.projects import get_project as get_project_service
 from aq_api.services.projects import list_projects as list_project_service
 from aq_api.services.projects import update_project as update_project_service
-from aq_api.services.workflows import archive_workflow as archive_workflow_service
-from aq_api.services.workflows import create_workflow as create_workflow_service
-from aq_api.services.workflows import get_workflow as get_workflow_service
-from aq_api.services.workflows import list_workflows as list_workflow_service
-from aq_api.services.workflows import update_workflow as update_workflow_service
 
 MCP_NAME = "AgenticQueue 2.0 MCP"
 MCP_HTTP_PATH = "/mcp"
@@ -366,111 +353,8 @@ def create_mcp_server() -> FastMCP:
                 return await archive_project_service(session, project_id)
 
     @server.tool(
-        description="Create Workflow v1 with an ordered set of step definitions.",
-        annotations={"readOnlyHint": False, "destructiveHint": False},
-    )
-    async def create_workflow(
-        name: ProjectName,
-        slug: ProjectSlug,
-        steps: list[WorkflowStepInput],
-        agent_identity: AgentIdentity = None,
-    ) -> CreateWorkflowResponse:
-        from aq_api._db import SessionLocal
-
-        with _claimed_agent_identity(agent_identity):
-            actor_id = _authenticated_actor_id()
-            request = CreateWorkflowRequest(name=name, slug=slug, steps=steps)
-            async with SessionLocal() as session:
-                return await create_workflow_service(
-                    session,
-                    request,
-                    actor_id=actor_id,
-                )
-
-    @server.tool(
         description=(
-            "List Workflows with opaque cursor pagination. Archived Workflow "
-            "versions are excluded unless include_archived is true."
-        ),
-        annotations={"readOnlyHint": True},
-    )
-    async def list_workflows(
-        limit: int = 50,
-        cursor: str | None = None,
-        include_archived: bool = False,
-        agent_identity: AgentIdentity = None,
-    ) -> ListWorkflowsResponse:
-        from aq_api._db import SessionLocal
-
-        with _claimed_agent_identity(agent_identity):
-            _authenticated_actor_id()
-            async with SessionLocal() as session:
-                return await list_workflow_service(
-                    session,
-                    limit=limit,
-                    cursor=cursor,
-                    include_archived=include_archived,
-                )
-
-    @server.tool(
-        description="Return one Workflow version by UUID.",
-        annotations={"readOnlyHint": True},
-    )
-    async def get_workflow(
-        workflow_id: UUID,
-        agent_identity: AgentIdentity = None,
-    ) -> GetWorkflowResponse:
-        from aq_api._db import SessionLocal
-
-        with _claimed_agent_identity(agent_identity):
-            _authenticated_actor_id()
-            async with SessionLocal() as session:
-                return await get_workflow_service(session, workflow_id)
-
-    @server.tool(
-        description=(
-            "Create the next Workflow version from a latest Workflow UUID. "
-            "The prior row and prior steps are retained unchanged."
-        ),
-        annotations={"readOnlyHint": False, "destructiveHint": False},
-    )
-    async def update_workflow(
-        workflow_id: UUID,
-        name: ProjectName,
-        steps: list[WorkflowStepInput],
-        agent_identity: AgentIdentity = None,
-    ) -> UpdateWorkflowResponse:
-        from aq_api._db import SessionLocal
-
-        with _claimed_agent_identity(agent_identity):
-            actor_id = _authenticated_actor_id()
-            request = UpdateWorkflowRequest(name=name, steps=steps)
-            async with SessionLocal() as session:
-                return await update_workflow_service(
-                    session,
-                    workflow_id,
-                    request,
-                    actor_id=actor_id,
-                )
-
-    @server.tool(
-        description="Archive every version in a Workflow slug family.",
-        annotations={"readOnlyHint": False, "destructiveHint": True},
-    )
-    async def archive_workflow(
-        slug: ProjectSlug,
-        agent_identity: AgentIdentity = None,
-    ) -> ArchiveWorkflowResponse:
-        from aq_api._db import SessionLocal
-
-        with _claimed_agent_identity(agent_identity):
-            _authenticated_actor_id()
-            async with SessionLocal() as session:
-                return await archive_workflow_service(session, slug)
-
-    @server.tool(
-        description=(
-            "Create an ad-hoc Pipeline in a Project without a Workflow link."
+            "Create an ad-hoc Pipeline in a Project."
         ),
         annotations={"readOnlyHint": False, "destructiveHint": False},
     )
@@ -490,47 +374,6 @@ def create_mcp_server() -> FastMCP:
                     request,
                     actor_id=actor_id,
                 )
-
-    @server.tool(
-        description=(
-            "Instantiate a Pipeline snapshot from the latest non-archived "
-            "Workflow slug family and create ready Jobs for each step."
-        ),
-        annotations={"readOnlyHint": False, "destructiveHint": False},
-    )
-    async def instantiate_pipeline(
-        workflow_slug: ProjectSlug,
-        project_id: UUID,
-        pipeline_name: PipelineName,
-        agent_identity: AgentIdentity = None,
-    ) -> ToolResult:
-        from aq_api._db import SessionLocal
-
-        with _claimed_agent_identity(agent_identity):
-            actor_id = _authenticated_actor_id()
-            request = InstantiatePipelineRequest(
-                project_id=project_id,
-                pipeline_name=pipeline_name,
-            )
-            async with SessionLocal() as session:
-                response = await instantiate_pipeline_service(
-                    session,
-                    workflow_slug,
-                    request,
-                    actor_id=actor_id,
-                )
-        message = (
-            f"Instantiated Pipeline {response.pipeline.name} from Workflow "
-            f"{workflow_slug} v{response.pipeline.instantiated_from_workflow_version}. "
-            f"{len(response.jobs)} Jobs created in state='ready' and immediately "
-            "claimable. Each Job's contract_profile_id was set from its source "
-            "step's default profile. Required next: optionally attach_label for "
-            "routing, or hand off to cap #4's claim_next_job."
-        )
-        return ToolResult(
-            content=message,
-            structured_content=response.model_dump(mode="json"),
-        )
 
     @server.tool(
         description="List Pipelines with opaque cursor pagination.",
@@ -587,6 +430,46 @@ def create_mcp_server() -> FastMCP:
                     pipeline_id,
                     request.model_dump(mode="json"),
                 )
+
+    @server.tool(
+        description=(
+            "Clone a Pipeline and copy its Jobs as ready Jobs with the same "
+            "contracts, labels, titles, and descriptions."
+        ),
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def clone_pipeline(
+        source_id: UUID,
+        name: PipelineName,
+        agent_identity: AgentIdentity = None,
+    ) -> ClonePipelineResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = ClonePipelineRequest(name=name)
+            async with SessionLocal() as session:
+                return await clone_pipeline_service(
+                    session,
+                    source_id,
+                    request,
+                    actor_id=actor_id,
+                )
+
+    @server.tool(
+        description="Archive a Pipeline by setting archived_at; Jobs are retained.",
+        annotations={"readOnlyHint": False, "destructiveHint": True},
+    )
+    async def archive_pipeline(
+        pipeline_id: UUID,
+        agent_identity: AgentIdentity = None,
+    ) -> ArchivePipelineResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await archive_pipeline_service(session, pipeline_id)
 
     @server.tool(
         description="Register a Project-scoped Label for future Job attachment.",
