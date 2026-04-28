@@ -6,7 +6,6 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKey,
-    ForeignKeyConstraint,
     Index,
     Integer,
     LargeBinary,
@@ -291,9 +290,6 @@ class WorkflowStep(Base):
 
 class Pipeline(Base):
     __tablename__ = "pipelines"
-    __table_args__ = (
-        UniqueConstraint("id", "project_id", name="pipelines_id_project_id_uniq"),
-    )
 
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
@@ -306,11 +302,16 @@ class Pipeline(Base):
         nullable=False,
     )
     name: Mapped[str] = mapped_column(Text, nullable=False)
-    instantiated_from_workflow_id: Mapped[UUID | None] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("workflows.id", ondelete="RESTRICT"),
+    is_template: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        server_default=text("false"),
     )
-    instantiated_from_workflow_version: Mapped[int | None] = mapped_column(Integer)
+    cloned_from_pipeline_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("pipelines.id", ondelete="RESTRICT"),
+    )
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -332,12 +333,6 @@ class Job(Base):
                 "'blocked','pending_review','cancelled')"
             ),
             name="jobs_state_check",
-        ),
-        ForeignKeyConstraint(
-            ["pipeline_id", "project_id"],
-            ["pipelines.id", "pipelines.project_id"],
-            name="jobs_pipeline_id_project_id_fkey",
-            ondelete="RESTRICT",
         ),
         Index(
             "idx_jobs_labels_gin",
@@ -367,14 +362,10 @@ class Job(Base):
     state: Mapped[str] = mapped_column(Text, nullable=False)
     title: Mapped[str] = mapped_column(Text, nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
-    contract_profile_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("contract_profiles.id", ondelete="RESTRICT"),
+    contract: Mapped[dict[str, object]] = mapped_column(
+        JSONB,
         nullable=False,
-    )
-    instantiated_from_step_id: Mapped[UUID | None] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("workflow_steps.id", ondelete="RESTRICT"),
+        server_default=text("'{}'::jsonb"),
     )
     labels: Mapped[list[str]] = mapped_column(
         ARRAY(Text),

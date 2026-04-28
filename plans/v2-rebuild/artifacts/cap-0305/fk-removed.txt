@@ -1,0 +1,11 @@
+AQ2-56 FK/unique constraint removal evidence
+
+## removed old constraints
+       check_name       | ok | found
+------------------------+----+-------
+ old_constraints_absent | t  |     0
+(1 row)
+
+ conname | definition
+---------+------------
+(0 rows)
