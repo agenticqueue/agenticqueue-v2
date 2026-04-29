@@ -1,0 +1,314 @@
+{
+  "project": {
+    "id": "[UUID_REDACTED]",
+    "name": "Label Parity Project",
+    "slug": "label-parity-ca2084994e49",
+    "description": null,
+    "archived_at": null,
+    "created_at": "2026-04-27T22:23:58.449226Z",
+    "created_by_actor_id": "[UUID_REDACTED]"
+  },
+  "job_id": "[UUID_REDACTED]",
+  "register": {
+    "rest": {
+      "label": {
+        "id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "name": "area:web",
+        "color": "#336699",
+        "created_at": "2026-04-27T22:23:58.520485Z",
+        "archived_at": null
+      }
+    },
+    "cli": {
+      "label": {
+        "id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "name": "prio:high",
+        "color": null,
+        "created_at": "2026-04-27T22:23:58.857748Z",
+        "archived_at": null
+      }
+    },
+    "mcp": {
+      "label": {
+        "id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "name": "kind:test",
+        "color": null,
+        "created_at": "2026-04-27T22:23:58.940669Z",
+        "archived_at": null
+      }
+    }
+  },
+  "attach": {
+    "rest": {
+      "job_id": "[UUID_REDACTED]",
+      "labels": [
+        "area:web"
+      ]
+    },
+    "cli": {
+      "job_id": "[UUID_REDACTED]",
+      "labels": [
+        "area:web",
+        "prio:high"
+      ]
+    },
+    "mcp": {
+      "job_id": "[UUID_REDACTED]",
+      "labels": [
+        "area:web",
+        "prio:high",
+        "kind:test"
+      ]
+    }
+  },
+  "detach": {
+    "rest": {
+      "job_id": "[UUID_REDACTED]",
+      "labels": [
+        "prio:high",
+        "kind:test"
+      ]
+    },
+    "cli": {
+      "job_id": "[UUID_REDACTED]",
+      "labels": [
+        "kind:test"
+      ]
+    },
+    "mcp": {
+      "job_id": "[UUID_REDACTED]",
+      "labels": []
+    }
+  },
+  "audit": {
+    "entries": [
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-27T22:23:59.871020Z",
+        "op": "detach_label",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-label",
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "job_id": "[UUID_REDACTED]",
+          "label_name": "kind:test"
+        },
+        "response_payload": {
+          "job_id": "[UUID_REDACTED]",
+          "labels": []
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-27T22:23:59.787357Z",
+        "op": "detach_label",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "job_id": "[UUID_REDACTED]",
+          "label_name": "prio:high"
+        },
+        "response_payload": {
+          "job_id": "[UUID_REDACTED]",
+          "labels": [
+            "kind:test"
+          ]
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-27T22:23:59.476666Z",
+        "op": "detach_label",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "job_id": "[UUID_REDACTED]",
+          "label_name": "area:web"
+        },
+        "response_payload": {
+          "job_id": "[UUID_REDACTED]",
+          "labels": [
+            "prio:high",
+            "kind:test"
+          ]
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-27T22:23:59.405177Z",
+        "op": "attach_label",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-label",
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "job_id": "[UUID_REDACTED]",
+          "label_name": "kind:test"
+        },
+        "response_payload": {
+          "job_id": "[UUID_REDACTED]",
+          "labels": [
+            "area:web",
+            "prio:high",
+            "kind:test"
+          ]
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-27T22:23:59.322958Z",
+        "op": "attach_label",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "job_id": "[UUID_REDACTED]",
+          "label_name": "prio:high"
+        },
+        "response_payload": {
+          "job_id": "[UUID_REDACTED]",
+          "labels": [
+            "area:web",
+            "prio:high"
+          ]
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-27T22:23:59.005157Z",
+        "op": "attach_label",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "job_id": "[UUID_REDACTED]",
+          "label_name": "area:web"
+        },
+        "response_payload": {
+          "job_id": "[UUID_REDACTED]",
+          "labels": [
+            "area:web"
+          ]
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-27T22:23:58.940669Z",
+        "op": "register_label",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-label",
+        "target_kind": "label",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "kind:test",
+          "color": null,
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "label": {
+            "id": "[UUID_REDACTED]",
+            "name": "kind:test",
+            "color": null,
+            "created_at": "2026-04-27T22:23:58.940669Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-27T22:23:58.857748Z",
+        "op": "register_label",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "label",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "prio:high",
+          "color": null,
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "label": {
+            "id": "[UUID_REDACTED]",
+            "name": "prio:high",
+            "color": null,
+            "created_at": "2026-04-27T22:23:58.857748Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-27T22:23:58.520485Z",
+        "op": "register_label",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "label",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "area:web",
+          "color": "#336699",
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "label": {
+            "id": "[UUID_REDACTED]",
+            "name": "area:web",
+            "color": "#336699",
+            "created_at": "2026-04-27T22:23:58.520485Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-27T22:23:58.449226Z",
+        "op": "create_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "Label Parity Project",
+          "slug": "label-parity-ca2084994e49",
+          "description": null
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "Label Parity Project",
+            "slug": "label-parity-ca2084994e49",
+            "created_at": "2026-04-27T22:23:58.449226Z",
+            "archived_at": null,
+            "description": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      }
+    ],
+    "next_cursor": null
+  }
+}

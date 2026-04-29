@@ -1,0 +1,16 @@
+Downloading mypy (14.1MiB)
+Downloading ruff (10.8MiB)
+ Downloading ruff
+ Downloading mypy
+Installed 9 packages in 119ms
+Bytecode compiled 4121 files in 802ms
+........................................................................ [ 53%]
+...............................sssss...........................          [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/fastmcp/server/auth/providers/jwt.py:10
+  /app/.venv/lib/python3.12/site-packages/fastmcp/server/auth/providers/jwt.py:10: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+  It will be compatible before version 2.0.0.
+    from authlib.jose import JsonWebKey, JsonWebToken
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+130 passed, 5 skipped, 1 warning in 50.20s

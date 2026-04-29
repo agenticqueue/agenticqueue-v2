@@ -1,5 +1,6 @@
 import asyncio
 import os
+import uuid
 from collections.abc import AsyncIterator, Iterator
 from uuid import UUID
 
@@ -7,10 +8,17 @@ import httpx
 import psycopg
 import pytest
 import pytest_asyncio
+from _db_cleanup import cleanup_actor_state
+from aq_api.services.auth import (
+    DISPLAY_PREFIX_LENGTH,
+    PASSWORD_HASHER,
+    lookup_id_for_key,
+)
 from psycopg import Connection
 
 DATABASE_URL_SYNC = os.environ.get("DATABASE_URL_SYNC")
 API_BASE_URL = os.environ.get("AQ_TEST_API_URL", "http://127.0.0.1:8000")
+ACTOR_PREFIX = "mcp-agent-test-"
 
 pytestmark = pytest.mark.skipif(
     not DATABASE_URL_SYNC,
@@ -38,17 +46,46 @@ async def async_client() -> AsyncIterator[httpx.AsyncClient]:
 
 
 def _truncate_cap02_state(conn: Connection[tuple[object, ...]]) -> None:
+    cleanup_actor_state(conn, actor_name_prefix=ACTOR_PREFIX)
+
+
+def _insert_actor_with_key(
+    conn: Connection[tuple[object, ...]],
+    *,
+    name: str,
+) -> tuple[UUID, str]:
+    api_key = f"aq2_mcp_agent_contract_{uuid.uuid4().hex}"
     with conn.cursor() as cursor:
-        cursor.execute("DELETE FROM audit_log")
-        cursor.execute("DELETE FROM api_keys")
-        cursor.execute("DELETE FROM actors")
+        cursor.execute(
+            """
+            INSERT INTO actors (name, kind)
+            VALUES (%s, 'human')
+            RETURNING id
+            """,
+            (name,),
+        )
+        row = cursor.fetchone()
+        assert row is not None
+        actor_id = row[0]
+        assert isinstance(actor_id, UUID)
 
+        cursor.execute(
+            """
+            INSERT INTO api_keys
+                (actor_id, name, key_hash, prefix, lookup_id)
+            VALUES
+                (%s, %s, %s, %s, %s)
+            """,
+            (
+                actor_id,
+                f"{ACTOR_PREFIX}key-{uuid.uuid4()}",
+                PASSWORD_HASHER.hash(api_key),
+                api_key[:DISPLAY_PREFIX_LENGTH],
+                lookup_id_for_key(api_key),
+            ),
+        )
 
-async def _setup_founder(client: httpx.AsyncClient) -> tuple[UUID, str]:
-    response = await client.post("/setup", json={})
-    assert response.status_code == 200
-    payload = response.json()
-    return UUID(str(payload["actor_id"])), str(payload["founder_key"])
+    return actor_id, api_key
 
 
 def _auth_headers(key: str) -> dict[str, str]:
@@ -116,9 +153,13 @@ def _create_actor_audit_rows(
                    authenticated_actor_id,
                    claimed_actor_identity
             FROM audit_log
-            WHERE op = 'create_actor'
+            WHERE authenticated_actor_id IN (
+                SELECT id FROM actors WHERE name LIKE %s
+            )
+              AND op = 'create_actor'
             ORDER BY ts ASC, id ASC
-            """
+            """,
+            (f"{ACTOR_PREFIX}%",),
         )
         rows = cursor.fetchall()
     result: dict[str, tuple[UUID, str | None]] = {}
@@ -135,7 +176,16 @@ def _create_actor_audit_rows(
 
 def _audit_count(conn: Connection[tuple[object, ...]]) -> int:
     with conn.cursor() as cursor:
-        cursor.execute("SELECT count(*) FROM audit_log")
+        cursor.execute(
+            """
+            SELECT count(*)
+            FROM audit_log
+            WHERE authenticated_actor_id IN (
+                SELECT id FROM actors WHERE name LIKE %s
+            )
+            """,
+            (f"{ACTOR_PREFIX}%",),
+        )
         row = cursor.fetchone()
     assert row is not None
     return int(row[0])
@@ -146,14 +196,17 @@ async def test_mcp_agent_identity_records_claimed_identity_and_rest_remains_null
     conn: Connection[tuple[object, ...]],
     async_client: httpx.AsyncClient,
 ) -> None:
-    founder_id, founder_key = await _setup_founder(async_client)
+    founder_id, founder_key = _insert_actor_with_key(
+        conn,
+        name=f"{ACTOR_PREFIX}founder",
+    )
 
     await _mcp_call(
         async_client,
         founder_key,
         "create_actor",
         {
-            "name": "mcp-agent-identity",
+            "name": f"{ACTOR_PREFIX}identity",
             "kind": "agent",
             "agent_identity": "claude-opus-4-7",
         },
@@ -161,13 +214,13 @@ async def test_mcp_agent_identity_records_claimed_identity_and_rest_remains_null
     rest_response = await async_client.post(
         "/actors",
         headers=_auth_headers(founder_key),
-        json={"name": "rest-no-agent-identity", "kind": "agent"},
+        json={"name": f"{ACTOR_PREFIX}rest-no-identity", "kind": "agent"},
     )
 
     assert rest_response.status_code == 200
     rows = _create_actor_audit_rows(conn)
-    assert rows["mcp-agent-identity"] == (founder_id, "claude-opus-4-7")
-    assert rows["rest-no-agent-identity"] == (founder_id, None)
+    assert rows[f"{ACTOR_PREFIX}identity"] == (founder_id, "claude-opus-4-7")
+    assert rows[f"{ACTOR_PREFIX}rest-no-identity"] == (founder_id, None)
 
 
 @pytest.mark.asyncio
@@ -175,7 +228,10 @@ async def test_mcp_agent_identity_is_task_scoped_under_concurrency(
     conn: Connection[tuple[object, ...]],
     async_client: httpx.AsyncClient,
 ) -> None:
-    founder_id, founder_key = await _setup_founder(async_client)
+    founder_id, founder_key = _insert_actor_with_key(
+        conn,
+        name=f"{ACTOR_PREFIX}founder",
+    )
 
     await asyncio.gather(
         _mcp_call(
@@ -183,7 +239,7 @@ async def test_mcp_agent_identity_is_task_scoped_under_concurrency(
             founder_key,
             "create_actor",
             {
-                "name": "mcp-concurrent-a",
+                "name": f"{ACTOR_PREFIX}concurrent-a",
                 "kind": "agent",
                 "agent_identity": "agent-a",
             },
@@ -194,7 +250,7 @@ async def test_mcp_agent_identity_is_task_scoped_under_concurrency(
             founder_key,
             "create_actor",
             {
-                "name": "mcp-concurrent-b",
+                "name": f"{ACTOR_PREFIX}concurrent-b",
                 "kind": "agent",
                 "agent_identity": "agent-b",
             },
@@ -203,8 +259,8 @@ async def test_mcp_agent_identity_is_task_scoped_under_concurrency(
     )
 
     rows = _create_actor_audit_rows(conn)
-    assert rows["mcp-concurrent-a"] == (founder_id, "agent-a")
-    assert rows["mcp-concurrent-b"] == (founder_id, "agent-b")
+    assert rows[f"{ACTOR_PREFIX}concurrent-a"] == (founder_id, "agent-a")
+    assert rows[f"{ACTOR_PREFIX}concurrent-b"] == (founder_id, "agent-b")
 
 
 @pytest.mark.asyncio
@@ -212,21 +268,24 @@ async def test_mcp_empty_agent_identity_is_treated_as_null(
     conn: Connection[tuple[object, ...]],
     async_client: httpx.AsyncClient,
 ) -> None:
-    founder_id, founder_key = await _setup_founder(async_client)
+    founder_id, founder_key = _insert_actor_with_key(
+        conn,
+        name=f"{ACTOR_PREFIX}founder",
+    )
 
     await _mcp_call(
         async_client,
         founder_key,
         "create_actor",
         {
-            "name": "mcp-empty-agent-identity",
+            "name": f"{ACTOR_PREFIX}empty-identity",
             "kind": "agent",
             "agent_identity": "",
         },
     )
 
     rows = _create_actor_audit_rows(conn)
-    assert rows["mcp-empty-agent-identity"] == (founder_id, None)
+    assert rows[f"{ACTOR_PREFIX}empty-identity"] == (founder_id, None)
 
 
 @pytest.mark.asyncio
@@ -234,14 +293,17 @@ async def test_mcp_invalid_agent_identity_is_rejected_without_audit(
     conn: Connection[tuple[object, ...]],
     async_client: httpx.AsyncClient,
 ) -> None:
-    _founder_id, founder_key = await _setup_founder(async_client)
+    _founder_id, founder_key = _insert_actor_with_key(
+        conn,
+        name=f"{ACTOR_PREFIX}founder",
+    )
 
     payload = await _mcp_raw_call(
         async_client,
         founder_key,
         "create_actor",
         {
-            "name": "mcp-invalid-agent-identity",
+            "name": f"{ACTOR_PREFIX}invalid-identity",
             "kind": "agent",
             "agent_identity": "<script>",
         },

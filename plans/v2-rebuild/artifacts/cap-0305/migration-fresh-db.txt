@@ -1,0 +1,44 @@
+### Isolated fresh DB migration and setup evidence
+### docker compose exec -T db psql -U aq -d postgres -v ON_ERROR_STOP=1 -c "DROP DATABASE IF EXISTS aq2_freshmigration_test WITH (FORCE);"
+DROP DATABASE
+### docker compose exec -T db psql -U aq -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE aq2_freshmigration_test;"
+CREATE DATABASE
+### docker compose exec -T api sh -lc 'DATABASE_URL="postgresql+asyncpg://aq:${POSTGRES_PASSWORD}@db:5432/aq2_freshmigration_test" DATABASE_URL_SYNC="postgresql+psycopg://aq:${POSTGRES_PASSWORD}@db:5432/aq2_freshmigration_test" uv run alembic -c apps/api/alembic.ini upgrade head'
+### docker compose exec -T api sh -lc 'DATABASE_URL="postgresql+asyncpg://aq:${POSTGRES_PASSWORD}@db:5432/aq2_freshmigration_test" DATABASE_URL_SYNC="postgresql+psycopg://aq:${POSTGRES_PASSWORD}@db:5432/aq2_freshmigration_test" uv run alembic -c apps/api/alembic.ini current'
+0005_cap0305 (head)
+### docker compose exec -T db psql -U aq -d aq2_freshmigration_test -v ON_ERROR_STOP=1 -c "SELECT to_regclass('workflows') AS workflows, to_regclass('contract_profiles') AS contract_profiles;"
+ workflows | contract_profiles
+-----------+-------------------
+           |
+(1 row)
+
+### docker compose exec -T db psql -U aq -d aq2_freshmigration_test -v ON_ERROR_STOP=1 -c "SELECT count(*) AS template_pipelines_before_setup FROM pipelines WHERE is_template=true;"
+ template_pipelines_before_setup
+---------------------------------
+                               0
+(1 row)
+
+### docker compose exec -T api sh -lc 'DATABASE_URL="postgresql+asyncpg://aq:${POSTGRES_PASSWORD}@db:5432/aq2_freshmigration_test" DATABASE_URL_SYNC="postgresql+psycopg://aq:${POSTGRES_PASSWORD}@db:5432/aq2_freshmigration_test" uv run uvicorn aq_api.app:app --host 127.0.0.1 --port 18080 >/tmp/aq2-freshmigration-api.log 2>&1 & pid=$!; for i in $(seq 1 30); do if curl -fsS http://127.0.0.1:18080/healthz >/dev/null; then break; fi; sleep 1; done; AQ_API_URL=http://127.0.0.1:18080 uv run aq setup; status=$?; kill $pid; wait $pid 2>/dev/null || true; cat /tmp/aq2-freshmigration-api.log; exit $status'
+{"actor_id":"[UUID_REDACTED]","config_path":"/root/.aq/config.toml"}
+Bytecode compiled 4121 files in 105ms
+/app/.venv/lib/python3.12/site-packages/fastmcp/server/auth/providers/jwt.py:10: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+It will be compatible before version 2.0.0.
+  from authlib.jose import JsonWebKey, JsonWebToken
+INFO:     Started server process [29280]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:18080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:35886 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35898 - "POST /setup HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [29280]
+### docker compose exec -T db psql -U aq -d aq2_freshmigration_test -v ON_ERROR_STOP=1 -c "SELECT p.name, p.is_template, count(j.id) AS jobs, bool_and(j.state = 'ready') AS all_ready, bool_and(j.contract != '{}'::jsonb) AS contracts_nonempty FROM pipelines p LEFT JOIN jobs j ON j.pipeline_id = p.id WHERE p.name = 'ship-a-thing' GROUP BY p.name, p.is_template;"
+     name     | is_template | jobs | all_ready | contracts_nonempty
+--------------+-------------+------+-----------+--------------------
+ ship-a-thing | t           |    3 | t         | t
+(1 row)
+
+### docker compose exec -T db psql -U aq -d postgres -v ON_ERROR_STOP=1 -c "DROP DATABASE aq2_freshmigration_test WITH (FORCE);"
+DROP DATABASE

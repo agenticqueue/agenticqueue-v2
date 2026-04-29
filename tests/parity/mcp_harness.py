@@ -3,11 +3,15 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import uuid
+from pathlib import Path
 from typing import Any
 
 import httpx
 
-DEFAULT_API_URL = "http://localhost:8001"
+DEFAULT_API_URL = (
+    "http://127.0.0.1:8000" if Path("/.dockerenv").exists() else "http://localhost:8001"
+)
 TOOL_NAMES = [
     "health_check",
     "get_version",
@@ -16,7 +20,36 @@ TOOL_NAMES = [
     "create_actor",
     "revoke_api_key",
     "query_audit_log",
+    "create_project",
+    "list_projects",
+    "get_project",
+    "update_project",
+    "archive_project",
+    "create_pipeline",
+    "list_pipelines",
+    "get_pipeline",
+    "update_pipeline",
+    "clone_pipeline",
+    "archive_pipeline",
+    "create_job",
+    "list_jobs",
+    "get_job",
+    "update_job",
+    "list_ready_jobs",
+    "comment_on_job",
+    "list_job_comments",
+    "cancel_job",
+    "register_label",
+    "attach_label",
+    "detach_label",
 ]
+DEFAULT_TOOL_ARGUMENTS = {
+    "create_project": lambda: {
+        "name": "MCP Harness Project",
+        "slug": f"mcp-harness-{uuid.uuid4().hex[:12]}",
+        "description": "Created by tests.parity.mcp_harness",
+    }
+}
 
 
 def call_tool(
@@ -55,6 +88,13 @@ def call_tool(
     return structured_content
 
 
+def _setup_key(api_base_url: str) -> str:
+    response = httpx.post(f"{api_base_url.rstrip('/')}/setup", json={}, timeout=10)
+    response.raise_for_status()
+    payload = response.json()
+    return str(payload["founder_key"])
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Call an AQ2 MCP parity tool.")
     parser.add_argument("tool", choices=TOOL_NAMES)
@@ -79,17 +119,21 @@ def main() -> None:
         help="Tool arguments JSON object merged after --agent-identity.",
     )
     args = parser.parse_args()
-    arguments = json.loads(args.arguments_json)
-    if not isinstance(arguments, dict):
+    explicit_arguments = json.loads(args.arguments_json)
+    if not isinstance(explicit_arguments, dict):
         raise TypeError("--arguments-json must decode to an object")
+    default_args_factory = DEFAULT_TOOL_ARGUMENTS.get(args.tool)
+    arguments = default_args_factory() if default_args_factory is not None else {}
+    arguments.update(explicit_arguments)
     if args.agent_identity is not None:
         arguments["agent_identity"] = args.agent_identity
+    api_key = args.api_key or _setup_key(args.api_base_url)
     print(
         json.dumps(
             call_tool(
                 args.tool,
                 args.api_base_url,
-                api_key=args.api_key,
+                api_key=api_key,
                 arguments=arguments,
             ),
             separators=(",", ":"),

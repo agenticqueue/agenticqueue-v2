@@ -1,0 +1,3 @@
+artifact_paths_scanned=29
+patterns=aq2 token, argon2 hash, UUID
+status=ok

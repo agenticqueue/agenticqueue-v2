@@ -1,0 +1,485 @@
+{
+  "creates": {
+    "rest": {
+      "project": {
+        "id": "[UUID_REDACTED]",
+        "name": "REST Project",
+        "slug": "rest-project-724ca599e01a",
+        "description": "Created through REST",
+        "archived_at": null,
+        "created_at": "2026-04-27T21:57:50.682130Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    },
+    "cli": {
+      "project": {
+        "id": "[UUID_REDACTED]",
+        "name": "CLI Project",
+        "slug": "cli-project-724ca599e01a",
+        "description": "Created through CLI",
+        "archived_at": null,
+        "created_at": "2026-04-27T21:57:51.058463Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    },
+    "mcp": {
+      "project": {
+        "id": "[UUID_REDACTED]",
+        "name": "MCP Project",
+        "slug": "mcp-project-724ca599e01a",
+        "description": "Created through MCP",
+        "archived_at": null,
+        "created_at": "2026-04-27T21:57:51.206616Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    }
+  },
+  "lists": {
+    "rest": {
+      "projects": [
+        {
+          "id": "[UUID_REDACTED]",
+          "name": "REST Project",
+          "slug": "rest-project-724ca599e01a",
+          "description": "Created through REST",
+          "archived_at": null,
+          "created_at": "2026-04-27T21:57:50.682130Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "name": "CLI Project",
+          "slug": "cli-project-724ca599e01a",
+          "description": "Created through CLI",
+          "archived_at": null,
+          "created_at": "2026-04-27T21:57:51.058463Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "name": "MCP Project",
+          "slug": "mcp-project-724ca599e01a",
+          "description": "Created through MCP",
+          "archived_at": null,
+          "created_at": "2026-04-27T21:57:51.206616Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      ],
+      "next_cursor": null
+    },
+    "cli": {
+      "projects": [
+        {
+          "id": "[UUID_REDACTED]",
+          "name": "REST Project",
+          "slug": "rest-project-724ca599e01a",
+          "description": "Created through REST",
+          "archived_at": null,
+          "created_at": "2026-04-27T21:57:50.682130Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "name": "CLI Project",
+          "slug": "cli-project-724ca599e01a",
+          "description": "Created through CLI",
+          "archived_at": null,
+          "created_at": "2026-04-27T21:57:51.058463Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "name": "MCP Project",
+          "slug": "mcp-project-724ca599e01a",
+          "description": "Created through MCP",
+          "archived_at": null,
+          "created_at": "2026-04-27T21:57:51.206616Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      ],
+      "next_cursor": null
+    },
+    "mcp": {
+      "projects": [
+        {
+          "id": "[UUID_REDACTED]",
+          "name": "REST Project",
+          "slug": "rest-project-724ca599e01a",
+          "description": "Created through REST",
+          "archived_at": null,
+          "created_at": "2026-04-27T21:57:50.682130Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "name": "CLI Project",
+          "slug": "cli-project-724ca599e01a",
+          "description": "Created through CLI",
+          "archived_at": null,
+          "created_at": "2026-04-27T21:57:51.058463Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "name": "MCP Project",
+          "slug": "mcp-project-724ca599e01a",
+          "description": "Created through MCP",
+          "archived_at": null,
+          "created_at": "2026-04-27T21:57:51.206616Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      ],
+      "next_cursor": null
+    },
+    "rest_after_archive": {
+      "projects": [],
+      "next_cursor": null
+    },
+    "cli_after_archive": {
+      "projects": [],
+      "next_cursor": null
+    },
+    "mcp_after_archive": {
+      "projects": [],
+      "next_cursor": null
+    }
+  },
+  "gets": {
+    "rest": {
+      "project": {
+        "id": "[UUID_REDACTED]",
+        "name": "REST Project",
+        "slug": "rest-project-724ca599e01a",
+        "description": "Created through REST",
+        "archived_at": null,
+        "created_at": "2026-04-27T21:57:50.682130Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    },
+    "cli": {
+      "project": {
+        "id": "[UUID_REDACTED]",
+        "name": "CLI Project",
+        "slug": "cli-project-724ca599e01a",
+        "description": "Created through CLI",
+        "archived_at": null,
+        "created_at": "2026-04-27T21:57:51.058463Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    },
+    "mcp": {
+      "project": {
+        "id": "[UUID_REDACTED]",
+        "name": "MCP Project",
+        "slug": "mcp-project-724ca599e01a",
+        "description": "Created through MCP",
+        "archived_at": null,
+        "created_at": "2026-04-27T21:57:51.206616Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    }
+  },
+  "updates": {
+    "rest": {
+      "project": {
+        "id": "[UUID_REDACTED]",
+        "name": "REST Project",
+        "slug": "rest-project-724ca599e01a",
+        "description": "REST updated",
+        "archived_at": null,
+        "created_at": "2026-04-27T21:57:50.682130Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    },
+    "cli": {
+      "project": {
+        "id": "[UUID_REDACTED]",
+        "name": "CLI Project",
+        "slug": "cli-project-724ca599e01a",
+        "description": "CLI updated",
+        "archived_at": null,
+        "created_at": "2026-04-27T21:57:51.058463Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    },
+    "mcp": {
+      "project": {
+        "id": "[UUID_REDACTED]",
+        "name": "MCP Project",
+        "slug": "mcp-project-724ca599e01a",
+        "description": "MCP updated",
+        "archived_at": null,
+        "created_at": "2026-04-27T21:57:51.206616Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    }
+  },
+  "archives": {
+    "rest": {
+      "project": {
+        "id": "[UUID_REDACTED]",
+        "name": "REST Project",
+        "slug": "rest-project-724ca599e01a",
+        "description": "REST updated",
+        "archived_at": "2026-04-27T21:57:52.966457Z",
+        "created_at": "2026-04-27T21:57:50.682130Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    },
+    "cli": {
+      "project": {
+        "id": "[UUID_REDACTED]",
+        "name": "CLI Project",
+        "slug": "cli-project-724ca599e01a",
+        "description": "CLI updated",
+        "archived_at": "2026-04-27T21:57:53.404479Z",
+        "created_at": "2026-04-27T21:57:51.058463Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    },
+    "mcp": {
+      "project": {
+        "id": "[UUID_REDACTED]",
+        "name": "MCP Project",
+        "slug": "mcp-project-724ca599e01a",
+        "description": "MCP updated",
+        "archived_at": "2026-04-27T21:57:53.492621Z",
+        "created_at": "2026-04-27T21:57:51.206616Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    }
+  },
+  "audit": {
+    "entries": [
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-27T21:57:53.492085Z",
+        "op": "archive_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-project",
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "MCP Project",
+            "slug": "mcp-project-724ca599e01a",
+            "created_at": "2026-04-27T21:57:51.206616Z",
+            "archived_at": "2026-04-27T21:57:53.492621Z",
+            "description": "MCP updated",
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-27T21:57:53.403952Z",
+        "op": "archive_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "CLI Project",
+            "slug": "cli-project-724ca599e01a",
+            "created_at": "2026-04-27T21:57:51.058463Z",
+            "archived_at": "2026-04-27T21:57:53.404479Z",
+            "description": "CLI updated",
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-27T21:57:52.965544Z",
+        "op": "archive_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "REST Project",
+            "slug": "rest-project-724ca599e01a",
+            "created_at": "2026-04-27T21:57:50.682130Z",
+            "archived_at": "2026-04-27T21:57:52.966457Z",
+            "description": "REST updated",
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-27T21:57:52.903997Z",
+        "op": "update_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-project",
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": null,
+          "project_id": "[UUID_REDACTED]",
+          "description": "MCP updated"
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "MCP Project",
+            "slug": "mcp-project-724ca599e01a",
+            "created_at": "2026-04-27T21:57:51.206616Z",
+            "archived_at": null,
+            "description": "MCP updated",
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-27T21:57:52.803045Z",
+        "op": "update_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": null,
+          "project_id": "[UUID_REDACTED]",
+          "description": "CLI updated"
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "CLI Project",
+            "slug": "cli-project-724ca599e01a",
+            "created_at": "2026-04-27T21:57:51.058463Z",
+            "archived_at": null,
+            "description": "CLI updated",
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-27T21:57:52.283766Z",
+        "op": "update_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": null,
+          "project_id": "[UUID_REDACTED]",
+          "description": "REST updated"
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "REST Project",
+            "slug": "rest-project-724ca599e01a",
+            "created_at": "2026-04-27T21:57:50.682130Z",
+            "archived_at": null,
+            "description": "REST updated",
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-27T21:57:51.206616Z",
+        "op": "create_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-project",
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "MCP Project",
+          "slug": "mcp-project-724ca599e01a",
+          "description": "Created through MCP"
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "MCP Project",
+            "slug": "mcp-project-724ca599e01a",
+            "created_at": "2026-04-27T21:57:51.206616Z",
+            "archived_at": null,
+            "description": "Created through MCP",
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-27T21:57:51.058463Z",
+        "op": "create_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "CLI Project",
+          "slug": "cli-project-724ca599e01a",
+          "description": "Created through CLI"
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "CLI Project",
+            "slug": "cli-project-724ca599e01a",
+            "created_at": "2026-04-27T21:57:51.058463Z",
+            "archived_at": null,
+            "description": "Created through CLI",
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-27T21:57:50.682130Z",
+        "op": "create_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "REST Project",
+          "slug": "rest-project-724ca599e01a",
+          "description": "Created through REST"
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "REST Project",
+            "slug": "rest-project-724ca599e01a",
+            "created_at": "2026-04-27T21:57:50.682130Z",
+            "archived_at": null,
+            "description": "Created through REST",
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      }
+    ],
+    "next_cursor": null
+  }
+}

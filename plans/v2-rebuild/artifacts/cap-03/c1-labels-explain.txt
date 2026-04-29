@@ -1,0 +1,10 @@
+                                                           QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on jobs  (cost=9.04..186.02 rows=100 width=16) (actual time=0.103..0.312 rows=100 loops=1)
+   Recheck Cond: (labels @> '{area:web}'::text[])
+   Heap Blocks: exact=101
+   ->  Bitmap Index Scan on idx_jobs_labels_gin  (cost=0.00..9.02 rows=100 width=0) (actual time=0.073..0.073 rows=111 loops=1)
+         Index Cond: (labels @> '{area:web}'::text[])
+ Planning Time: 0.663 ms
+ Execution Time: 0.365 ms
+(7 rows)

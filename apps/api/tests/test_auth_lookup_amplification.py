@@ -7,11 +7,13 @@ from uuid import UUID
 import psycopg
 import pytest
 import pytest_asyncio
+from _db_cleanup import cleanup_actor_state
 from aq_api.services.auth import PASSWORD_HASHER, lookup_id_for_key, resolve_actor
 from psycopg import Connection
 from sqlalchemy.ext.asyncio import AsyncSession
 
 DATABASE_URL_SYNC = os.environ.get("DATABASE_URL_SYNC")
+ACTOR_PREFIX = "lookup-test-"
 
 pytestmark = pytest.mark.skipif(
     not DATABASE_URL_SYNC,
@@ -42,10 +44,7 @@ async def session() -> AsyncIterator[AsyncSession]:
 
 
 def _truncate_cap02_state(conn: Connection[tuple[object, ...]]) -> None:
-    with conn.cursor() as cursor:
-        cursor.execute("DELETE FROM audit_log")
-        cursor.execute("DELETE FROM api_keys")
-        cursor.execute("DELETE FROM actors")
+    cleanup_actor_state(conn, actor_name_prefix=ACTOR_PREFIX)
 
 
 def _insert_actor_with_key(
@@ -54,7 +53,7 @@ def _insert_actor_with_key(
     *,
     actor_name: str | None = None,
 ) -> UUID:
-    actor_name = actor_name or f"lookup-test-{uuid.uuid4()}"
+    actor_name = actor_name or f"{ACTOR_PREFIX}{uuid.uuid4()}"
     with conn.cursor() as cursor:
         cursor.execute(
             """

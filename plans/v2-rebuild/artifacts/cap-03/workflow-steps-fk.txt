@@ -1,0 +1,23 @@
+                                                     Table "public.workflow_steps"
+           Column            |  Type   | Collation | Nullable |      Default      | Storage  | Compression | Stats target | Description
+-----------------------------+---------+-----------+----------+-------------------+----------+-------------+--------------+-------------
+ id                          | uuid    |           | not null | gen_random_uuid() | plain    |             |              |
+ workflow_id                 | uuid    |           | not null |                   | plain    |             |              |
+ name                        | text    |           | not null |                   | extended |             |              |
+ ordinal                     | integer |           | not null |                   | plain    |             |              |
+ default_contract_profile_id | uuid    |           | not null |                   | plain    |             |              |
+ step_edges                  | jsonb   |           | not null | '{}'::jsonb       | extended |             |              |
+Indexes:
+    "workflow_steps_pkey" PRIMARY KEY, btree (id)
+    "workflow_steps_workflow_ordinal_key" UNIQUE CONSTRAINT, btree (workflow_id, ordinal)
+Foreign-key constraints:
+    "[TOKEN_REDACTED]" FOREIGN KEY (default_contract_profile_id) REFERENCES contract_profiles(id) ON DELETE RESTRICT
+    "workflow_steps_workflow_id_fkey" FOREIGN KEY (workflow_id) REFERENCES workflows(id) ON DELETE CASCADE
+Referenced by:
+    TABLE "jobs" CONSTRAINT "jobs_instantiated_from_step_id_fkey" FOREIGN KEY (instantiated_from_step_id) REFERENCES workflow_steps(id) ON DELETE RESTRICT
+Access method: heap
+
+ null_default_contract_profile_id
+----------------------------------
+                                0
+(1 row)

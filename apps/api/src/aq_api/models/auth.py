@@ -73,6 +73,7 @@ class SetupRequest(AQModel):
 class SetupResponse(AQModel):
     actor_id: UUID
     founder_key: str = Field(min_length=1, repr=False)
+    bootstrap_project_id: UUID
 
 
 class CreateActorRequest(AQModel):

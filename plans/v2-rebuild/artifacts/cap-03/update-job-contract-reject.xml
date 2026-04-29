@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="1.325" timestamp="2026-04-28T23:20:12.244039+00:00" hostname="3630f67e9a96"><testcase classname="apps.api.tests.test_update_job_rejections" name="[TOKEN_REDACTED][[TOKEN_REDACTED]]" time="0.205" /></testsuite></testsuites>

@@ -1,0 +1,830 @@
+{
+  "fixture": {
+    "projects": {
+      "rest": {
+        "project": {
+          "id": "[UUID_REDACTED]",
+          "name": "REST job Project",
+          "slug": "parity-rest-job-02908e401bdd",
+          "description": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:44:12.019134Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "cli": {
+        "project": {
+          "id": "[UUID_REDACTED]",
+          "name": "CLI job Project",
+          "slug": "parity-cli-job-02908e401bdd",
+          "description": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:44:12.574958Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "mcp": {
+        "project": {
+          "id": "[UUID_REDACTED]",
+          "name": "MCP job Project",
+          "slug": "parity-mcp-job-02908e401bdd",
+          "description": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:44:12.743838Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      }
+    },
+    "pipelines": {
+      "rest": {
+        "pipeline": {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "REST job Pipeline",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:44:12.849020Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "cli": {
+        "pipeline": {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "CLI job Pipeline",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:44:13.272980Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "mcp": {
+        "pipeline": {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "MCP job Pipeline",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:44:13.383635Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      }
+    },
+    "pipeline_ids": {
+      "rest": "[UUID_REDACTED]",
+      "cli": "[UUID_REDACTED]",
+      "mcp": "[UUID_REDACTED]"
+    }
+  },
+  "creates": {
+    "rest": {
+      "job": {
+        "id": "[UUID_REDACTED]",
+        "pipeline_id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "state": "ready",
+        "title": "REST Job",
+        "description": "Created through REST",
+        "contract": {
+          "contract_type": "coding-task",
+          "dod_items": [
+            {
+              "id": "job-parity"
+            }
+          ]
+        },
+        "labels": [],
+        "claimed_by_actor_id": null,
+        "claimed_at": null,
+        "claim_heartbeat_at": null,
+        "created_at": "2026-04-29T00:44:13.453928Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    },
+    "cli": {
+      "job": {
+        "id": "[UUID_REDACTED]",
+        "pipeline_id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "state": "ready",
+        "title": "CLI Job",
+        "description": "Created through CLI",
+        "contract": {
+          "contract_type": "coding-task",
+          "dod_items": [
+            {
+              "id": "job-parity"
+            }
+          ]
+        },
+        "labels": [],
+        "claimed_by_actor_id": null,
+        "claimed_at": null,
+        "claim_heartbeat_at": null,
+        "created_at": "2026-04-29T00:44:13.930100Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    },
+    "mcp": {
+      "job": {
+        "id": "[UUID_REDACTED]",
+        "pipeline_id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "state": "ready",
+        "title": "MCP Job",
+        "description": "Created through MCP",
+        "contract": {
+          "contract_type": "coding-task",
+          "dod_items": [
+            {
+              "id": "job-parity"
+            }
+          ]
+        },
+        "labels": [],
+        "claimed_by_actor_id": null,
+        "claimed_at": null,
+        "claim_heartbeat_at": null,
+        "created_at": "2026-04-29T00:44:14.062826Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    }
+  },
+  "lists": {
+    "rest": {
+      "jobs": [
+        {
+          "id": "[UUID_REDACTED]",
+          "pipeline_id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "state": "ready",
+          "title": "REST Job",
+          "description": "Created through REST",
+          "contract": {
+            "dod_items": [
+              {
+                "id": "job-parity"
+              }
+            ],
+            "contract_type": "coding-task"
+          },
+          "labels": [],
+          "claimed_by_actor_id": null,
+          "claimed_at": null,
+          "claim_heartbeat_at": null,
+          "created_at": "2026-04-29T00:44:13.453928Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      ],
+      "next_cursor": null
+    },
+    "cli": {
+      "jobs": [
+        {
+          "id": "[UUID_REDACTED]",
+          "pipeline_id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "state": "ready",
+          "title": "CLI Job",
+          "description": "Created through CLI",
+          "contract": {
+            "dod_items": [
+              {
+                "id": "job-parity"
+              }
+            ],
+            "contract_type": "coding-task"
+          },
+          "labels": [],
+          "claimed_by_actor_id": null,
+          "claimed_at": null,
+          "claim_heartbeat_at": null,
+          "created_at": "2026-04-29T00:44:13.930100Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      ],
+      "next_cursor": null
+    },
+    "mcp": {
+      "jobs": [
+        {
+          "id": "[UUID_REDACTED]",
+          "pipeline_id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "state": "ready",
+          "title": "MCP Job",
+          "description": "Created through MCP",
+          "contract": {
+            "dod_items": [
+              {
+                "id": "job-parity"
+              }
+            ],
+            "contract_type": "coding-task"
+          },
+          "labels": [],
+          "claimed_by_actor_id": null,
+          "claimed_at": null,
+          "claim_heartbeat_at": null,
+          "created_at": "2026-04-29T00:44:14.062826Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      ],
+      "next_cursor": null
+    }
+  },
+  "gets": {
+    "rest": {
+      "job": {
+        "id": "[UUID_REDACTED]",
+        "pipeline_id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "state": "ready",
+        "title": "REST Job",
+        "description": "Created through REST",
+        "contract": {
+          "dod_items": [
+            {
+              "id": "job-parity"
+            }
+          ],
+          "contract_type": "coding-task"
+        },
+        "labels": [],
+        "claimed_by_actor_id": null,
+        "claimed_at": null,
+        "claim_heartbeat_at": null,
+        "created_at": "2026-04-29T00:44:13.453928Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      },
+      "decisions": {
+        "direct": [],
+        "inherited": []
+      },
+      "learnings": {
+        "direct": [],
+        "inherited": []
+      }
+    },
+    "cli": {
+      "job": {
+        "id": "[UUID_REDACTED]",
+        "pipeline_id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "state": "ready",
+        "title": "CLI Job",
+        "description": "Created through CLI",
+        "contract": {
+          "dod_items": [
+            {
+              "id": "job-parity"
+            }
+          ],
+          "contract_type": "coding-task"
+        },
+        "labels": [],
+        "claimed_by_actor_id": null,
+        "claimed_at": null,
+        "claim_heartbeat_at": null,
+        "created_at": "2026-04-29T00:44:13.930100Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      },
+      "decisions": {
+        "direct": [],
+        "inherited": []
+      },
+      "learnings": {
+        "direct": [],
+        "inherited": []
+      }
+    },
+    "mcp": {
+      "job": {
+        "id": "[UUID_REDACTED]",
+        "pipeline_id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "state": "ready",
+        "title": "MCP Job",
+        "description": "Created through MCP",
+        "contract": {
+          "dod_items": [
+            {
+              "id": "job-parity"
+            }
+          ],
+          "contract_type": "coding-task"
+        },
+        "labels": [],
+        "claimed_by_actor_id": null,
+        "claimed_at": null,
+        "claim_heartbeat_at": null,
+        "created_at": "2026-04-29T00:44:14.062826Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      },
+      "decisions": {
+        "direct": [],
+        "inherited": []
+      },
+      "learnings": {
+        "direct": [],
+        "inherited": []
+      }
+    }
+  },
+  "updates": {
+    "rest": {
+      "job": {
+        "id": "[UUID_REDACTED]",
+        "pipeline_id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "state": "ready",
+        "title": "REST Job v2",
+        "description": "Updated through REST",
+        "contract": {
+          "dod_items": [
+            {
+              "id": "job-parity"
+            }
+          ],
+          "contract_type": "coding-task"
+        },
+        "labels": [],
+        "claimed_by_actor_id": null,
+        "claimed_at": null,
+        "claim_heartbeat_at": null,
+        "created_at": "2026-04-29T00:44:13.453928Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    },
+    "cli": {
+      "job": {
+        "id": "[UUID_REDACTED]",
+        "pipeline_id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "state": "ready",
+        "title": "CLI Job v2",
+        "description": "Updated through CLI",
+        "contract": {
+          "dod_items": [
+            {
+              "id": "job-parity"
+            }
+          ],
+          "contract_type": "coding-task"
+        },
+        "labels": [],
+        "claimed_by_actor_id": null,
+        "claimed_at": null,
+        "claim_heartbeat_at": null,
+        "created_at": "2026-04-29T00:44:13.930100Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    },
+    "mcp": {
+      "job": {
+        "id": "[UUID_REDACTED]",
+        "pipeline_id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "state": "ready",
+        "title": "MCP Job v2",
+        "description": "Updated through MCP",
+        "contract": {
+          "dod_items": [
+            {
+              "id": "job-parity"
+            }
+          ],
+          "contract_type": "coding-task"
+        },
+        "labels": [],
+        "claimed_by_actor_id": null,
+        "claimed_at": null,
+        "claim_heartbeat_at": null,
+        "created_at": "2026-04-29T00:44:14.062826Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    }
+  },
+  "audit": {
+    "entries": [
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:16.410428Z",
+        "op": "update_job",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-job",
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "title": "MCP Job v2",
+          "job_id": "[UUID_REDACTED]",
+          "description": "Updated through MCP"
+        },
+        "response_payload": {
+          "job": {
+            "id": "[UUID_REDACTED]",
+            "state": "ready",
+            "title": "MCP Job v2",
+            "labels": [],
+            "contract": {
+              "dod_items": [
+                {
+                  "id": "job-parity"
+                }
+              ],
+              "contract_type": "coding-task"
+            },
+            "claimed_at": null,
+            "created_at": "2026-04-29T00:44:14.062826Z",
+            "project_id": "[UUID_REDACTED]",
+            "description": "Updated through MCP",
+            "pipeline_id": "[UUID_REDACTED]",
+            "claim_heartbeat_at": null,
+            "claimed_by_actor_id": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:16.294325Z",
+        "op": "update_job",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "title": "CLI Job v2",
+          "job_id": "[UUID_REDACTED]",
+          "description": "Updated through CLI"
+        },
+        "response_payload": {
+          "job": {
+            "id": "[UUID_REDACTED]",
+            "state": "ready",
+            "title": "CLI Job v2",
+            "labels": [],
+            "contract": {
+              "dod_items": [
+                {
+                  "id": "job-parity"
+                }
+              ],
+              "contract_type": "coding-task"
+            },
+            "claimed_at": null,
+            "created_at": "2026-04-29T00:44:13.930100Z",
+            "project_id": "[UUID_REDACTED]",
+            "description": "Updated through CLI",
+            "pipeline_id": "[UUID_REDACTED]",
+            "claim_heartbeat_at": null,
+            "claimed_by_actor_id": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:15.773369Z",
+        "op": "update_job",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "title": "REST Job v2",
+          "job_id": "[UUID_REDACTED]",
+          "description": "Updated through REST"
+        },
+        "response_payload": {
+          "job": {
+            "id": "[UUID_REDACTED]",
+            "state": "ready",
+            "title": "REST Job v2",
+            "labels": [],
+            "contract": {
+              "dod_items": [
+                {
+                  "id": "job-parity"
+                }
+              ],
+              "contract_type": "coding-task"
+            },
+            "claimed_at": null,
+            "created_at": "2026-04-29T00:44:13.453928Z",
+            "project_id": "[UUID_REDACTED]",
+            "description": "Updated through REST",
+            "pipeline_id": "[UUID_REDACTED]",
+            "claim_heartbeat_at": null,
+            "claimed_by_actor_id": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:14.062826Z",
+        "op": "create_job",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-job",
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "title": "MCP Job",
+          "contract": {
+            "dod_items": [
+              {
+                "id": "job-parity"
+              }
+            ],
+            "contract_type": "coding-task"
+          },
+          "description": "Created through MCP",
+          "pipeline_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "job": {
+            "id": "[UUID_REDACTED]",
+            "state": "ready",
+            "title": "MCP Job",
+            "labels": [],
+            "contract": {
+              "dod_items": [
+                {
+                  "id": "job-parity"
+                }
+              ],
+              "contract_type": "coding-task"
+            },
+            "claimed_at": null,
+            "created_at": "2026-04-29T00:44:14.062826Z",
+            "project_id": "[UUID_REDACTED]",
+            "description": "Created through MCP",
+            "pipeline_id": "[UUID_REDACTED]",
+            "claim_heartbeat_at": null,
+            "claimed_by_actor_id": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:13.930100Z",
+        "op": "create_job",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "title": "CLI Job",
+          "contract": {
+            "dod_items": [
+              {
+                "id": "job-parity"
+              }
+            ],
+            "contract_type": "coding-task"
+          },
+          "description": "Created through CLI",
+          "pipeline_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "job": {
+            "id": "[UUID_REDACTED]",
+            "state": "ready",
+            "title": "CLI Job",
+            "labels": [],
+            "contract": {
+              "dod_items": [
+                {
+                  "id": "job-parity"
+                }
+              ],
+              "contract_type": "coding-task"
+            },
+            "claimed_at": null,
+            "created_at": "2026-04-29T00:44:13.930100Z",
+            "project_id": "[UUID_REDACTED]",
+            "description": "Created through CLI",
+            "pipeline_id": "[UUID_REDACTED]",
+            "claim_heartbeat_at": null,
+            "claimed_by_actor_id": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:13.453928Z",
+        "op": "create_job",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "title": "REST Job",
+          "contract": {
+            "dod_items": [
+              {
+                "id": "job-parity"
+              }
+            ],
+            "contract_type": "coding-task"
+          },
+          "description": "Created through REST",
+          "pipeline_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "job": {
+            "id": "[UUID_REDACTED]",
+            "state": "ready",
+            "title": "REST Job",
+            "labels": [],
+            "contract": {
+              "dod_items": [
+                {
+                  "id": "job-parity"
+                }
+              ],
+              "contract_type": "coding-task"
+            },
+            "claimed_at": null,
+            "created_at": "2026-04-29T00:44:13.453928Z",
+            "project_id": "[UUID_REDACTED]",
+            "description": "Created through REST",
+            "pipeline_id": "[UUID_REDACTED]",
+            "claim_heartbeat_at": null,
+            "claimed_by_actor_id": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:13.383635Z",
+        "op": "create_pipeline",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-job",
+        "target_kind": "pipeline",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "MCP job Pipeline",
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "pipeline": {
+            "id": "[UUID_REDACTED]",
+            "name": "MCP job Pipeline",
+            "created_at": "2026-04-29T00:44:13.383635Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": null,
+            "is_template": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "cloned_from_pipeline_id": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:13.272980Z",
+        "op": "create_pipeline",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "pipeline",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "CLI job Pipeline",
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "pipeline": {
+            "id": "[UUID_REDACTED]",
+            "name": "CLI job Pipeline",
+            "created_at": "2026-04-29T00:44:13.272980Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": null,
+            "is_template": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "cloned_from_pipeline_id": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:12.849020Z",
+        "op": "create_pipeline",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "pipeline",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "REST job Pipeline",
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "pipeline": {
+            "id": "[UUID_REDACTED]",
+            "name": "REST job Pipeline",
+            "created_at": "2026-04-29T00:44:12.849020Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": null,
+            "is_template": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "cloned_from_pipeline_id": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:12.743838Z",
+        "op": "create_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-job",
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "MCP job Project",
+          "slug": "parity-mcp-job-02908e401bdd",
+          "description": null
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "MCP job Project",
+            "slug": "parity-mcp-job-02908e401bdd",
+            "created_at": "2026-04-29T00:44:12.743838Z",
+            "archived_at": null,
+            "description": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:12.574958Z",
+        "op": "create_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "CLI job Project",
+          "slug": "parity-cli-job-02908e401bdd",
+          "description": null
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "CLI job Project",
+            "slug": "parity-cli-job-02908e401bdd",
+            "created_at": "2026-04-29T00:44:12.574958Z",
+            "archived_at": null,
+            "description": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:12.019134Z",
+        "op": "create_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "REST job Project",
+          "slug": "parity-rest-job-02908e401bdd",
+          "description": null
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "REST job Project",
+            "slug": "parity-rest-job-02908e401bdd",
+            "created_at": "2026-04-29T00:44:12.019134Z",
+            "archived_at": null,
+            "description": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      }
+    ],
+    "next_cursor": null
+  }
+}

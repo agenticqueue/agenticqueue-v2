@@ -110,7 +110,8 @@ def test_setup_posts_and_writes_redacted_cli_summary(
     config_path = tmp_path / "config.toml"
     body = (
         '{"actor_id":"11111111-1111-4111-8111-111111111111",'
-        '"founder_key":"aq2_founder_contract_test_key"}'
+        '"founder_key":"aq2_founder_contract_test_key",'
+        '"bootstrap_project_id":"44444444-4444-4444-8444-444444444444"}'
     )
     calls: list[tuple[str, dict[str, object], float]] = []
 
@@ -300,6 +301,872 @@ def test_actor_create_posts_body_and_prints_one_shot_key(
             {"name": "worker", "kind": "agent", "key_name": "default"},
             10.0,
         )
+    ]
+
+
+def test_project_create_posts_body_and_prints_raw_json(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    body = (
+        '{"project":{"id":"44444444-4444-4444-8444-444444444444",'
+        '"name":"AQ 2.0 Backlog","slug":"aq-2-backlog",'
+        '"description":"Project board","archived_at":null,'
+        '"created_at":"2026-04-27T01:00:00Z",'
+        '"created_by_actor_id":"11111111-1111-4111-8111-111111111111"}}'
+    )
+    calls: list[tuple[str, dict[str, str], dict[str, object], float]] = []
+
+    def fake_post(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        calls.append((url, headers, json, timeout))
+        return _json_response(url, body, method="POST")
+
+    monkeypatch.setattr("aq_cli.main.httpx.post", fake_post)
+
+    result = runner.invoke(
+        app,
+        [
+            "project",
+            "create",
+            "--name",
+            "AQ 2.0 Backlog",
+            "--slug",
+            "aq-2-backlog",
+            "--description",
+            "Project board",
+        ],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert result.exit_code == 0
+    assert result.stdout == f"{body}\n"
+    assert calls == [
+        (
+            "http://api.test/projects",
+            {"Authorization": "Bearer aq2_cli_contract_key"},
+            {
+                "name": "AQ 2.0 Backlog",
+                "slug": "aq-2-backlog",
+                "description": "Project board",
+            },
+            10.0,
+        )
+    ]
+
+
+def test_project_create_derives_slug_when_omitted(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    body = (
+        '{"project":{"id":"44444444-4444-4444-8444-444444444444",'
+        '"name":"AQ 2.0 Backlog","slug":"aq-2-0-backlog",'
+        '"description":null,"archived_at":null,'
+        '"created_at":"2026-04-27T01:00:00Z",'
+        '"created_by_actor_id":"11111111-1111-4111-8111-111111111111"}}'
+    )
+    calls: list[dict[str, object]] = []
+
+    def fake_post(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        calls.append(json)
+        return _json_response(url, body, method="POST")
+
+    monkeypatch.setattr("aq_cli.main.httpx.post", fake_post)
+
+    result = runner.invoke(
+        app,
+        ["project", "create", "--name", "AQ 2.0 Backlog"],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert result.exit_code == 0
+    assert calls == [{"name": "AQ 2.0 Backlog", "slug": "aq-2-0-backlog"}]
+
+
+def test_project_list_sends_archived_query_params(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    body = '{"projects":[],"next_cursor":null}'
+    calls: list[tuple[str, dict[str, str], dict[str, object], float]] = []
+
+    def fake_get(
+        url: str,
+        *,
+        headers: dict[str, str],
+        params: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        calls.append((url, headers, params, timeout))
+        return _json_response(url, body)
+
+    monkeypatch.setattr("aq_cli.main.httpx.get", fake_get)
+
+    result = runner.invoke(
+        app,
+        [
+            "project",
+            "list",
+            "--limit",
+            "10",
+            "--cursor",
+            "cursor-1",
+            "--include-archived",
+        ],
+        env={API_URL_ENV: "http://api.test/", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert result.exit_code == 0
+    assert result.stdout == f"{body}\n"
+    assert calls == [
+        (
+            "http://api.test/projects",
+            {"Authorization": "Bearer aq2_cli_contract_key"},
+            {"limit": 10, "cursor": "cursor-1", "include_archived": True},
+            5.0,
+        )
+    ]
+
+
+def test_project_get_update_archive_use_expected_paths(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    project_id = "44444444-4444-4444-8444-444444444444"
+    body = (
+        '{"project":{"id":"44444444-4444-4444-8444-444444444444",'
+        '"name":"AQ 2.0 Backlog","slug":"aq-2-backlog",'
+        '"description":null,"archived_at":null,'
+        '"created_at":"2026-04-27T01:00:00Z",'
+        '"created_by_actor_id":"11111111-1111-4111-8111-111111111111"}}'
+    )
+    calls: list[tuple[str, str, dict[str, object] | None, float]] = []
+
+    def fake_get(
+        url: str,
+        *,
+        headers: dict[str, str],
+        timeout: float,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("GET", url, None, timeout))
+        return _json_response(url, body)
+
+    def fake_patch(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("PATCH", url, json, timeout))
+        return _json_response(url, body, method="PATCH")
+
+    def fake_post(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("POST", url, json, timeout))
+        return _json_response(url, body, method="POST")
+
+    monkeypatch.setattr("aq_cli.main.httpx.get", fake_get)
+    monkeypatch.setattr("aq_cli.main.httpx.patch", fake_patch)
+    monkeypatch.setattr("aq_cli.main.httpx.post", fake_post)
+
+    get_result = runner.invoke(
+        app,
+        ["project", "get", project_id],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+    update_result = runner.invoke(
+        app,
+        ["project", "update", project_id, "--name", "AQ 2.0 Backlog"],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+    archive_result = runner.invoke(
+        app,
+        ["project", "archive", project_id],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert get_result.exit_code == 0
+    assert update_result.exit_code == 0
+    assert archive_result.exit_code == 0
+    assert calls == [
+        ("GET", f"http://api.test/projects/{project_id}", None, 5.0),
+        (
+            "PATCH",
+            f"http://api.test/projects/{project_id}",
+            {"name": "AQ 2.0 Backlog"},
+            10.0,
+        ),
+        ("POST", f"http://api.test/projects/{project_id}/archive", {}, 10.0),
+    ]
+
+
+def test_pipeline_create_and_list_use_expected_payloads(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    project_id = "44444444-4444-4444-8444-444444444444"
+    body = (
+        '{"pipeline":{"id":"77777777-7777-4777-8777-777777777777",'
+        '"project_id":"44444444-4444-4444-8444-444444444444",'
+        '"name":"hotfix-2026-04-28","is_template":false,'
+        '"cloned_from_pipeline_id":null,"archived_at":null,'
+        '"created_at":"2026-04-27T01:00:00Z",'
+        '"created_by_actor_id":"11111111-1111-4111-8111-111111111111"}}'
+    )
+    list_body = '{"pipelines":[],"next_cursor":"cursor-2"}'
+    post_calls: list[tuple[str, dict[str, str], dict[str, object], float]] = []
+    get_calls: list[tuple[str, dict[str, str], dict[str, object], float]] = []
+
+    def fake_post(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        post_calls.append((url, headers, json, timeout))
+        return _json_response(url, body, method="POST")
+
+    def fake_get(
+        url: str,
+        *,
+        headers: dict[str, str],
+        params: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        get_calls.append((url, headers, params, timeout))
+        return _json_response(url, list_body)
+
+    monkeypatch.setattr("aq_cli.main.httpx.post", fake_post)
+    monkeypatch.setattr("aq_cli.main.httpx.get", fake_get)
+
+    create_result = runner.invoke(
+        app,
+        [
+            "pipeline",
+            "create",
+            "--project",
+            project_id,
+            "--name",
+            "hotfix-2026-04-28",
+        ],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+    list_result = runner.invoke(
+        app,
+        [
+            "pipeline",
+            "list",
+            "--limit",
+            "10",
+            "--cursor",
+            "cursor-1",
+        ],
+        env={API_URL_ENV: "http://api.test/", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert create_result.exit_code == 0
+    assert create_result.stdout == f"{body}\n"
+    assert list_result.exit_code == 0
+    assert list_result.stdout == f"{list_body}\n"
+    assert post_calls == [
+        (
+            "http://api.test/pipelines",
+            {"Authorization": "Bearer aq2_cli_contract_key"},
+            {"project_id": project_id, "name": "hotfix-2026-04-28"},
+            10.0,
+        )
+    ]
+    assert get_calls == [
+        (
+            "http://api.test/pipelines",
+            {"Authorization": "Bearer aq2_cli_contract_key"},
+            {"limit": 10, "cursor": "cursor-1"},
+            5.0,
+        )
+    ]
+
+
+def test_pipeline_get_and_update_use_expected_paths(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    pipeline_id = "77777777-7777-4777-8777-777777777777"
+    body = (
+        '{"pipeline":{"id":"77777777-7777-4777-8777-777777777777",'
+        '"project_id":"44444444-4444-4444-8444-444444444444",'
+        '"name":"hotfix-2026-04-28","is_template":false,'
+        '"cloned_from_pipeline_id":null,"archived_at":null,'
+        '"created_at":"2026-04-27T01:00:00Z",'
+        '"created_by_actor_id":"11111111-1111-4111-8111-111111111111"}}'
+    )
+    calls: list[tuple[str, str, dict[str, object] | None, float]] = []
+
+    def fake_get(
+        url: str,
+        *,
+        headers: dict[str, str],
+        timeout: float,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("GET", url, None, timeout))
+        return _json_response(url, body)
+
+    def fake_patch(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("PATCH", url, json, timeout))
+        return _json_response(url, body, method="PATCH")
+
+    monkeypatch.setattr("aq_cli.main.httpx.get", fake_get)
+    monkeypatch.setattr("aq_cli.main.httpx.patch", fake_patch)
+
+    get_result = runner.invoke(
+        app,
+        ["pipeline", "get", pipeline_id],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+    update_result = runner.invoke(
+        app,
+        ["pipeline", "update", pipeline_id, "--name", "hotfix-2026-04-28-updated"],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert get_result.exit_code == 0
+    assert update_result.exit_code == 0
+    assert calls == [
+        ("GET", f"http://api.test/pipelines/{pipeline_id}", None, 5.0),
+        (
+            "PATCH",
+            f"http://api.test/pipelines/{pipeline_id}",
+            {"name": "hotfix-2026-04-28-updated"},
+            10.0,
+        ),
+    ]
+
+
+def test_pipeline_clone_and_archive_use_expected_paths(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    source_id = "77777777-7777-4777-8777-777777777777"
+    clone_id = "88888888-8888-4888-8888-888888888888"
+    body = (
+        '{"pipeline":{"id":"88888888-8888-4888-8888-888888888888",'
+        '"project_id":"44444444-4444-4444-8444-444444444444",'
+        '"name":"customer-ship","is_template":false,'
+        '"cloned_from_pipeline_id":"77777777-7777-4777-8777-777777777777",'
+        '"archived_at":null,'
+        '"created_at":"2026-04-27T01:00:00Z",'
+        '"created_by_actor_id":"11111111-1111-4111-8111-111111111111"},'
+        '"jobs":[{"id":"99999999-9999-4999-8999-999999999999",'
+        '"pipeline_id":"88888888-8888-4888-8888-888888888888",'
+        '"project_id":"44444444-4444-4444-8444-444444444444",'
+        '"state":"ready","title":"scope","description":null,'
+        '"contract":{"contract_type":"scoping","dod_items":[{"id":"scope"}]},'
+        '"labels":[],"claimed_by_actor_id":null,"claimed_at":null,'
+        '"claim_heartbeat_at":null,'
+        '"created_at":"2026-04-27T01:00:00Z",'
+        '"created_by_actor_id":"11111111-1111-4111-8111-111111111111"}]}'
+    )
+    archive_body = (
+        '{"pipeline":{"id":"88888888-8888-4888-8888-888888888888",'
+        '"project_id":"44444444-4444-4444-8444-444444444444",'
+        '"name":"customer-ship","is_template":false,'
+        '"cloned_from_pipeline_id":"77777777-7777-4777-8777-777777777777",'
+        '"archived_at":"2026-04-27T02:00:00Z",'
+        '"created_at":"2026-04-27T01:00:00Z",'
+        '"created_by_actor_id":"11111111-1111-4111-8111-111111111111"}}'
+    )
+    calls: list[tuple[str, dict[str, str], dict[str, object], float]] = []
+
+    def fake_post(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        calls.append((url, headers, json, timeout))
+        response_body = archive_body if url.endswith("/archive") else body
+        return _json_response(url, response_body, method="POST")
+
+    monkeypatch.setattr("aq_cli.main.httpx.post", fake_post)
+
+    clone_result = runner.invoke(
+        app,
+        [
+            "pipeline",
+            "clone",
+            "--source-id",
+            source_id,
+            "--name",
+            "customer-ship",
+        ],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+    archive_result = runner.invoke(
+        app,
+        ["pipeline", "archive", clone_id],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert clone_result.exit_code == 0
+    assert archive_result.exit_code == 0
+    assert clone_result.stdout == f"{body}\n"
+    assert archive_result.stdout == f"{archive_body}\n"
+    assert calls == [
+        (
+            f"http://api.test/pipelines/{source_id}/clone",
+            {"Authorization": "Bearer aq2_cli_contract_key"},
+            {"name": "customer-ship"},
+            10.0,
+        ),
+        (
+            f"http://api.test/pipelines/{clone_id}/archive",
+            {"Authorization": "Bearer aq2_cli_contract_key"},
+            {},
+            10.0,
+        )
+    ]
+
+
+def test_job_create_list_get_update_use_expected_paths(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    project_id = "44444444-4444-4444-8444-444444444444"
+    pipeline_id = "77777777-7777-4777-8777-777777777777"
+    job_id = "99999999-9999-4999-8999-999999999999"
+    contract_json = (
+        '{"contract_type":"coding-task","dod_items":[{"id":"tests-pass"}]}'
+    )
+    body = (
+        '{"job":{"id":"99999999-9999-4999-8999-999999999999",'
+        '"pipeline_id":"77777777-7777-4777-8777-777777777777",'
+        '"project_id":"44444444-4444-4444-8444-444444444444",'
+        '"state":"ready","title":"Build","description":"Do it",'
+        '"contract":{"contract_type":"coding-task",'
+        '"dod_items":[{"id":"tests-pass"}]},'
+        '"labels":[],"claimed_by_actor_id":null,"claimed_at":null,'
+        '"claim_heartbeat_at":null,'
+        '"created_at":"2026-04-27T01:00:00Z",'
+        '"created_by_actor_id":"11111111-1111-4111-8111-111111111111"}}'
+    )
+    get_body = (
+        body[:-1]
+        + ',"decisions":{"direct":[],"inherited":[]},'
+        + '"learnings":{"direct":[],"inherited":[]}}'
+    )
+    list_body = '{"jobs":[],"next_cursor":"cursor-2"}'
+    calls: list[tuple[str, str, dict[str, object] | None, float]] = []
+
+    def fake_post(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("POST", url, json, timeout))
+        return _json_response(url, body, method="POST")
+
+    def fake_get(
+        url: str,
+        *,
+        headers: dict[str, str],
+        timeout: float,
+        params: dict[str, object] | None = None,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("GET", url, params, timeout))
+        response_body = list_body if params is not None else get_body
+        return _json_response(url, response_body)
+
+    def fake_patch(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("PATCH", url, json, timeout))
+        return _json_response(url, body, method="PATCH")
+
+    monkeypatch.setattr("aq_cli.main.httpx.post", fake_post)
+    monkeypatch.setattr("aq_cli.main.httpx.get", fake_get)
+    monkeypatch.setattr("aq_cli.main.httpx.patch", fake_patch)
+
+    create_result = runner.invoke(
+        app,
+        [
+            "job",
+            "create",
+            "--pipeline",
+            pipeline_id,
+            "--title",
+            "Build",
+            "--description",
+            "Do it",
+            "--contract-json",
+            contract_json,
+        ],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+    list_result = runner.invoke(
+        app,
+        [
+            "job",
+            "list",
+            "--project",
+            project_id,
+            "--pipeline",
+            pipeline_id,
+            "--state",
+            "ready",
+            "--limit",
+            "10",
+            "--cursor",
+            "cursor-1",
+        ],
+        env={API_URL_ENV: "http://api.test/", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+    get_result = runner.invoke(
+        app,
+        ["job", "get", job_id],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+    update_result = runner.invoke(
+        app,
+        [
+            "job",
+            "update",
+            job_id,
+            "--title",
+            "Build v2",
+            "--description",
+            "Do it v2",
+        ],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert create_result.exit_code == 0
+    assert list_result.exit_code == 0
+    assert get_result.exit_code == 0
+    assert update_result.exit_code == 0
+    assert create_result.stdout == f"{body}\n"
+    assert list_result.stdout == f"{list_body}\n"
+    assert get_result.stdout == f"{get_body}\n"
+    assert update_result.stdout == f"{body}\n"
+    assert calls == [
+        (
+            "POST",
+            "http://api.test/jobs",
+            {
+                "pipeline_id": pipeline_id,
+                "title": "Build",
+                "description": "Do it",
+                "contract": {
+                    "contract_type": "coding-task",
+                    "dod_items": [{"id": "tests-pass"}],
+                },
+            },
+            10.0,
+        ),
+        (
+            "GET",
+            "http://api.test/jobs",
+            {
+                "limit": 10,
+                "project_id": project_id,
+                "pipeline_id": pipeline_id,
+                "state": "ready",
+                "cursor": "cursor-1",
+            },
+            5.0,
+        ),
+        ("GET", f"http://api.test/jobs/{job_id}", None, 5.0),
+        (
+            "PATCH",
+            f"http://api.test/jobs/{job_id}",
+            {"title": "Build v2", "description": "Do it v2"},
+            10.0,
+        ),
+    ]
+
+
+def test_job_comment_comments_and_cancel_use_expected_paths(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    job_id = "99999999-9999-4999-8999-999999999999"
+    comment_body = (
+        '{"comment":{"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",'
+        '"job_id":"99999999-9999-4999-8999-999999999999",'
+        '"author_actor_id":"11111111-1111-4111-8111-111111111111",'
+        '"body":"Looks scoped.","created_at":"2026-04-27T01:00:00Z"}}'
+    )
+    comments_body = '{"comments":[],"next_cursor":"cursor-2"}'
+    cancel_body = (
+        '{"job":{"id":"99999999-9999-4999-8999-999999999999",'
+        '"pipeline_id":"77777777-7777-4777-8777-777777777777",'
+        '"project_id":"44444444-4444-4444-8444-444444444444",'
+        '"state":"cancelled","title":"Build","description":"Do it",'
+        '"contract":{"contract_type":"coding-task",'
+        '"dod_items":[{"id":"tests-pass"}]},'
+        '"labels":[],"claimed_by_actor_id":null,"claimed_at":null,'
+        '"claim_heartbeat_at":null,'
+        '"created_at":"2026-04-27T01:00:00Z",'
+        '"created_by_actor_id":"11111111-1111-4111-8111-111111111111"}}'
+    )
+    calls: list[tuple[str, str, dict[str, object] | None, float]] = []
+
+    def fake_post(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("POST", url, json, timeout))
+        response_body = cancel_body if url.endswith("/cancel") else comment_body
+        return _json_response(url, response_body, method="POST")
+
+    def fake_get(
+        url: str,
+        *,
+        headers: dict[str, str],
+        params: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("GET", url, params, timeout))
+        return _json_response(url, comments_body)
+
+    monkeypatch.setattr("aq_cli.main.httpx.post", fake_post)
+    monkeypatch.setattr("aq_cli.main.httpx.get", fake_get)
+
+    comment_result = runner.invoke(
+        app,
+        ["job", "comment", job_id, "--body", "Looks scoped."],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+    comments_result = runner.invoke(
+        app,
+        ["job", "comments", job_id, "--limit", "10", "--cursor", "cursor-1"],
+        env={API_URL_ENV: "http://api.test/", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+    cancel_result = runner.invoke(
+        app,
+        ["job", "cancel", job_id],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert comment_result.exit_code == 0
+    assert comments_result.exit_code == 0
+    assert cancel_result.exit_code == 0
+    assert comment_result.stdout == f"{comment_body}\n"
+    assert comments_result.stdout == f"{comments_body}\n"
+    assert cancel_result.stdout == f"{cancel_body}\n"
+    assert calls == [
+        (
+            "POST",
+            f"http://api.test/jobs/{job_id}/comments",
+            {"body": "Looks scoped."},
+            10.0,
+        ),
+        (
+            "GET",
+            f"http://api.test/jobs/{job_id}/comments",
+            {"limit": 10, "cursor": "cursor-1"},
+            5.0,
+        ),
+        ("POST", f"http://api.test/jobs/{job_id}/cancel", {}, 10.0),
+    ]
+
+
+def test_job_list_ready_uses_expected_path_and_query(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    project_id = "44444444-4444-4444-8444-444444444444"
+    body = '{"jobs":[],"next_cursor":"cursor-2"}'
+    calls: list[tuple[str, str, dict[str, object], float]] = []
+
+    def fake_get(
+        url: str,
+        *,
+        headers: dict[str, str],
+        params: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("GET", url, params, timeout))
+        return _json_response(url, body)
+
+    monkeypatch.setattr("aq_cli.main.httpx.get", fake_get)
+
+    result = runner.invoke(
+        app,
+        [
+            "job",
+            "list-ready",
+            "--project",
+            project_id,
+            "--label",
+            "area:web",
+            "--label",
+            "kind:fix",
+            "--limit",
+            "10",
+            "--cursor",
+            "cursor-1",
+        ],
+        env={API_URL_ENV: "http://api.test/", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert result.exit_code == 0
+    assert result.stdout == f"{body}\n"
+    assert calls == [
+        (
+            "GET",
+            "http://api.test/jobs/ready",
+            {
+                "project": project_id,
+                "label": ["area:web", "kind:fix"],
+                "limit": 10,
+                "cursor": "cursor-1",
+            },
+            5.0,
+        )
+    ]
+
+
+def test_label_register_posts_body_and_prints_raw_json(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    project_id = "44444444-4444-4444-8444-444444444444"
+    body = (
+        '{"label":{"id":"55555555-5555-4555-8555-555555555555",'
+        '"project_id":"44444444-4444-4444-8444-444444444444",'
+        '"name":"area:web","color":"#336699",'
+        '"created_at":"2026-04-27T01:00:00Z","archived_at":null}}'
+    )
+    calls: list[tuple[str, dict[str, str], dict[str, object], float]] = []
+
+    def fake_post(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        calls.append((url, headers, json, timeout))
+        return _json_response(url, body, method="POST")
+
+    monkeypatch.setattr("aq_cli.main.httpx.post", fake_post)
+
+    result = runner.invoke(
+        app,
+        [
+            "label",
+            "register",
+            "--project",
+            project_id,
+            "--name",
+            "area:web",
+            "--color",
+            "#336699",
+        ],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert result.exit_code == 0
+    assert result.stdout == f"{body}\n"
+    assert calls == [
+        (
+            f"http://api.test/projects/{project_id}/labels",
+            {"Authorization": "Bearer aq2_cli_contract_key"},
+            {"name": "area:web", "color": "#336699"},
+            10.0,
+        )
+    ]
+
+
+def test_label_attach_and_detach_use_expected_paths(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    job_id = "66666666-6666-4666-8666-666666666666"
+    body = (
+        '{"job_id":"66666666-6666-4666-8666-666666666666",'
+        '"labels":["area:web"]}'
+    )
+    calls: list[tuple[str, str, dict[str, object] | None, float]] = []
+
+    def fake_post(
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("POST", url, json, timeout))
+        return _json_response(url, body, method="POST")
+
+    def fake_delete(
+        url: str,
+        *,
+        headers: dict[str, str],
+        timeout: float,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("DELETE", url, None, timeout))
+        return _json_response(url, body, method="DELETE")
+
+    monkeypatch.setattr("aq_cli.main.httpx.post", fake_post)
+    monkeypatch.setattr("aq_cli.main.httpx.delete", fake_delete)
+
+    attach_result = runner.invoke(
+        app,
+        ["label", "attach", job_id, "--name", "area:web"],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+    detach_result = runner.invoke(
+        app,
+        ["label", "detach", job_id, "--name", "area:web"],
+        env={API_URL_ENV: "http://api.test", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert attach_result.exit_code == 0
+    assert detach_result.exit_code == 0
+    assert calls == [
+        (
+            "POST",
+            f"http://api.test/jobs/{job_id}/labels",
+            {"label_name": "area:web"},
+            10.0,
+        ),
+        ("DELETE", f"http://api.test/jobs/{job_id}/labels/area:web", None, 10.0),
     ]
 
 

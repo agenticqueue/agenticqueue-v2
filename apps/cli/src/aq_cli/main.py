@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from pathlib import Path
 from typing import Annotated, NoReturn
 
@@ -38,13 +39,18 @@ ActorKindOption = Annotated[
 app = typer.Typer(add_completion=False, pretty_exceptions_enable=False)
 actor_app = typer.Typer(add_completion=False, help="Actor identity commands.")
 key_app = typer.Typer(add_completion=False, help="API key commands.")
+project_app = typer.Typer(add_completion=False, help="Project commands.")
+label_app = typer.Typer(add_completion=False, help="Label commands.")
+pipeline_app = typer.Typer(add_completion=False, help="Pipeline commands.")
+job_app = typer.Typer(add_completion=False, help="Job commands.")
+SLUG_CHARS_RE = re.compile(r"[^a-z0-9]+")
 
 
 def _api_url(path: str) -> str:
     return f"{os.getenv(API_URL_ENV, DEFAULT_API_URL).rstrip('/')}{path}"
 
 
-QueryParams = dict[str, str | int | float | bool | None]
+QueryParams = dict[str, str | int | float | bool | None | list[str]]
 
 
 def _load_config(config_path: Path | None) -> StoredConfig:
@@ -187,6 +193,36 @@ def _post_auth(
     return response.text
 
 
+def _patch_auth(
+    path: str,
+    body: dict[str, object],
+    timeout: float,
+    config_path: Path | None,
+) -> str:
+    url = _authenticated_api_url(path, config_path)
+    try:
+        response = httpx.patch(
+            url,
+            headers=_auth_headers(config_path),
+            json=body,
+            timeout=timeout,
+        )
+    except httpx.TimeoutException as exc:
+        _fail("timeout", url, message=str(exc), type=type(exc).__name__)
+    except httpx.HTTPError as exc:
+        _fail("request_error", url, message=str(exc), type=type(exc).__name__)
+
+    if not 200 <= response.status_code < 300:
+        _fail(
+            "http_error",
+            url,
+            status_code=response.status_code,
+            body=response.text,
+        )
+
+    return response.text
+
+
 def _delete_auth(
     path: str,
     timeout: float,
@@ -213,6 +249,21 @@ def _delete_auth(
         )
 
     return response.text
+
+
+def _slug_from_name(name: str) -> str:
+    slug = SLUG_CHARS_RE.sub("-", name.lower()).strip("-")
+    return slug[:63].strip("-") or "project"
+
+
+def _json_object(raw: str, *, option_name: str) -> dict[str, object]:
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        _fail("invalid_json", option_name, message=str(exc))
+    if not isinstance(payload, dict):
+        _fail("invalid_json", option_name, message="JSON value must be an object")
+    return payload
 
 
 @app.command()
@@ -351,6 +402,337 @@ def actor_create(
 
 
 app.add_typer(actor_app, name="actor")
+
+
+@project_app.command("create")
+def project_create(
+    name: Annotated[str, typer.Option("--name")],
+    slug: Annotated[str | None, typer.Option("--slug")] = None,
+    description: Annotated[str | None, typer.Option("--description")] = None,
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Create a Project and print the Project response."""
+    body: dict[str, object] = {"name": name, "slug": slug or _slug_from_name(name)}
+    if description is not None:
+        body["description"] = description
+    typer.echo(_post_auth("/projects", body, timeout, config))
+
+
+@project_app.command("list")
+def project_list(
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+    limit: Annotated[int, typer.Option("--limit", min=1, max=200)] = 50,
+    cursor: Annotated[str | None, typer.Option("--cursor")] = None,
+    include_archived: Annotated[bool, typer.Option("--include-archived")] = False,
+) -> None:
+    """Print the paginated ListProjectsResponse JSON payload."""
+    params: QueryParams = {"limit": limit}
+    if cursor is not None:
+        params["cursor"] = cursor
+    if include_archived:
+        params["include_archived"] = True
+    typer.echo(_get_auth("/projects", timeout, config, params=params))
+
+
+@project_app.command("get")
+def project_get(
+    project_id: Annotated[str, typer.Argument(help="Project UUID.")],
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    """Print one Project JSON payload."""
+    typer.echo(_get_auth(f"/projects/{project_id}", timeout, config))
+
+
+@project_app.command("update")
+def project_update(
+    project_id: Annotated[str, typer.Argument(help="Project UUID.")],
+    name: Annotated[str | None, typer.Option("--name")] = None,
+    description: Annotated[str | None, typer.Option("--description")] = None,
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Update a Project and print the Project response."""
+    body: dict[str, object] = {}
+    if name is not None:
+        body["name"] = name
+    if description is not None:
+        body["description"] = description
+    typer.echo(_patch_auth(f"/projects/{project_id}", body, timeout, config))
+
+
+@project_app.command("archive")
+def project_archive(
+    project_id: Annotated[str, typer.Argument(help="Project UUID.")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Archive a Project with a soft-delete timestamp."""
+    typer.echo(_post_auth(f"/projects/{project_id}/archive", {}, timeout, config))
+
+
+app.add_typer(project_app, name="project")
+
+
+@pipeline_app.command("create")
+def pipeline_create(
+    project_id: Annotated[str, typer.Option("--project")],
+    name: Annotated[str, typer.Option("--name")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Create an ad-hoc Pipeline in a Project."""
+    body: dict[str, object] = {"project_id": project_id, "name": name}
+    typer.echo(_post_auth("/pipelines", body, timeout, config))
+
+
+@pipeline_app.command("list")
+def pipeline_list(
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+    limit: Annotated[int, typer.Option("--limit", min=1, max=200)] = 50,
+    cursor: Annotated[str | None, typer.Option("--cursor")] = None,
+) -> None:
+    """Print the paginated ListPipelinesResponse JSON payload."""
+    params: QueryParams = {"limit": limit}
+    if cursor is not None:
+        params["cursor"] = cursor
+    typer.echo(_get_auth("/pipelines", timeout, config, params=params))
+
+
+@pipeline_app.command("get")
+def pipeline_get(
+    pipeline_id: Annotated[str, typer.Argument(help="Pipeline UUID.")],
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    """Print one Pipeline JSON payload."""
+    typer.echo(_get_auth(f"/pipelines/{pipeline_id}", timeout, config))
+
+
+@pipeline_app.command("update")
+def pipeline_update(
+    pipeline_id: Annotated[str, typer.Argument(help="Pipeline UUID.")],
+    name: Annotated[str, typer.Option("--name")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Update mutable Pipeline metadata."""
+    typer.echo(
+        _patch_auth(
+            f"/pipelines/{pipeline_id}",
+            {"name": name},
+            timeout,
+            config,
+        )
+    )
+
+
+@pipeline_app.command("clone")
+def pipeline_clone(
+    source_id: Annotated[str, typer.Option("--source-id")],
+    name: Annotated[str, typer.Option("--name")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Clone a Pipeline and copy its Jobs as ready work."""
+    typer.echo(
+        _post_auth(
+            f"/pipelines/{source_id}/clone",
+            {"name": name},
+            timeout,
+            config,
+        )
+    )
+
+
+@pipeline_app.command("archive")
+def pipeline_archive(
+    pipeline_id: Annotated[str, typer.Argument(help="Pipeline UUID.")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Archive a Pipeline with a soft-delete timestamp."""
+    typer.echo(_post_auth(f"/pipelines/{pipeline_id}/archive", {}, timeout, config))
+
+
+app.add_typer(pipeline_app, name="pipeline")
+
+
+@job_app.command("create")
+def job_create(
+    pipeline_id: Annotated[str, typer.Option("--pipeline")],
+    title: Annotated[str, typer.Option("--title")],
+    contract_json: Annotated[str, typer.Option("--contract-json")],
+    description: Annotated[str | None, typer.Option("--description")] = None,
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Create a ready Job with an inline Contract JSON object."""
+    body: dict[str, object] = {
+        "pipeline_id": pipeline_id,
+        "title": title,
+        "contract": _json_object(contract_json, option_name="--contract-json"),
+    }
+    if description is not None:
+        body["description"] = description
+    typer.echo(_post_auth("/jobs", body, timeout, config))
+
+
+@job_app.command("list")
+def job_list(
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+    project_id: Annotated[str | None, typer.Option("--project")] = None,
+    pipeline_id: Annotated[str | None, typer.Option("--pipeline")] = None,
+    state: Annotated[str | None, typer.Option("--state")] = None,
+    limit: Annotated[int, typer.Option("--limit", min=1, max=100)] = 50,
+    cursor: Annotated[str | None, typer.Option("--cursor")] = None,
+) -> None:
+    """Print the paginated ListJobsResponse JSON payload."""
+    params: QueryParams = {"limit": limit}
+    if project_id is not None:
+        params["project_id"] = project_id
+    if pipeline_id is not None:
+        params["pipeline_id"] = pipeline_id
+    if state is not None:
+        params["state"] = state
+    if cursor is not None:
+        params["cursor"] = cursor
+    typer.echo(_get_auth("/jobs", timeout, config, params=params))
+
+
+@job_app.command("list-ready")
+def job_list_ready(
+    project_id: Annotated[str, typer.Option("--project")],
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+    label: Annotated[list[str] | None, typer.Option("--label")] = None,
+    limit: Annotated[int, typer.Option("--limit", min=1)] = 50,
+    cursor: Annotated[str | None, typer.Option("--cursor")] = None,
+) -> None:
+    """Print the paginated ListReadyJobsResponse JSON payload."""
+    params: QueryParams = {"project": project_id, "limit": limit}
+    if label:
+        params["label"] = list(label)
+    if cursor is not None:
+        params["cursor"] = cursor
+    typer.echo(_get_auth("/jobs/ready", timeout, config, params=params))
+
+
+@job_app.command("get")
+def job_get(
+    job_id: Annotated[str, typer.Argument(help="Job UUID.")],
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    """Print one Job JSON payload."""
+    typer.echo(_get_auth(f"/jobs/{job_id}", timeout, config))
+
+
+@job_app.command("update")
+def job_update(
+    job_id: Annotated[str, typer.Argument(help="Job UUID.")],
+    title: Annotated[str | None, typer.Option("--title")] = None,
+    description: Annotated[str | None, typer.Option("--description")] = None,
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Update mutable Job metadata."""
+    body: dict[str, object] = {}
+    if title is not None:
+        body["title"] = title
+    if description is not None:
+        body["description"] = description
+    typer.echo(_patch_auth(f"/jobs/{job_id}", body, timeout, config))
+
+
+@job_app.command("comment")
+def job_comment(
+    job_id: Annotated[str, typer.Argument(help="Job UUID.")],
+    body: Annotated[str, typer.Option("--body")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Add a durable comment to a Job."""
+    typer.echo(_post_auth(f"/jobs/{job_id}/comments", {"body": body}, timeout, config))
+
+
+@job_app.command("comments")
+def job_comments(
+    job_id: Annotated[str, typer.Argument(help="Job UUID.")],
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+    limit: Annotated[int, typer.Option("--limit", min=1, max=100)] = 50,
+    cursor: Annotated[str | None, typer.Option("--cursor")] = None,
+) -> None:
+    """Print the paginated ListJobCommentsResponse JSON payload."""
+    params: QueryParams = {"limit": limit}
+    if cursor is not None:
+        params["cursor"] = cursor
+    typer.echo(_get_auth(f"/jobs/{job_id}/comments", timeout, config, params=params))
+
+
+@job_app.command("cancel")
+def job_cancel(
+    job_id: Annotated[str, typer.Argument(help="Job UUID.")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Cancel a non-terminal Job."""
+    typer.echo(_post_auth(f"/jobs/{job_id}/cancel", {}, timeout, config))
+
+
+app.add_typer(job_app, name="job")
+
+
+@label_app.command("register")
+def label_register(
+    project_id: Annotated[str, typer.Option("--project")],
+    name: Annotated[str, typer.Option("--name")],
+    color: Annotated[str | None, typer.Option("--color")] = None,
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Register a Project-scoped Label."""
+    body: dict[str, object] = {"name": name}
+    if color is not None:
+        body["color"] = color
+    typer.echo(_post_auth(f"/projects/{project_id}/labels", body, timeout, config))
+
+
+@label_app.command("attach")
+def label_attach(
+    job_id: Annotated[str, typer.Argument(help="Job UUID.")],
+    name: Annotated[str, typer.Option("--name")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Attach a registered Label to a Job."""
+    typer.echo(
+        _post_auth(
+            f"/jobs/{job_id}/labels",
+            {"label_name": name},
+            timeout,
+            config,
+        )
+    )
+
+
+@label_app.command("detach")
+def label_detach(
+    job_id: Annotated[str, typer.Argument(help="Job UUID.")],
+    name: Annotated[str, typer.Option("--name")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Detach a Label from a Job."""
+    typer.echo(_delete_auth(f"/jobs/{job_id}/labels/{name}", timeout, config))
+
+
+app.add_typer(label_app, name="label")
 
 
 @key_app.command("revoke")

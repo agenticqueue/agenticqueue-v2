@@ -1,0 +1,338 @@
+{
+  "fixture": {
+    "projects": {
+      "rest": {
+        "project": {
+          "id": "[UUID_REDACTED]",
+          "name": "REST clone Project",
+          "slug": "parity-rest-clone-6ed95b7ef641",
+          "description": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:44:06.676467Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "cli": {
+        "project": {
+          "id": "[UUID_REDACTED]",
+          "name": "CLI clone Project",
+          "slug": "parity-cli-clone-6ed95b7ef641",
+          "description": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:44:07.019708Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "mcp": {
+        "project": {
+          "id": "[UUID_REDACTED]",
+          "name": "MCP clone Project",
+          "slug": "parity-mcp-clone-6ed95b7ef641",
+          "description": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:44:07.146287Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      }
+    },
+    "pipelines": {
+      "rest": {
+        "pipeline": {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "REST clone Pipeline",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:44:07.242718Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "cli": {
+        "pipeline": {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "CLI clone Pipeline",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:44:07.679656Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "mcp": {
+        "pipeline": {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "MCP clone Pipeline",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:44:07.781557Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      }
+    },
+    "pipeline_ids": {
+      "rest": "[UUID_REDACTED]",
+      "cli": "[UUID_REDACTED]",
+      "mcp": "[UUID_REDACTED]"
+    }
+  },
+  "clones": {
+    "rest": {
+      "pipeline": {
+        "id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "name": "REST Clone Pipeline",
+        "is_template": false,
+        "cloned_from_pipeline_id": "[UUID_REDACTED]",
+        "archived_at": null,
+        "created_at": "2026-04-29T00:44:07.852102Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      },
+      "jobs": []
+    },
+    "cli": {
+      "pipeline": {
+        "id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "name": "CLI Clone Pipeline",
+        "is_template": false,
+        "cloned_from_pipeline_id": "[UUID_REDACTED]",
+        "archived_at": null,
+        "created_at": "2026-04-29T00:44:08.256524Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      },
+      "jobs": []
+    },
+    "mcp": {
+      "pipeline": {
+        "id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "name": "MCP Clone Pipeline",
+        "is_template": false,
+        "cloned_from_pipeline_id": "[UUID_REDACTED]",
+        "archived_at": null,
+        "created_at": "2026-04-29T00:44:08.435408Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      },
+      "jobs": []
+    }
+  },
+  "audit": {
+    "entries": [
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:08.435408Z",
+        "op": "clone_pipeline",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-clone",
+        "target_kind": "pipeline",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "MCP Clone Pipeline",
+          "source_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "cloned_job_ids": [],
+          "cloned_pipeline_id": "[UUID_REDACTED]"
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:08.256524Z",
+        "op": "clone_pipeline",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "pipeline",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "CLI Clone Pipeline",
+          "source_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "cloned_job_ids": [],
+          "cloned_pipeline_id": "[UUID_REDACTED]"
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:07.852102Z",
+        "op": "clone_pipeline",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "pipeline",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "REST Clone Pipeline",
+          "source_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "cloned_job_ids": [],
+          "cloned_pipeline_id": "[UUID_REDACTED]"
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:07.781557Z",
+        "op": "create_pipeline",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-clone",
+        "target_kind": "pipeline",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "MCP clone Pipeline",
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "pipeline": {
+            "id": "[UUID_REDACTED]",
+            "name": "MCP clone Pipeline",
+            "created_at": "2026-04-29T00:44:07.781557Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": null,
+            "is_template": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "cloned_from_pipeline_id": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:07.679656Z",
+        "op": "create_pipeline",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "pipeline",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "CLI clone Pipeline",
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "pipeline": {
+            "id": "[UUID_REDACTED]",
+            "name": "CLI clone Pipeline",
+            "created_at": "2026-04-29T00:44:07.679656Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": null,
+            "is_template": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "cloned_from_pipeline_id": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:07.242718Z",
+        "op": "create_pipeline",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "pipeline",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "REST clone Pipeline",
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "pipeline": {
+            "id": "[UUID_REDACTED]",
+            "name": "REST clone Pipeline",
+            "created_at": "2026-04-29T00:44:07.242718Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": null,
+            "is_template": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "cloned_from_pipeline_id": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:07.146287Z",
+        "op": "create_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-clone",
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "MCP clone Project",
+          "slug": "parity-mcp-clone-6ed95b7ef641",
+          "description": null
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "MCP clone Project",
+            "slug": "parity-mcp-clone-6ed95b7ef641",
+            "created_at": "2026-04-29T00:44:07.146287Z",
+            "archived_at": null,
+            "description": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:07.019708Z",
+        "op": "create_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "CLI clone Project",
+          "slug": "parity-cli-clone-6ed95b7ef641",
+          "description": null
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "CLI clone Project",
+            "slug": "parity-cli-clone-6ed95b7ef641",
+            "created_at": "2026-04-29T00:44:07.019708Z",
+            "archived_at": null,
+            "description": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:06.676467Z",
+        "op": "create_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "REST clone Project",
+          "slug": "parity-rest-clone-6ed95b7ef641",
+          "description": null
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "REST clone Project",
+            "slug": "parity-rest-clone-6ed95b7ef641",
+            "created_at": "2026-04-29T00:44:06.676467Z",
+            "archived_at": null,
+            "description": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      }
+    ],
+    "next_cursor": null
+  }
+}

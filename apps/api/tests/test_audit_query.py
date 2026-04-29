@@ -8,6 +8,7 @@ import httpx
 import psycopg
 import pytest
 import pytest_asyncio
+from _db_cleanup import cleanup_actor_state
 from aq_api.app import app
 from aq_api.models import AuditLogPage
 from aq_api.services.auth import (
@@ -19,6 +20,7 @@ from psycopg import Connection
 from psycopg.types.json import Jsonb
 
 DATABASE_URL_SYNC = os.environ.get("DATABASE_URL_SYNC")
+ACTOR_PREFIX = "audit-query-test-"
 
 pytestmark = pytest.mark.skipif(
     not DATABASE_URL_SYNC,
@@ -51,10 +53,7 @@ async def async_client() -> AsyncIterator[httpx.AsyncClient]:
 
 
 def _truncate_cap02_state(conn: Connection[tuple[object, ...]]) -> None:
-    with conn.cursor() as cursor:
-        cursor.execute("DELETE FROM audit_log")
-        cursor.execute("DELETE FROM api_keys")
-        cursor.execute("DELETE FROM actors")
+    cleanup_actor_state(conn, actor_name_prefix=ACTOR_PREFIX)
 
 
 def _insert_actor_with_key(
@@ -63,7 +62,7 @@ def _insert_actor_with_key(
     name: str | None = None,
     key: str | None = None,
 ) -> tuple[UUID, str]:
-    actor_name = name or f"audit-query-test-{uuid.uuid4()}"
+    actor_name = name or f"{ACTOR_PREFIX}{uuid.uuid4()}"
     api_key = key or f"aq2_audit_query_contract_{uuid.uuid4().hex}"
     with conn.cursor() as cursor:
         cursor.execute(
@@ -140,7 +139,16 @@ def _auth_headers(key: str) -> dict[str, str]:
 
 def _audit_count(conn: Connection[tuple[object, ...]]) -> int:
     with conn.cursor() as cursor:
-        cursor.execute("SELECT count(*) FROM audit_log")
+        cursor.execute(
+            """
+            SELECT count(*)
+            FROM audit_log
+            WHERE authenticated_actor_id IN (
+                SELECT id FROM actors WHERE name LIKE %s
+            )
+            """,
+            (f"{ACTOR_PREFIX}%",),
+        )
         row = cursor.fetchone()
     assert row is not None
     return int(row[0])
@@ -173,11 +181,15 @@ async def test_audit_query_filters_and_reads_do_not_audit(
     )
     before = _audit_count(conn)
 
-    all_response = await async_client.get("/audit", headers=_auth_headers(key))
+    all_response = await async_client.get(
+        "/audit",
+        headers=_auth_headers(key),
+        params={"actor": str(actor_id)},
+    )
     op_response = await async_client.get(
         "/audit",
         headers=_auth_headers(key),
-        params={"op": "create_actor"},
+        params={"actor": str(actor_id), "op": "create_actor"},
     )
     actor_response = await async_client.get(
         "/audit",
@@ -188,7 +200,6 @@ async def test_audit_query_filters_and_reads_do_not_audit(
     assert all_response.status_code == 200
     all_page = AuditLogPage.model_validate(all_response.json())
     assert [entry.op for entry in all_page.entries] == [
-        "create_actor",
         "revoke_api_key",
         "create_actor",
     ]
@@ -254,7 +265,7 @@ async def test_audit_pagination_cursor_round_trips_without_duplicates(
     first = await async_client.get(
         "/audit",
         headers=_auth_headers(key),
-        params={"limit": 2},
+        params={"actor": str(actor_id), "limit": 2},
     )
     assert first.status_code == 200
     first_page = AuditLogPage.model_validate(first.json())
@@ -264,7 +275,7 @@ async def test_audit_pagination_cursor_round_trips_without_duplicates(
     second = await async_client.get(
         "/audit",
         headers=_auth_headers(key),
-        params={"limit": 2, "cursor": first_page.next_cursor},
+        params={"actor": str(actor_id), "limit": 2, "cursor": first_page.next_cursor},
     )
     assert second.status_code == 200
     second_page = AuditLogPage.model_validate(second.json())
@@ -292,7 +303,7 @@ async def test_audit_limit_clamps_to_200(
     response = await async_client.get(
         "/audit",
         headers=_auth_headers(key),
-        params={"limit": 10000},
+        params={"actor": str(actor_id), "limit": 10000},
     )
 
     assert response.status_code == 200

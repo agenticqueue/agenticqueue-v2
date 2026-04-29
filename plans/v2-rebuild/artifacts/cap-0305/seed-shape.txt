@@ -1,0 +1,29 @@
+AQ2-56 seed shape evidence
+
+## seeded template and jobs
+ template_pipeline_count
+-------------------------
+                       1
+(1 row)
+
+         template_pipeline_id         |              project_id              | is_template | cloned_from_pipeline_id | job_count | all_ready | all_have_dod_items | all_dod_items_arrays | all_dod_items_nonempty
+--------------------------------------+--------------------------------------+-------------+-------------------------+-----------+-----------+--------------------+----------------------+------------------------
+ [UUID_REDACTED] | [UUID_REDACTED] | t           |                         |         3 | t         | t                  | t                    | t
+(1 row)
+
+ title  | state | contract_type | dod_count
+--------+-------+---------------+-----------
+ build  | ready | coding-task   |         2
+ scope  | ready | scoping       |         1
+ verify | ready | verification  |         1
+(3 rows)
+
+ draft_jobs
+------------
+          0
+(1 row)
+
+ job_edges_rows
+----------------
+              0
+(1 row)

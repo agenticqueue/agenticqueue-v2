@@ -1,0 +1,14 @@
+AQ2-56 static check evidence
+
+## ruff touched files
+Downloading ruff (10.8MiB)
+Downloading mypy (14.1MiB)
+ Downloading ruff
+ Downloading mypy
+Installed 9 packages in 102ms
+Bytecode compiled 4121 files in 385ms
+All checks passed!
+
+## mypy db model
+Bytecode compiled 4121 files in 119ms
+Success: no issues found in 1 source file

@@ -1,4 +1,129 @@
-# Plan: AQ 2.0 Capability #3 — Project, Workflow, Pipeline, Job entities with full CRUD; one seeded static Workflow template
+# Plan: AQ 2.0 Capability #3 — Project, Pipeline, Job entities with full CRUD; one seeded static Pipeline template
+
+## Rev 4 banner — 2026-04-28
+
+On 2026-04-28, the v1 plan was updated by Ghost. Six structural decisions in [`plan-update-2026-04-28.md`](plan-update-2026-04-28.md) plus one decision in [`plan-update-2026-04-28-graph.md`](plan-update-2026-04-28-graph.md) restructure cap #3:
+
+- **Workflows collapse into Pipelines.** One entity type. `is_template` BOOLEAN + `clone_pipeline` op replace the Workflow tables and `instantiate_pipeline`. Templates are not versioned — clone before changing if you want to preserve the old shape.
+- **Contract Profiles dropped entirely.** No registry, no versioning, no seeded profiles. Every Job carries an inline `contract JSONB NOT NULL` column. ADR-AQ-030 becomes the JSON schema of that field.
+- **A new cap #3.5 epic is inserted between AQ2-46 and AQ2-47.** Cap #3.5 unwinds the Workflow tables, the Contract Profile tables, the `instantiated_from_*` columns, the composite FK `(pipeline_id, project_id)`, and folds in AQ2-46's mypy/ruff fix-up. Cap #3 resumes after cap #3.5 ships and is approved.
+- **AQ2-50 is cancelled.** Contract Profile discovery doesn't exist in v1.
+- **AQ2-47, AQ2-49, AQ2-51 ticket bodies are edited.** AQ2-48 unchanged.
+- **`get_job` / `get_pipeline` / `get_project` ship with empty `decisions: {direct: [], inherited: []}` and `learnings: {direct: [], inherited: []}` arrays** so cap #9 (Decisions and Learnings) can wire data without breaking the response shape. Forward-compatible.
+- **Final cap-03 op count drops from 28 to 22** after cap #3.5 ships and AQ2-50 is cancelled.
+
+**Authority:** This banner + the two `plan-update-2026-04-28*.md` files supersede the rev-3 sections below on conflict. Sections marked "Rev 3 (historical)" are preserved for audit context but are NOT the spec. Codex implements against this banner and the plan-update files.
+
+---
+
+## Cap #3.5 epic spec (inserted between AQ2-46 and AQ2-47)
+
+Source: [`plan-update-2026-04-28.md`](plan-update-2026-04-28.md) Section 4.
+
+**Insertion point:** Between cap #3 (in flight, paused at AQ2-46 done) and cap #4 (atomic claim).
+
+**Statement:** After cap #3.5 ships, the v1 schema reflects the final v1 design — one Pipeline entity (templates and runs), no Workflow tables, no Contract Profile tables, inline `contract JSONB` on every Job, two new generic edge types for D&L cross-references, and a `clone_pipeline` op replacing `instantiate_pipeline`. AQ2-46's mypy/ruff fix-up is folded in. All four surfaces parity-test the new op set. The seeded `ship-a-thing` data lives as a template Pipeline, not a Workflow.
+
+**Dependencies:**
+- AQ2-39 epic + AQ2-40 through AQ2-46 are MERGED on `aq2-cap-03`.
+- AQ2-46's mypy/ruff fix-up landed at `784125a` (claude-approved 2026-04-28).
+- AQ2-47 has NOT been claimed.
+
+**Five stories (Codex implements one per commit, claude audits each):**
+
+- **Story 3.5.0 — Fold in AQ2-46 mypy/ruff fix-up.** Already complete via Codex commit `784125a` and claude approval `aea6f81d-5e96-4c85-88f0-81e3b30437a3` (2026-04-28). Story exists in Plane for evidence + per-commit gate discipline.
+- **Story 3.5.1 — Schema migration `0005_cap0305_schema_consolidation`.** One Alembic revision: drops `workflow_steps`, `workflows`, `contract_profiles`; drops columns `jobs.instantiated_from_step_id`, `jobs.contract_profile_id`, `pipelines.instantiated_from_workflow_id`, `pipelines.instantiated_from_workflow_version`; drops constraints `jobs_pipeline_project_composite_fk`, `pipelines_id_project_id_uniq`; drops `instantiated_from` from edge_type enum; adds columns `pipelines.is_template BOOLEAN NOT NULL DEFAULT false`, `pipelines.cloned_from_pipeline_id UUID NULL REFERENCES pipelines(id)`, `pipelines.archived_at TIMESTAMPTZ NULL`, `jobs.contract JSONB NOT NULL DEFAULT '{}'::jsonb`; adds edge type values `job_references_decision`, `job_references_learning`. Seed migration: read existing `ship-a-thing` v1 + 3 steps, create one `pipelines` row with `is_template=true`, create 3 `jobs` rows in `state='draft'` with empty `contract='{}'::jsonb`. Idempotent on fresh DB and on existing dev DB.
+- **Story 3.5.2 — Service + route + CLI + MCP changes.** Remove `services/workflows.py`, `routes/workflows.py`, `services/instantiate.py`, the 4 workflow tests + 2 instantiate tests, the `aq workflow` Typer subcommand group, the `aq pipeline instantiate` Typer command, 6 MCP tools (`create_workflow`, `list_workflows`, `get_workflow`, `update_workflow`, `archive_workflow`, `instantiate_pipeline`), the `Workflow` / `WorkflowStep` / `ContractProfile` SQLAlchemy + Pydantic models, and `app.py` route registrations. Add `clone_pipeline` and `archive_pipeline` to `services/pipelines.py`, `POST /pipelines/{id}/clone` and `POST /pipelines/{id}/archive` routes, `aq pipeline clone` and `aq pipeline archive` CLI commands, `clone_pipeline` (`destructiveHint:false`) and `archive_pipeline` (`destructiveHint:true`) MCP tools, `apps/api/tests/test_pipeline_template_and_clone.py` (covers `is_template` filter, clone semantics — 3 Jobs in `draft` with empty `contract` JSONB and `cloned_from_pipeline_id` set, archive), and a new clone atomicity test.
+- **Story 3.5.3 — OpenAPI + MCP snapshot regeneration + parity test updates.** Regenerate `tests/parity/openapi.snapshot.json` and `tests/parity/mcp_schema.snapshot.json`. Update `tests/parity/test_four_surface_parity.py` — remove `-k workflow`, `-k profile`, `-k instantiate` parameterized cases; add `-k clone`, `-k template` cases. Update `tests/parity/mcp_harness.py`. Verify `pnpm gen:types` produces clean Web TypeScript types from the new OpenAPI snapshot.
+- **Story 3.5.4 — Evidence pack + cap #3.5 C-checkpoint.** Run full Docker test matrix (`pytest -q apps/api/tests apps/cli/tests tests/parity tests/atomicity`), `mypy --strict apps/api/src/aq_api/`, `ruff check apps/api apps/cli`. Run seed migration on a fresh DB and on the existing dev DB; verify both succeed. Verify post-migration DB shape (no Workflow / Contract Profile tables; no `instantiated_from_*` columns; `contract` column present on jobs; `is_template` + `cloned_from_pipeline_id` + `archived_at` columns on pipelines; exactly one `is_template=true` Pipeline named `ship-a-thing`). Evidence under `plans/v2-rebuild/artifacts/cap-0305/`. Push branch tip, post comprehensive evidence on the cap #3.5 epic, wait for claude audit + Ghost approval. **No PR yet** — cap #3.5 squashes into the cap #3 PR at C2.
+
+**Op-count math.** Starting cap-03 op count (per AQ2-39 epic, rev-3 plan): 28 ops. After cap #3.5 + AQ2-50 cancellation: −5 Workflow ops − 1 `instantiate_pipeline` − 2 profile ops + 1 `clone_pipeline` + 1 `archive_pipeline` = **−6 ops, final 22**.
+
+**Final 22 cap-03 ops:** 5 project (create/list/get/update/archive) + 3 labels (register/attach/detach) + 6 pipeline (create/list/get/update/clone/archive) + 4 job CRUD (create/list/get/update) + 3 (`comment_on_job`, `list_job_comments`, `cancel_job`) + `list_ready_jobs` = 22.
+
+---
+
+## Revised cap #3 stories (post cap #3.5)
+
+Source: [`plan-update-2026-04-28.md`](plan-update-2026-04-28.md) Section 5.
+
+### AQ2-47 (Story 3.8 — Job CRUD) — modified
+
+- `create_job` takes a required inline `contract JSONB` argument instead of binding to a Contract Profile by id. Missing/null contract → 422.
+- `create_job` defaults `state='ready'` for ad-hoc Jobs. Note: `clone_pipeline` (cap #3.5) is the only path that creates Jobs in `state='draft'`. `create_job` itself never creates draft Jobs.
+- `update_job` rejects `state` payloads with 400 `cannot_write_state_via_update`, `labels` payloads with 400 `cannot_write_labels_via_update`, and now also `contract` payloads with 400 `cannot_write_contract_via_update`. The Contract is set at create time and is immutable. All three rejections audited.
+- `create_job` inherits Pipeline's `project_id` denormalization at the application layer (the service function copies `project_id` from the parent Pipeline at insert time). The composite FK from F-P1-rev2-7 was unwound in cap #3.5; consistency is enforced at the service layer instead of at the DB level.
+- New DoD-AQ2-S8-05 — `create_job` requires non-null `contract JSONB`; missing/null → 422.
+- DoD count: 4 → 5.
+
+### AQ2-48 (Story 3.9 — comments + cancel) — unchanged
+
+### AQ2-49 (Story 3.10 — list_ready_jobs) — minor
+
+- Handoff string updated to "AQ2-51 — AQ2-50 was cancelled per plan-update-2026-04-28; profile discovery does not exist in v1."
+
+### AQ2-50 (Story 3.11 — Contract Profile discovery) — CANCELLED
+
+Cancelled per [`plan-update-2026-04-28.md`](plan-update-2026-04-28.md) Decision 3. Contract Profiles dropped from v1; the `contract_profiles` table is removed in cap #3.5's schema migration. The seeded profile data is dropped silently (no consumers). MCP descriptions on `create_job` (and on `submit_job` in cap #5) teach the Contract shape inline; no profile registry is needed for discovery. The ADR-AQ-030 contract structure remains authoritative — it now describes the shape of the inline `contract JSONB` field on each Job rather than entries in a profile registry.
+
+### AQ2-51 (Story 3.12 — Parity + CI + atomicity + redact-evidence — CHECKPOINT C2) — substantial
+
+- 22 ops total (not 28).
+- Atomicity test for `clone_pipeline` (replaces the old `instantiate_pipeline` atomicity test, which was deleted in cap #3.5).
+- DOD-AQ2-S12-08 (no `instantiated_from` edges) **DELETED** — the F-P0-2 lock was unwound in cap #3.5; the `instantiated_from` enum value is removed from edge_type.
+- New **DOD-AQ2-S12-08-NEW** — `pipelines.is_template = true` shows exactly one row (the seeded ship-a-thing template); `pipelines.cloned_from_pipeline_id` is queryable post-migration. Evidence: `artifacts/cap-03/template-pipeline-shape.txt`. Acceptance: seeded template present after migration; clone test produces a row with non-null `cloned_from_pipeline_id`.
+
+---
+
+## Graph response-shape requirement (cap #3 forward-compat)
+
+Source: [`plan-update-2026-04-28-graph.md`](plan-update-2026-04-28-graph.md) Section 2.
+
+`get_job`, `get_pipeline`, and `get_project` (cap #3) ship with the final response shape from day one — including empty `decisions: {direct: [], inherited: []}` and `learnings: {direct: [], inherited: []}` arrays. Cap #9 wires the actual D&L lookups into those arrays when it ships. This means cap #3 returns the post-cap-#9 shape with empty arrays, and cap #9 fills them in — no breaking response-shape change between cap #3 and cap #9.
+
+This affects:
+- **AQ2-45** (`get_pipeline`) — already shipped, will need a small response-shape extension during cap #3.5 Story 3.5.2 OR a follow-up patch in AQ2-47's commit. Codex's call.
+- **AQ2-47** (`get_job`, `get_project`) — ship with the empty arrays from the start.
+
+Each entity returns a different combination of arrays:
+- `get_project` returns only direct attachments (Project is top of the inheritance chain).
+- `get_pipeline` returns direct + inherited from Project.
+- `get_job` returns direct + inherited from parent Pipeline + inherited from Project.
+
+---
+
+## Carry-forward locks that survive the rev-4 update
+
+These rev-3 locks remain in force after cap #3.5:
+
+- F-P0-1 — no `draft` entry path in `create_job`. (Cap #3.5 introduces `clone_pipeline` as the new exception; that op creates Jobs in `draft`.)
+- F-P1-5 — `update_job` is metadata-only (and now also rejects `contract` payloads).
+- F-P1-rev2-5 — `list_ready_jobs(project_id)` is REQUIRED (not optional).
+- F-P1-rev2-6 — `list_job_comments` is the canonical reader for Job comments.
+- All cap #2 locks (HMAC lookup_id, audit_log shape, same-transaction guarantee, `extra='forbid' frozen=True` on every Pydantic model, etc.).
+- All cap #1 locks (four-surface byte-equality, Z-form datetime via `aq_api._datetime.parse_utc`, single Pydantic source of truth, etc.).
+
+---
+
+## Locks unwound by cap #3.5
+
+These rev-3 locks are explicitly removed:
+
+- F-P0-2 — `jobs.instantiated_from_step_id` direct FK is dropped. Provenance moves to `pipelines.cloned_from_pipeline_id`.
+- F-P0-4 — `contract_profiles` UUID PK + UNIQUE (name, version) is dropped. Profiles do not exist.
+- F-P0-5 — Workflow slug family identifier is dropped. No Workflows.
+- F-P0-rev2-1 — `workflow_steps.default_contract_profile_id NOT NULL` is dropped. No `workflow_steps`.
+- F-P1-rev2-7 — composite FK `(pipeline_id, project_id)` on jobs is dropped. The denormalization invariant is enforced at the application layer in `clone_pipeline` (project_id of clone matches source) and `create_job` (project_id copied from parent Pipeline at insert time) instead of at the DB level.
+
+---
+
+## Rev 3 (historical — preserved below for audit context, NOT the spec)
+
+The remainder of this file is rev-3 as written on 2026-04-27. It documents the original plan with 20 audit findings folded in (12 from rev-1 audit + 8 from rev-2 re-audit). It captures what was originally locked and shipped through AQ2-40 → AQ2-46. **It is NOT authoritative going forward** — the rev-4 banner above + the two `plan-update-2026-04-28*.md` files are. On any conflict, rev-4 wins.
+
+---
+
+# Plan: AQ 2.0 Capability #3 — Project, Workflow, Pipeline, Job entities with full CRUD; one seeded static Workflow template (rev 3 — 2026-04-27 — historical)
 
 ## Context
 

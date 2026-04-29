@@ -1,0 +1,2 @@
+Bytecode compiled 4121 files in 163ms
+{"project":{"id":"[UUID_REDACTED]","name":"MCP Harness Project","slug":"mcp-harness-7048ef4bd328","description":"Created by tests.parity.mcp_harness","archived_at":null,"created_at":"2026-04-27T21:57:41.279779Z","created_by_actor_id":"[UUID_REDACTED]"}}

@@ -8,6 +8,7 @@ import httpx
 import psycopg
 import pytest
 import pytest_asyncio
+from _db_cleanup import cleanup_actor_state
 from aq_api.app import app
 from aq_api.models import CreateActorResponse, ListActorsResponse, WhoamiResponse
 from aq_api.services.auth import (
@@ -18,6 +19,7 @@ from aq_api.services.auth import (
 from psycopg import Connection
 
 DATABASE_URL_SYNC = os.environ.get("DATABASE_URL_SYNC")
+ACTOR_PREFIX = "actor-test-"
 
 pytestmark = pytest.mark.skipif(
     not DATABASE_URL_SYNC,
@@ -50,10 +52,7 @@ async def async_client() -> AsyncIterator[httpx.AsyncClient]:
 
 
 def _truncate_cap02_state(conn: Connection[tuple[object, ...]]) -> None:
-    with conn.cursor() as cursor:
-        cursor.execute("DELETE FROM audit_log")
-        cursor.execute("DELETE FROM api_keys")
-        cursor.execute("DELETE FROM actors")
+    cleanup_actor_state(conn, actor_name_prefix=ACTOR_PREFIX)
 
 
 def _insert_actor_with_key(
@@ -64,7 +63,7 @@ def _insert_actor_with_key(
     key: str | None = None,
     deactivated: bool = False,
 ) -> tuple[UUID, str]:
-    actor_name = name or f"actor-test-{uuid.uuid4()}"
+    actor_name = name or f"{ACTOR_PREFIX}{uuid.uuid4()}"
     api_key = key or f"aq2_actor_contract_{uuid.uuid4().hex}"
     deactivated_at = datetime.now(UTC) if deactivated else None
     with conn.cursor() as cursor:
@@ -106,7 +105,16 @@ def _auth_headers(key: str) -> dict[str, str]:
 
 def _audit_count(conn: Connection[tuple[object, ...]]) -> int:
     with conn.cursor() as cursor:
-        cursor.execute("SELECT count(*) FROM audit_log")
+        cursor.execute(
+            """
+            SELECT count(*)
+            FROM audit_log
+            WHERE authenticated_actor_id IN (
+                SELECT id FROM actors WHERE name LIKE %s
+            )
+            """,
+            (f"{ACTOR_PREFIX}%",),
+        )
         row = cursor.fetchone()
     assert row is not None
     return int(row[0])
@@ -119,9 +127,13 @@ def _latest_audit(conn: Connection[tuple[object, ...]]) -> dict[str, object]:
             SELECT op, target_kind, target_id, request_payload,
                    response_payload, error_code
             FROM audit_log
+            WHERE authenticated_actor_id IN (
+                SELECT id FROM actors WHERE name LIKE %s
+            )
             ORDER BY ts DESC, id DESC
             LIMIT 1
-            """
+            """,
+            (f"{ACTOR_PREFIX}%",),
         )
         row = cursor.fetchone()
     assert row is not None
@@ -238,7 +250,11 @@ async def test_create_actor_mints_key_once_and_writes_redacted_audit(
     assert payload["key"] not in audit_text
     assert "[REDACTED]" in audit_text
 
-    list_response = await async_client.get("/actors", headers=_auth_headers(key))
+    list_response = await async_client.get(
+        "/actors",
+        headers=_auth_headers(key),
+        params={"limit": 200},
+    )
     assert list_response.status_code == 200
     listed = ListActorsResponse.model_validate(list_response.json())
     assert created.actor.id in {actor.id for actor in listed.actors}
@@ -298,14 +314,37 @@ async def test_list_actors_pagination_and_deactivated_filter(
     first_ids = {actor.id for actor in first_page.actors}
     second_ids = {actor.id for actor in second_page.actors}
     assert first_ids.isdisjoint(second_ids)
-    assert set(active_ids).issubset(first_ids | second_ids)
-    assert deactivated_id not in first_ids | second_ids
-
-    with_deactivated = await async_client.get(
+    all_active = await async_client.get(
         "/actors",
         headers=_auth_headers(key),
-        params={"include_deactivated": "true", "limit": 10},
+        params={"limit": 200},
     )
-    assert with_deactivated.status_code == 200
-    included = ListActorsResponse.model_validate(with_deactivated.json())
-    assert deactivated_id in {actor.id for actor in included.actors}
+    assert all_active.status_code == 200
+    all_active_page = ListActorsResponse.model_validate(all_active.json())
+    all_active_ids = {actor.id for actor in all_active_page.actors}
+    assert set(active_ids).issubset(all_active_ids)
+    assert deactivated_id not in all_active_ids
+
+    cursor: str | None = None
+    included_ids: set[UUID] = set()
+    while True:
+        params: dict[str, object] = {
+            "include_deactivated": "true",
+            "limit": 200,
+        }
+        if cursor is not None:
+            params["cursor"] = cursor
+
+        with_deactivated = await async_client.get(
+            "/actors",
+            headers=_auth_headers(key),
+            params=params,
+        )
+        assert with_deactivated.status_code == 200
+        included = ListActorsResponse.model_validate(with_deactivated.json())
+        included_ids.update(actor.id for actor in included.actors)
+        cursor = included.next_cursor
+        if cursor is None or deactivated_id in included_ids:
+            break
+
+    assert deactivated_id in included_ids

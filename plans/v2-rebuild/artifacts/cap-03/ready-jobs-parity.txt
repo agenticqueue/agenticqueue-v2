@@ -1,0 +1,731 @@
+{
+  "fixture": {
+    "projects": {
+      "rest": {
+        "project": {
+          "id": "[UUID_REDACTED]",
+          "name": "REST ready Project",
+          "slug": "parity-rest-ready-98ff505401b5",
+          "description": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:21:42.460722Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "cli": {
+        "project": {
+          "id": "[UUID_REDACTED]",
+          "name": "CLI ready Project",
+          "slug": "parity-cli-ready-98ff505401b5",
+          "description": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:21:42.935802Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "mcp": {
+        "project": {
+          "id": "[UUID_REDACTED]",
+          "name": "MCP ready Project",
+          "slug": "parity-mcp-ready-98ff505401b5",
+          "description": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:21:43.057657Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      }
+    },
+    "pipelines": {
+      "rest": {
+        "pipeline": {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "REST ready Pipeline",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:21:43.143866Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "cli": {
+        "pipeline": {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "CLI ready Pipeline",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:21:43.684762Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "mcp": {
+        "pipeline": {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "MCP ready Pipeline",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:21:43.845098Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      }
+    },
+    "pipeline_ids": {
+      "rest": "[UUID_REDACTED]",
+      "cli": "[UUID_REDACTED]",
+      "mcp": "[UUID_REDACTED]"
+    }
+  },
+  "jobs": {
+    "rest": {
+      "job": {
+        "id": "[UUID_REDACTED]",
+        "pipeline_id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "state": "ready",
+        "title": "REST Ready Job",
+        "description": null,
+        "contract": {
+          "contract_type": "coding-task",
+          "dod_items": [
+            {
+              "id": "ready-parity"
+            }
+          ]
+        },
+        "labels": [],
+        "claimed_by_actor_id": null,
+        "claimed_at": null,
+        "claim_heartbeat_at": null,
+        "created_at": "2026-04-29T00:21:43.957533Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    },
+    "cli": {
+      "job": {
+        "id": "[UUID_REDACTED]",
+        "pipeline_id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "state": "ready",
+        "title": "CLI Ready Job",
+        "description": null,
+        "contract": {
+          "contract_type": "coding-task",
+          "dod_items": [
+            {
+              "id": "ready-parity"
+            }
+          ]
+        },
+        "labels": [],
+        "claimed_by_actor_id": null,
+        "claimed_at": null,
+        "claim_heartbeat_at": null,
+        "created_at": "2026-04-29T00:21:44.520235Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    },
+    "mcp": {
+      "job": {
+        "id": "[UUID_REDACTED]",
+        "pipeline_id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "state": "ready",
+        "title": "MCP Ready Job",
+        "description": null,
+        "contract": {
+          "contract_type": "coding-task",
+          "dod_items": [
+            {
+              "id": "ready-parity"
+            }
+          ]
+        },
+        "labels": [],
+        "claimed_by_actor_id": null,
+        "claimed_at": null,
+        "claim_heartbeat_at": null,
+        "created_at": "2026-04-29T00:21:44.640523Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    }
+  },
+  "labels": {
+    "rest": {
+      "label": {
+        "id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "name": "area:web",
+        "color": null,
+        "created_at": "2026-04-29T00:21:44.715207Z",
+        "archived_at": null
+      }
+    },
+    "cli": {
+      "label": {
+        "id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "name": "area:web",
+        "color": null,
+        "created_at": "2026-04-29T00:21:45.107663Z",
+        "archived_at": null
+      }
+    },
+    "mcp": {
+      "label": {
+        "id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "name": "area:web",
+        "color": null,
+        "created_at": "2026-04-29T00:21:45.216807Z",
+        "archived_at": null
+      }
+    }
+  },
+  "attaches": {
+    "rest": {
+      "job_id": "[UUID_REDACTED]",
+      "labels": [
+        "area:web"
+      ]
+    },
+    "cli": {
+      "job_id": "[UUID_REDACTED]",
+      "labels": [
+        "area:web"
+      ]
+    },
+    "mcp": {
+      "job_id": "[UUID_REDACTED]",
+      "labels": [
+        "area:web"
+      ]
+    }
+  },
+  "ready_pages": {
+    "rest": {
+      "jobs": [
+        {
+          "id": "[UUID_REDACTED]",
+          "pipeline_id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "state": "ready",
+          "title": "REST Ready Job",
+          "description": null,
+          "contract": {
+            "dod_items": [
+              {
+                "id": "ready-parity"
+              }
+            ],
+            "contract_type": "coding-task"
+          },
+          "labels": [
+            "area:web"
+          ],
+          "claimed_by_actor_id": null,
+          "claimed_at": null,
+          "claim_heartbeat_at": null,
+          "created_at": "2026-04-29T00:21:43.957533Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      ],
+      "next_cursor": null
+    },
+    "cli": {
+      "jobs": [
+        {
+          "id": "[UUID_REDACTED]",
+          "pipeline_id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "state": "ready",
+          "title": "CLI Ready Job",
+          "description": null,
+          "contract": {
+            "dod_items": [
+              {
+                "id": "ready-parity"
+              }
+            ],
+            "contract_type": "coding-task"
+          },
+          "labels": [
+            "area:web"
+          ],
+          "claimed_by_actor_id": null,
+          "claimed_at": null,
+          "claim_heartbeat_at": null,
+          "created_at": "2026-04-29T00:21:44.520235Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      ],
+      "next_cursor": null
+    },
+    "mcp": {
+      "jobs": [
+        {
+          "id": "[UUID_REDACTED]",
+          "pipeline_id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "state": "ready",
+          "title": "MCP Ready Job",
+          "description": null,
+          "contract": {
+            "dod_items": [
+              {
+                "id": "ready-parity"
+              }
+            ],
+            "contract_type": "coding-task"
+          },
+          "labels": [
+            "area:web"
+          ],
+          "claimed_by_actor_id": null,
+          "claimed_at": null,
+          "claim_heartbeat_at": null,
+          "created_at": "2026-04-29T00:21:44.640523Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      ],
+      "next_cursor": null
+    }
+  },
+  "audit": {
+    "entries": [
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:21:46.037375Z",
+        "op": "attach_label",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-ready",
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "job_id": "[UUID_REDACTED]",
+          "label_name": "area:web"
+        },
+        "response_payload": {
+          "job_id": "[UUID_REDACTED]",
+          "labels": [
+            "area:web"
+          ]
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:21:45.745630Z",
+        "op": "attach_label",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "job_id": "[UUID_REDACTED]",
+          "label_name": "area:web"
+        },
+        "response_payload": {
+          "job_id": "[UUID_REDACTED]",
+          "labels": [
+            "area:web"
+          ]
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:21:45.310907Z",
+        "op": "attach_label",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "job_id": "[UUID_REDACTED]",
+          "label_name": "area:web"
+        },
+        "response_payload": {
+          "job_id": "[UUID_REDACTED]",
+          "labels": [
+            "area:web"
+          ]
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:21:45.216807Z",
+        "op": "register_label",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-ready",
+        "target_kind": "label",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "area:web",
+          "color": null,
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "label": {
+            "id": "[UUID_REDACTED]",
+            "name": "area:web",
+            "color": null,
+            "created_at": "2026-04-29T00:21:45.216807Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:21:45.107663Z",
+        "op": "register_label",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "label",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "area:web",
+          "color": null,
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "label": {
+            "id": "[UUID_REDACTED]",
+            "name": "area:web",
+            "color": null,
+            "created_at": "2026-04-29T00:21:45.107663Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:21:44.715207Z",
+        "op": "register_label",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "label",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "area:web",
+          "color": null,
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "label": {
+            "id": "[UUID_REDACTED]",
+            "name": "area:web",
+            "color": null,
+            "created_at": "2026-04-29T00:21:44.715207Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:21:44.640523Z",
+        "op": "create_job",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-ready",
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "title": "MCP Ready Job",
+          "contract": {
+            "dod_items": [
+              {
+                "id": "ready-parity"
+              }
+            ],
+            "contract_type": "coding-task"
+          },
+          "pipeline_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "job": {
+            "id": "[UUID_REDACTED]",
+            "state": "ready",
+            "title": "MCP Ready Job",
+            "labels": [],
+            "contract": {
+              "dod_items": [
+                {
+                  "id": "ready-parity"
+                }
+              ],
+              "contract_type": "coding-task"
+            },
+            "claimed_at": null,
+            "created_at": "2026-04-29T00:21:44.640523Z",
+            "project_id": "[UUID_REDACTED]",
+            "description": null,
+            "pipeline_id": "[UUID_REDACTED]",
+            "claim_heartbeat_at": null,
+            "claimed_by_actor_id": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:21:44.520235Z",
+        "op": "create_job",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "title": "CLI Ready Job",
+          "contract": {
+            "dod_items": [
+              {
+                "id": "ready-parity"
+              }
+            ],
+            "contract_type": "coding-task"
+          },
+          "pipeline_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "job": {
+            "id": "[UUID_REDACTED]",
+            "state": "ready",
+            "title": "CLI Ready Job",
+            "labels": [],
+            "contract": {
+              "dod_items": [
+                {
+                  "id": "ready-parity"
+                }
+              ],
+              "contract_type": "coding-task"
+            },
+            "claimed_at": null,
+            "created_at": "2026-04-29T00:21:44.520235Z",
+            "project_id": "[UUID_REDACTED]",
+            "description": null,
+            "pipeline_id": "[UUID_REDACTED]",
+            "claim_heartbeat_at": null,
+            "claimed_by_actor_id": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:21:43.957533Z",
+        "op": "create_job",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "job",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "title": "REST Ready Job",
+          "contract": {
+            "dod_items": [
+              {
+                "id": "ready-parity"
+              }
+            ],
+            "contract_type": "coding-task"
+          },
+          "pipeline_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "job": {
+            "id": "[UUID_REDACTED]",
+            "state": "ready",
+            "title": "REST Ready Job",
+            "labels": [],
+            "contract": {
+              "dod_items": [
+                {
+                  "id": "ready-parity"
+                }
+              ],
+              "contract_type": "coding-task"
+            },
+            "claimed_at": null,
+            "created_at": "2026-04-29T00:21:43.957533Z",
+            "project_id": "[UUID_REDACTED]",
+            "description": null,
+            "pipeline_id": "[UUID_REDACTED]",
+            "claim_heartbeat_at": null,
+            "claimed_by_actor_id": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:21:43.845098Z",
+        "op": "create_pipeline",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-ready",
+        "target_kind": "pipeline",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "MCP ready Pipeline",
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "pipeline": {
+            "id": "[UUID_REDACTED]",
+            "name": "MCP ready Pipeline",
+            "created_at": "2026-04-29T00:21:43.845098Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": null,
+            "is_template": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "cloned_from_pipeline_id": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:21:43.684762Z",
+        "op": "create_pipeline",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "pipeline",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "CLI ready Pipeline",
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "pipeline": {
+            "id": "[UUID_REDACTED]",
+            "name": "CLI ready Pipeline",
+            "created_at": "2026-04-29T00:21:43.684762Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": null,
+            "is_template": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "cloned_from_pipeline_id": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:21:43.143866Z",
+        "op": "create_pipeline",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "pipeline",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "REST ready Pipeline",
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "pipeline": {
+            "id": "[UUID_REDACTED]",
+            "name": "REST ready Pipeline",
+            "created_at": "2026-04-29T00:21:43.143866Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": null,
+            "is_template": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "cloned_from_pipeline_id": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:21:43.057657Z",
+        "op": "create_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-ready",
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "MCP ready Project",
+          "slug": "parity-mcp-ready-98ff505401b5",
+          "description": null
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "MCP ready Project",
+            "slug": "parity-mcp-ready-98ff505401b5",
+            "created_at": "2026-04-29T00:21:43.057657Z",
+            "archived_at": null,
+            "description": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:21:42.935802Z",
+        "op": "create_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "CLI ready Project",
+          "slug": "parity-cli-ready-98ff505401b5",
+          "description": null
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "CLI ready Project",
+            "slug": "parity-cli-ready-98ff505401b5",
+            "created_at": "2026-04-29T00:21:42.935802Z",
+            "archived_at": null,
+            "description": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:21:42.460722Z",
+        "op": "create_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "REST ready Project",
+          "slug": "parity-rest-ready-98ff505401b5",
+          "description": null
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "REST ready Project",
+            "slug": "parity-rest-ready-98ff505401b5",
+            "created_at": "2026-04-29T00:21:42.460722Z",
+            "archived_at": null,
+            "description": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      }
+    ],
+    "next_cursor": null
+  }
+}

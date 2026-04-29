@@ -1,0 +1,15 @@
+# cap03 C2 validation
+database=aq2 user=aq
+PASS	final cap03 MCP tool count	29
+PASS	workflows table absent	NULL
+PASS	workflow_steps table absent	NULL
+PASS	contract_profiles table absent	NULL
+PASS	jobs inline contract column present	contract
+PASS	pipelines cap0305 columns present	archived_at,cloned_from_pipeline_id,is_template
+PASS	legacy cap03 columns absent	NONE
+PASS	no draft jobs invariant	0
+PASS	seeded ship-a-thing template count	1
+PASS	seeded ship-a-thing ready jobs with contracts	3
+PASS	clone lineage column queryable	ok
+PASS	job_edges edge_type check excludes instantiated_from	ok
+VALIDATE_CAP03_OK

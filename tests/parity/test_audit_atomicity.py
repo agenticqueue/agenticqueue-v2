@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Callable
 from uuid import UUID
 
 import pytest
@@ -16,15 +15,6 @@ pytestmark = [
 ]
 
 
-async def _setup_founder() -> tuple[UUID, str]:
-    from aq_api._db import SessionLocal
-    from aq_api.services.setup import run_setup
-
-    async with SessionLocal() as session:
-        setup = await run_setup(session)
-    return setup.actor_id, setup.founder_key
-
-
 async def _actor_count(name: str | None = None) -> int:
     from aq_api._db import SessionLocal
     from aq_api.models.db import Actor as DbActor
@@ -37,11 +27,17 @@ async def _actor_count(name: str | None = None) -> int:
     return int(value or 0)
 
 
-async def _audit_count(error_code: str | None = None) -> int:
+async def _audit_count(
+    *,
+    actor_id: UUID | None = None,
+    error_code: str | None = None,
+) -> int:
     from aq_api._db import SessionLocal
     from aq_api.models.db import AuditLogEntry
 
     statement = select(func.count()).select_from(AuditLogEntry)
+    if actor_id is not None:
+        statement = statement.where(AuditLogEntry.authenticated_actor_id == actor_id)
     if error_code is not None:
         statement = statement.where(AuditLogEntry.error_code == error_code)
     async with SessionLocal() as session:
@@ -51,7 +47,7 @@ async def _audit_count(error_code: str | None = None) -> int:
 
 async def test_domain_and_audit_roll_back_when_audit_insert_fails(
     monkeypatch: pytest.MonkeyPatch,
-    truncate_db: Callable[[], None],
+    founder: dict[str, str],
 ) -> None:
     from aq_api._audit import audited_op
     from aq_api._db import SessionLocal
@@ -61,8 +57,7 @@ async def test_domain_and_audit_roll_back_when_audit_insert_fails(
     )
     from aq_api.models.db import Actor as DbActor
 
-    truncate_db()
-    founder_id, _founder_key = await _setup_founder()
+    founder_id = UUID(founder["actor_id"])
 
     async def fail_record(*_args: object, **_kwargs: object) -> None:
         raise RuntimeError("forced audit insert failure")
@@ -83,11 +78,11 @@ async def test_domain_and_audit_roll_back_when_audit_insert_fails(
         reset_authenticated_actor_id(context_token)
 
     assert await _actor_count("atomicity-rollback") == 0
-    assert await _audit_count() == 0
+    assert await _audit_count(actor_id=founder_id) == 0
 
 
 async def test_business_rule_denial_rolls_back_domain_but_commits_audit(
-    truncate_db: Callable[[], None],
+    founder: dict[str, str],
 ) -> None:
     from aq_api._audit import BusinessRuleException
     from aq_api._db import SessionLocal
@@ -98,14 +93,13 @@ async def test_business_rule_denial_rolls_back_domain_but_commits_audit(
     from aq_api.models import CreateActorRequest
     from aq_api.services.actors import create_actor
 
-    truncate_db()
-    founder_id, _founder_key = await _setup_founder()
+    founder_id = UUID(founder["actor_id"])
     context_token = set_authenticated_actor_id(founder_id)
     try:
         async with SessionLocal() as session:
             first = await create_actor(
                 session,
-                CreateActorRequest(name="atomicity-denial", kind="agent"),
+                CreateActorRequest(name="parity-test-atomicity-denial", kind="agent"),
             )
         before_actor_count = await _actor_count()
 
@@ -120,5 +114,7 @@ async def test_business_rule_denial_rolls_back_domain_but_commits_audit(
 
     assert exc_info.value.error_code == "actor_already_exists"
     assert await _actor_count() == before_actor_count
-    assert await _audit_count() == 2
-    assert await _audit_count("actor_already_exists") == 1
+    assert await _audit_count(actor_id=founder_id) == 2
+    assert (
+        await _audit_count(actor_id=founder_id, error_code="actor_already_exists") == 1
+    )

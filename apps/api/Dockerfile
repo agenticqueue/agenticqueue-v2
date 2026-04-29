@@ -24,6 +24,8 @@ RUN apt-get update \
 COPY pyproject.toml uv.lock ./
 COPY apps/api ./apps/api
 COPY apps/cli ./apps/cli
+COPY tests ./tests
+COPY scripts ./scripts
 
 RUN uv sync --frozen --no-dev
 

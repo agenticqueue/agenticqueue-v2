@@ -1,0 +1,8 @@
+AQ2-53 founder survival evidence
+setup_http_status=200
+setup_actor_id=[UUID_REDACTED]
+setup_founder_key=[REDACTED]
+pytest_command=docker compose exec -T api uv run pytest -q apps/api/tests/ tests/parity/
+pytest_exit_code=0
+actors_me_http_status=200
+{"actor":{"id":"[UUID_REDACTED]","name":"founder","kind":"human","created_at":"2026-04-27T22:46:55.007400Z","deactivated_at":null}}

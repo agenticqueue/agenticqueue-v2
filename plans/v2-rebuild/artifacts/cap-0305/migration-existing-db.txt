@@ -1,0 +1,23 @@
+### Existing dev DB migration round-trip evidence
+### docker compose exec -T api uv run alembic -c apps/api/alembic.ini upgrade head
+### docker compose exec -T api uv run alembic -c apps/api/alembic.ini current
+0005_cap0305 (head)
+### docker compose exec -T api uv run alembic -c apps/api/alembic.ini downgrade -1
+### docker compose exec -T api uv run alembic -c apps/api/alembic.ini upgrade head
+### docker compose exec -T api uv run alembic -c apps/api/alembic.ini current
+0005_cap0305 (head)
+### & 'C:\Program Files\Git\bin\bash.exe' scripts/verify-cap0305-shape.sh
+# cap0305 DB shape verification
+database=aq2 user=aq
+PASS	workflows table absent	NULL
+PASS	workflow_steps table absent	NULL
+PASS	contract_profiles table absent	NULL
+PASS	jobs legacy columns absent	NONE
+PASS	pipelines legacy columns absent	NONE
+PASS	jobs contract column present	contract
+PASS	pipelines cap0305 columns present	archived_at,cloned_from_pipeline_id,is_template
+PASS	ship-a-thing template pipeline count	1
+PASS	ship-a-thing template ready jobs with contracts	3
+PASS	cap03 no draft jobs invariant	0
+PASS	job_edges edge_type check shape	ok
+cap0305 DB shape verification passed

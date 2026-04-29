@@ -1,0 +1,48 @@
+AQ2-56 Alembic round-trip evidence
+
+## upgrade head no-op before roundtrip
+Bytecode compiled 4121 files in 128ms
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+
+## downgrade to 0004
+Bytecode compiled 4121 files in 157ms
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running downgrade 0005_cap0305 -> 0004_cap03_entities, Consolidate cap 03 workflow schema into template pipelines.
+
+## upgrade back to head
+Bytecode compiled 4121 files in 119ms
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade 0004_cap03_entities -> 0005_cap0305, Consolidate cap 03 workflow schema into template pipelines.
+
+## current after roundtrip
+Bytecode compiled 4121 files in 121ms
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+0005_cap0305 (head)
+
+## schema after roundtrip
+    check_name     | ok | found
+-------------------+----+-------
+ old_tables_absent | t  |     0
+(1 row)
+
+     check_name     | ok | found
+--------------------+----+-------
+ old_columns_absent | t  |     0
+(1 row)
+
+ table_name |       column_name       |        data_type         | is_nullable | column_default
+------------+-------------------------+--------------------------+-------------+----------------
+ jobs       | contract                | jsonb                    | NO          | '{}'::jsonb
+ pipelines  | archived_at             | timestamp with time zone | YES         |
+ pipelines  | cloned_from_pipeline_id | uuid                     | YES         |
+ pipelines  | is_template             | boolean                  | NO          | false
+(4 rows)
+
+          conname          |                                          definition
+---------------------------+-----------------------------------------------------------------------------------------------
+ job_edges_edge_type_check | CHECK ((edge_type = ANY (ARRAY['gated_on'::text, 'parent_of'::text, 'sequence_next'::text])))
+(1 row)

@@ -1,0 +1,3 @@
+### gitleaks full-history scan
+### docker run --rm -v "D:/mmmmm/mmmmm-aq2.0:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 detect --source /repo --no-banner --redact --exit-code 1
+exit_code=0

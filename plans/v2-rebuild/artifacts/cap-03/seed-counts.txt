@@ -1,0 +1,21 @@
+# Seed counts
+
+$ docker compose exec -T db psql -U aq -d aq2 -c "SELECT count(*) AS contract_profiles_count FROM contract_profiles;"
+ contract_profiles_count
+-------------------------
+                       4
+(1 row)
+
+
+$ docker compose exec -T db psql -U aq -d aq2 -c "SELECT count(*) AS ship_a_thing_workflows FROM workflows WHERE slug='ship-a-thing';"
+ ship_a_thing_workflows
+------------------------
+                      1
+(1 row)
+
+
+$ docker compose exec -T db psql -U aq -d aq2 -c "SELECT count(*) AS ship_a_thing_steps FROM workflow_steps WHERE workflow_id IN (SELECT id FROM workflows WHERE slug='ship-a-thing');"
+ ship_a_thing_steps
+--------------------
+                  3
+(1 row)

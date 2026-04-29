@@ -15,21 +15,88 @@ from aq_api._request_context import (
 from aq_api._version import VERSION_INFO
 from aq_api.models import (
     ActorKind,
+    ArchivePipelineResponse,
+    ArchiveProjectResponse,
+    AttachLabelRequest,
+    AttachLabelResponse,
     AuditLogPage,
     AuditQueryParams,
+    CancelJobResponse,
+    ClonePipelineRequest,
+    ClonePipelineResponse,
+    CommentOnJobRequest,
+    CommentOnJobResponse,
     CreateActorRequest,
     CreateActorResponse,
+    CreateJobRequest,
+    CreateJobResponse,
+    CreatePipelineRequest,
+    CreatePipelineResponse,
+    CreateProjectRequest,
+    CreateProjectResponse,
+    DetachLabelRequest,
+    DetachLabelResponse,
+    GetJobResponse,
+    GetPipelineResponse,
+    GetProjectResponse,
     HealthStatus,
     ListActorsResponse,
+    ListJobCommentsResponse,
+    ListJobsResponse,
+    ListPipelinesResponse,
+    ListProjectsResponse,
+    ListReadyJobsResponse,
+    RegisterLabelRequest,
+    RegisterLabelResponse,
     RevokeApiKeyResponse,
+    UpdateJobResponse,
+    UpdatePipelineRequest,
+    UpdatePipelineResponse,
+    UpdateProjectRequest,
+    UpdateProjectResponse,
     VersionInfo,
     WhoamiResponse,
+)
+from aq_api.models.job_comments import CommentBody
+from aq_api.models.jobs import JobState, JobTitle
+from aq_api.models.labels import LabelColor, LabelName
+from aq_api.models.pipelines import PipelineName
+from aq_api.models.projects import (
+    Description as ProjectDescription,
+)
+from aq_api.models.projects import (
+    Name as ProjectName,
+)
+from aq_api.models.projects import (
+    Slug as ProjectSlug,
 )
 from aq_api.services.actors import create_actor as create_actor_service
 from aq_api.services.actors import get_self_by_id
 from aq_api.services.actors import list_actors as list_actor_service
 from aq_api.services.api_keys import revoke_api_key as revoke_api_key_service
 from aq_api.services.audit import query_audit_log as query_audit_log_service
+from aq_api.services.job_comments import comment_on_job as comment_on_job_service
+from aq_api.services.job_comments import list_job_comments as list_comments_service
+from aq_api.services.job_lifecycle import cancel_job as cancel_job_service
+from aq_api.services.jobs import create_job as create_job_service
+from aq_api.services.jobs import get_job as get_job_service
+from aq_api.services.jobs import list_jobs as list_job_service
+from aq_api.services.jobs import update_job as update_job_service
+from aq_api.services.labels import attach_label as attach_label_service
+from aq_api.services.labels import detach_label as detach_label_service
+from aq_api.services.labels import register_label as register_label_service
+from aq_api.services.list_ready_jobs import list_ready_jobs as list_ready_jobs_service
+from aq_api.services.pipelines import archive_pipeline as archive_pipeline_service
+from aq_api.services.pipelines import clone_pipeline as clone_pipeline_service
+from aq_api.services.pipelines import create_pipeline as create_pipeline_service
+from aq_api.services.pipelines import get_pipeline as get_pipeline_service
+from aq_api.services.pipelines import list_pipelines as list_pipeline_service
+from aq_api.services.pipelines import update_pipeline as update_pipeline_service
+from aq_api.services.projects import archive_project as archive_project_service
+from aq_api.services.projects import create_project as create_project_service
+from aq_api.services.projects import get_project as get_project_service
+from aq_api.services.projects import list_projects as list_project_service
+from aq_api.services.projects import update_project as update_project_service
 
 MCP_NAME = "AgenticQueue 2.0 MCP"
 MCP_HTTP_PATH = "/mcp"
@@ -200,6 +267,469 @@ def create_mcp_server() -> FastMCP:
             )
             async with SessionLocal() as session:
                 return await query_audit_log_service(session, params)
+
+    @server.tool(
+        description="Create a Project. Slug uniqueness is enforced globally.",
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def create_project(
+        name: ProjectName,
+        slug: ProjectSlug,
+        description: ProjectDescription = None,
+        agent_identity: AgentIdentity = None,
+    ) -> CreateProjectResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = CreateProjectRequest(
+                name=name,
+                slug=slug,
+                description=description,
+            )
+            async with SessionLocal() as session:
+                return await create_project_service(
+                    session,
+                    request,
+                    actor_id=actor_id,
+                )
+
+    @server.tool(
+        description=(
+            "List Projects with opaque cursor pagination. Archived Projects are "
+            "excluded unless include_archived is true."
+        ),
+        annotations={"readOnlyHint": True},
+    )
+    async def list_projects(
+        limit: int = 50,
+        cursor: str | None = None,
+        include_archived: bool = False,
+        agent_identity: AgentIdentity = None,
+    ) -> ListProjectsResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await list_project_service(
+                    session,
+                    limit=limit,
+                    cursor=cursor,
+                    include_archived=include_archived,
+                )
+
+    @server.tool(
+        description="Return one Project by UUID.",
+        annotations={"readOnlyHint": True},
+    )
+    async def get_project(
+        project_id: UUID,
+        agent_identity: AgentIdentity = None,
+    ) -> GetProjectResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await get_project_service(session, project_id)
+
+    @server.tool(
+        description="Update mutable Project metadata by UUID.",
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def update_project(
+        project_id: UUID,
+        name: ProjectName | None = None,
+        description: ProjectDescription = None,
+        agent_identity: AgentIdentity = None,
+    ) -> UpdateProjectResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            data: dict[str, object] = {}
+            if name is not None:
+                data["name"] = name
+            if description is not None:
+                data["description"] = description
+            request = UpdateProjectRequest.model_validate(data)
+            async with SessionLocal() as session:
+                return await update_project_service(session, project_id, request)
+
+    @server.tool(
+        description="Archive a Project by setting archived_at; rows are retained.",
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def archive_project(
+        project_id: UUID,
+        agent_identity: AgentIdentity = None,
+    ) -> ArchiveProjectResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await archive_project_service(session, project_id)
+
+    @server.tool(
+        description=(
+            "Create an ad-hoc Pipeline in a Project."
+        ),
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def create_pipeline(
+        project_id: UUID,
+        name: PipelineName,
+        agent_identity: AgentIdentity = None,
+    ) -> CreatePipelineResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = CreatePipelineRequest(project_id=project_id, name=name)
+            async with SessionLocal() as session:
+                return await create_pipeline_service(
+                    session,
+                    request,
+                    actor_id=actor_id,
+                )
+
+    @server.tool(
+        description="List Pipelines with opaque cursor pagination.",
+        annotations={"readOnlyHint": True},
+    )
+    async def list_pipelines(
+        limit: int = 50,
+        cursor: str | None = None,
+        agent_identity: AgentIdentity = None,
+    ) -> ListPipelinesResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await list_pipeline_service(
+                    session,
+                    limit=limit,
+                    cursor=cursor,
+                )
+
+    @server.tool(
+        description="Return one Pipeline by UUID.",
+        annotations={"readOnlyHint": True},
+    )
+    async def get_pipeline(
+        pipeline_id: UUID,
+        agent_identity: AgentIdentity = None,
+    ) -> GetPipelineResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await get_pipeline_service(session, pipeline_id)
+
+    @server.tool(
+        description="Update mutable Pipeline metadata by UUID.",
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def update_pipeline(
+        pipeline_id: UUID,
+        name: PipelineName,
+        agent_identity: AgentIdentity = None,
+    ) -> UpdatePipelineResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            request = UpdatePipelineRequest(name=name)
+            async with SessionLocal() as session:
+                return await update_pipeline_service(
+                    session,
+                    pipeline_id,
+                    request.model_dump(mode="json"),
+                )
+
+    @server.tool(
+        description=(
+            "Clone a Pipeline and copy its Jobs as ready Jobs with the same "
+            "contracts, labels, titles, and descriptions."
+        ),
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def clone_pipeline(
+        source_id: UUID,
+        name: PipelineName,
+        agent_identity: AgentIdentity = None,
+    ) -> ClonePipelineResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = ClonePipelineRequest(name=name)
+            async with SessionLocal() as session:
+                return await clone_pipeline_service(
+                    session,
+                    source_id,
+                    request,
+                    actor_id=actor_id,
+                )
+
+    @server.tool(
+        description="Archive a Pipeline by setting archived_at; Jobs are retained.",
+        annotations={"readOnlyHint": False, "destructiveHint": True},
+    )
+    async def archive_pipeline(
+        pipeline_id: UUID,
+        agent_identity: AgentIdentity = None,
+    ) -> ArchivePipelineResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await archive_pipeline_service(session, pipeline_id)
+
+    @server.tool(
+        description="Create a ready Job in a Pipeline with an inline Contract object.",
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def create_job(
+        pipeline_id: UUID,
+        title: JobTitle,
+        contract: dict[str, object],
+        description: ProjectDescription = None,
+        agent_identity: AgentIdentity = None,
+    ) -> CreateJobResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = CreateJobRequest(
+                pipeline_id=pipeline_id,
+                title=title,
+                description=description,
+                contract=contract,
+            )
+            async with SessionLocal() as session:
+                return await create_job_service(session, request, actor_id=actor_id)
+
+    @server.tool(
+        description=(
+            "List Jobs with opaque cursor pagination and optional project_id, "
+            "pipeline_id, and state filters."
+        ),
+        annotations={"readOnlyHint": True},
+    )
+    async def list_jobs(
+        project_id: UUID | None = None,
+        pipeline_id: UUID | None = None,
+        state: JobState | None = None,
+        limit: int = 50,
+        cursor: str | None = None,
+        agent_identity: AgentIdentity = None,
+    ) -> ListJobsResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await list_job_service(
+                    session,
+                    project_id=project_id,
+                    pipeline_id=pipeline_id,
+                    state=state,
+                    limit=limit,
+                    cursor=cursor,
+                )
+
+    @server.tool(
+        description="Return one Job by UUID.",
+        annotations={"readOnlyHint": True},
+    )
+    async def get_job(
+        job_id: UUID,
+        agent_identity: AgentIdentity = None,
+    ) -> GetJobResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await get_job_service(session, job_id)
+
+    @server.tool(
+        description=(
+            "Update mutable Job metadata. Only title and description are accepted; "
+            "state, labels, claim metadata, and contract are rejected by the service."
+        ),
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def update_job(
+        job_id: UUID,
+        title: JobTitle | None = None,
+        description: ProjectDescription = None,
+        agent_identity: AgentIdentity = None,
+    ) -> UpdateJobResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            data: dict[str, object] = {}
+            if title is not None:
+                data["title"] = title
+            if description is not None:
+                data["description"] = description
+            async with SessionLocal() as session:
+                return await update_job_service(session, job_id, data)
+
+    @server.tool(
+        description=(
+            "List ready Jobs in a Project, optionally filtered by labels. "
+            "Read-only and unaudited; template and archived Pipelines are excluded."
+        ),
+        annotations={"readOnlyHint": True},
+    )
+    async def list_ready_jobs(
+        project_id: UUID,
+        label_filter: list[LabelName] | None = None,
+        limit: int = 50,
+        cursor: str | None = None,
+        agent_identity: AgentIdentity = None,
+    ) -> ListReadyJobsResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await list_ready_jobs_service(
+                    session,
+                    project_id=project_id,
+                    label_filter=label_filter,
+                    limit=limit,
+                    cursor=cursor,
+                )
+
+    @server.tool(
+        description=(
+            "Add a durable Job comment. Audit rows record body_length only; "
+            "the body is stored in job_comments."
+        ),
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def comment_on_job(
+        job_id: UUID,
+        body: CommentBody,
+        agent_identity: AgentIdentity = None,
+    ) -> CommentOnJobResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = CommentOnJobRequest(body=body)
+            async with SessionLocal() as session:
+                return await comment_on_job_service(
+                    session,
+                    job_id,
+                    request,
+                    actor_id=actor_id,
+                )
+
+    @server.tool(
+        description=(
+            "List Job comments in FIFO order with opaque cursor pagination. "
+            "Read-only and unaudited."
+        ),
+        annotations={"readOnlyHint": True},
+    )
+    async def list_job_comments(
+        job_id: UUID,
+        limit: int = 50,
+        cursor: str | None = None,
+        agent_identity: AgentIdentity = None,
+    ) -> ListJobCommentsResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await list_comments_service(
+                    session,
+                    job_id,
+                    limit=limit,
+                    cursor=cursor,
+                )
+
+    @server.tool(
+        description=(
+            "Cancel a non-terminal Job. Terminal Jobs return already_terminal "
+            "and remain unchanged."
+        ),
+        annotations={"readOnlyHint": False, "destructiveHint": True},
+    )
+    async def cancel_job(
+        job_id: UUID,
+        agent_identity: AgentIdentity = None,
+    ) -> CancelJobResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await cancel_job_service(session, job_id)
+
+    @server.tool(
+        description="Register a Project-scoped Label for future Job attachment.",
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def register_label(
+        project_id: UUID,
+        name: LabelName,
+        color: LabelColor = None,
+        agent_identity: AgentIdentity = None,
+    ) -> RegisterLabelResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            request = RegisterLabelRequest(name=name, color=color)
+            async with SessionLocal() as session:
+                return await register_label_service(session, project_id, request)
+
+    @server.tool(
+        description="Attach one registered Label to a Job's TEXT[] label cache.",
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def attach_label(
+        job_id: UUID,
+        label_name: LabelName,
+        agent_identity: AgentIdentity = None,
+    ) -> AttachLabelResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            request = AttachLabelRequest(label_name=label_name)
+            async with SessionLocal() as session:
+                return await attach_label_service(session, job_id, request)
+
+    @server.tool(
+        description="Detach one Label from a Job's TEXT[] label cache.",
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def detach_label(
+        job_id: UUID,
+        label_name: LabelName,
+        agent_identity: AgentIdentity = None,
+    ) -> DetachLabelResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            request = DetachLabelRequest(label_name=label_name)
+            async with SessionLocal() as session:
+                return await detach_label_service(session, job_id, request)
 
     return server
 

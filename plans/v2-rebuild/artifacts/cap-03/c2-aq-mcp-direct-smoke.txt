@@ -1,0 +1,12 @@
+AQ MCP direct smoke, run from Codex MCP tools after the fresh C2 stack was rebuilt and healthy.
+
+health_check(agent_identity="codex"):
+{"status":"ok","timestamp":"2026-04-29T01:00:56.436906Z"}
+
+get_version(agent_identity="codex"):
+{"version":"0.0.0-dev","commit":"8c3f1f1","built_at":"2026-04-29T00:55:28Z"}
+
+list_projects(agent_identity="codex", limit=3, include_archived=false):
+Returned 3 projects and next_cursor=null. Sample ids redacted by evidence redactor in committed artifact.
+
+MCP schema snapshot count is checked by scripts/validate-cap03.sh and passed with 29 tools.
