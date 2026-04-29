@@ -622,6 +622,20 @@ def job_list_ready(
     typer.echo(_get_auth("/jobs/ready", timeout, config, params=params))
 
 
+@job_app.command("claim")
+def job_claim(
+    project_id: Annotated[str, typer.Option("--project")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+    label: Annotated[list[str] | None, typer.Option("--label")] = None,
+) -> None:
+    """Atomically claim the next ready Job in a Project."""
+    body: dict[str, object] = {"project_id": project_id}
+    if label:
+        body["label_filter"] = list(label)
+    typer.echo(_post_auth("/jobs/claim", body, timeout, config))
+
+
 @job_app.command("get")
 def job_get(
     job_id: Annotated[str, typer.Argument(help="Job UUID.")],

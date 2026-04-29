@@ -1,9 +1,12 @@
+import json
 from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Annotated
 from uuid import UUID
 
 from fastmcp import FastMCP
+from fastmcp.tools.tool import ToolResult
+from mcp.types import TextContent
 from pydantic import Field
 
 from aq_api._health import current_health_status
@@ -22,6 +25,7 @@ from aq_api.models import (
     AuditLogPage,
     AuditQueryParams,
     CancelJobResponse,
+    ClaimNextJobRequest,
     ClonePipelineRequest,
     ClonePipelineResponse,
     CommentOnJobRequest,
@@ -75,6 +79,7 @@ from aq_api.services.actors import get_self_by_id
 from aq_api.services.actors import list_actors as list_actor_service
 from aq_api.services.api_keys import revoke_api_key as revoke_api_key_service
 from aq_api.services.audit import query_audit_log as query_audit_log_service
+from aq_api.services.claim import claim_next_job as claim_next_job_service
 from aq_api.services.job_comments import comment_on_job as comment_on_job_service
 from aq_api.services.job_comments import list_job_comments as list_comments_service
 from aq_api.services.job_lifecycle import cancel_job as cancel_job_service
@@ -119,6 +124,13 @@ def _authenticated_actor_id() -> UUID:
     if actor_id is None:
         raise RuntimeError("MCP tool requires authenticated Bearer context")
     return actor_id
+
+
+def _json_block(payload: object) -> TextContent:
+    return TextContent(
+        type="text",
+        text=json.dumps(payload, separators=(",", ":"), sort_keys=True),
+    )
 
 
 @contextmanager
@@ -610,6 +622,53 @@ def create_mcp_server() -> FastMCP:
                     limit=limit,
                     cursor=cursor,
                 )
+
+    @server.tool(
+        description=(
+            "Atomically claim the next ready Job in a Project, optionally filtered "
+            "by labels. Returns the Job, a stub Context Packet, and next-step text."
+        ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": True,
+            "idempotentHint": False,
+        },
+        output_schema=None,
+    )
+    async def claim_next_job(
+        project_id: UUID,
+        label_filter: list[LabelName] | None = None,
+        agent_identity: AgentIdentity = None,
+    ) -> ToolResult:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = ClaimNextJobRequest(
+                project_id=project_id,
+                label_filter=label_filter,
+            )
+            async with SessionLocal() as session:
+                response = await claim_next_job_service(
+                    session,
+                    request=request,
+                    actor_id=actor_id,
+                )
+
+        payload = response.model_dump(mode="json")
+        packet_payload = response.packet.model_dump(mode="json")
+        next_step = (
+            "Read the Job's inline contract field; call heartbeat_job while "
+            "working; submit_job ships in cap #5."
+        )
+        return ToolResult(
+            content=[
+                _json_block({"job": payload["job"]}),
+                _json_block({"packet": packet_payload}),
+                TextContent(type="text", text=next_step),
+            ],
+            structured_content=payload,
+        )
 
     @server.tool(
         description=(

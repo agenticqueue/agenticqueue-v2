@@ -1779,6 +1779,151 @@ def test_list_ready_jobs_matches_rest_cli_mcp_and_no_audit(
     )
 
 
+def test_claim_next_job_matches_rest_cli_mcp_and_audit(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    founder_actor_id: str,
+    artifact_dir: Path,
+    redact_evidence: Any,
+) -> None:
+    auth = {"Authorization": f"Bearer {founder_key}"}
+    fixture = _create_pipeline_triplet(
+        api_base_url,
+        mcp_base_url,
+        founder_key,
+        label="claim",
+        mcp_request_start=120,
+    )
+    project_ids = {
+        surface: payload["project"]["id"]
+        for surface, payload in fixture["projects"].items()
+    }
+    pipeline_ids = fixture["pipeline_ids"]
+    contract = {
+        "contract_type": "coding-task",
+        "dod_items": [{"id": "claim-parity"}],
+    }
+    contract_json = json.dumps(contract, separators=(",", ":"))
+
+    rest_job_response = httpx.post(
+        f"{api_base_url}/jobs",
+        headers=auth,
+        json={
+            "pipeline_id": pipeline_ids["rest"],
+            "title": "REST Claim Job",
+            "contract": contract,
+        },
+        timeout=10,
+    )
+    rest_job_response.raise_for_status()
+    rest_job = rest_job_response.json()
+    cli_job = _run_cli(
+        [
+            "job",
+            "create",
+            "--pipeline",
+            pipeline_ids["cli"],
+            "--title",
+            "CLI Claim Job",
+            "--contract-json",
+            contract_json,
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_job = _call_mcp_tool(
+        mcp_base_url,
+        "create_job",
+        123,
+        api_key=founder_key,
+        arguments={
+            "pipeline_id": pipeline_ids["mcp"],
+            "title": "MCP Claim Job",
+            "contract": contract,
+            "agent_identity": "parity-claim",
+        },
+    )
+
+    rest_claim_response = httpx.post(
+        f"{api_base_url}/jobs/claim",
+        headers=auth,
+        json={"project_id": project_ids["rest"]},
+        timeout=10,
+    )
+    rest_claim_response.raise_for_status()
+    rest_claim = rest_claim_response.json()
+    cli_claim = _run_cli(
+        ["job", "claim", "--project", project_ids["cli"]],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_claim_result = _call_mcp_tool_result(
+        mcp_base_url,
+        "claim_next_job",
+        124,
+        api_key=founder_key,
+        arguments={
+            "project_id": project_ids["mcp"],
+            "agent_identity": "parity-claim",
+        },
+    )
+    mcp_claim = mcp_claim_result["structuredContent"]
+
+    claims = {"rest": rest_claim, "cli": cli_claim, "mcp": mcp_claim}
+    source_jobs = {"rest": rest_job, "cli": cli_job, "mcp": mcp_job}
+    for surface, claim in claims.items():
+        job = claim["job"]
+        assert job["id"] == source_jobs[surface]["job"]["id"]
+        assert job["state"] == "in_progress"
+        assert job["project_id"] == project_ids[surface]
+        assert job["pipeline_id"] == pipeline_ids[surface]
+        assert job["claimed_by_actor_id"] == founder_actor_id
+        assert job["claimed_at"] == job["claim_heartbeat_at"]
+        assert claim["packet"] == {
+            "project_id": project_ids[surface],
+            "pipeline_id": pipeline_ids[surface],
+            "current_job_id": job["id"],
+            "previous_jobs": [],
+            "next_job_id": None,
+        }
+        assert claim["lease_seconds"] == 900
+        assert claim["recommended_heartbeat_after_seconds"] == 30
+        assert parse_utc(claim["lease_expires_at"]) == parse_utc(
+            job["claimed_at"]
+        ) + timedelta(seconds=900)
+
+    mcp_content = mcp_claim_result["content"]
+    assert isinstance(mcp_content, list)
+    assert len(mcp_content) == 3
+    assert json.loads(mcp_content[0]["text"]) == {"job": mcp_claim["job"]}
+    assert json.loads(mcp_content[1]["text"]) == {"packet": mcp_claim["packet"]}
+    assert "heartbeat_job" in mcp_content[2]["text"]
+
+    audit = _get_json(
+        f"{api_base_url}/audit",
+        api_key=founder_key,
+        params={"actor": founder_actor_id, "limit": 120},
+    )
+    claim_ops = [row for row in audit["entries"] if row["op"] == "claim_next_job"]
+    assert len(claim_ops) == 3
+    assert all(row["target_kind"] == "job" for row in claim_ops)
+    assert all(row["target_id"] is not None for row in claim_ops)
+    assert all(row["error_code"] is None for row in claim_ops)
+
+    artifact = {
+        "fixture": fixture,
+        "jobs": source_jobs,
+        "claims": claims,
+        "mcp_content": mcp_content,
+        "audit": audit,
+    }
+    (artifact_dir / "claim-parity.txt").write_text(
+        redact_evidence(_json_text(artifact)),
+        encoding="utf-8",
+    )
+
+
 def test_comment_and_cancel_ops_match_rest_cli_mcp_and_audit(
     api_base_url: str,
     mcp_base_url: str,

@@ -10,6 +10,8 @@ from aq_api._audit import BusinessRuleException
 from aq_api._auth import current_actor
 from aq_api.models import (
     CancelJobResponse,
+    ClaimNextJobRequest,
+    ClaimNextJobResponse,
     CommentOnJobRequest,
     CommentOnJobResponse,
     CreateJobRequest,
@@ -23,6 +25,7 @@ from aq_api.models import (
 )
 from aq_api.models.db import Actor as DbActor
 from aq_api.models.labels import LabelName
+from aq_api.services.claim import claim_next_job as claim_next_job_service
 from aq_api.services.job_comments import (
     InvalidJobCommentCursorError,
     JobCommentJobNotFoundError,
@@ -60,6 +63,18 @@ async def create_job(
 ) -> CreateJobResponse | JSONResponse:
     try:
         return await create_job_service(session, request, actor_id=actor.id)
+    except BusinessRuleException as exc:
+        return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)
+
+
+@router.post("/jobs/claim", response_model=ClaimNextJobResponse)
+async def claim_next_job(
+    request: ClaimNextJobRequest,
+    actor: AuthenticatedActor,
+    session: SessionDep,
+) -> ClaimNextJobResponse | JSONResponse:
+    try:
+        return await claim_next_job_service(session, request=request, actor_id=actor.id)
     except BusinessRuleException as exc:
         return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)
 

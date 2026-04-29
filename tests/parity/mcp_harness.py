@@ -36,6 +36,7 @@ TOOL_NAMES = [
     "get_job",
     "update_job",
     "list_ready_jobs",
+    "claim_next_job",
     "comment_on_job",
     "list_job_comments",
     "cancel_job",

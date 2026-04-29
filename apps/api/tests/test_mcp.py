@@ -40,6 +40,7 @@ async def test_mcp_tools_return_shared_contract_payloads() -> None:
             "get_job",
             "update_job",
             "list_ready_jobs",
+            "claim_next_job",
             "comment_on_job",
             "list_job_comments",
             "cancel_job",
@@ -103,6 +104,10 @@ async def test_mcp_tools_return_shared_contract_payloads() -> None:
         assert tool_by_name["update_job"].annotations.destructiveHint is False
         assert tool_by_name["list_ready_jobs"].annotations is not None
         assert tool_by_name["list_ready_jobs"].annotations.readOnlyHint is True
+        assert tool_by_name["claim_next_job"].annotations is not None
+        assert tool_by_name["claim_next_job"].annotations.readOnlyHint is False
+        assert tool_by_name["claim_next_job"].annotations.destructiveHint is True
+        assert tool_by_name["claim_next_job"].annotations.idempotentHint is False
         assert tool_by_name["comment_on_job"].annotations is not None
         assert tool_by_name["comment_on_job"].annotations.readOnlyHint is False
         assert tool_by_name["comment_on_job"].annotations.destructiveHint is False
