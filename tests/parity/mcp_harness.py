@@ -42,6 +42,7 @@ TOOL_NAMES = [
     "cancel_job",
     "release_job",
     "reset_claim",
+    "heartbeat_job",
     "register_label",
     "attach_label",
     "detach_label",

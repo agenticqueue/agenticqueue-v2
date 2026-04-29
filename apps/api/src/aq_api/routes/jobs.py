@@ -17,6 +17,7 @@ from aq_api.models import (
     CreateJobRequest,
     CreateJobResponse,
     GetJobResponse,
+    HeartbeatJobResponse,
     JobState,
     ListJobCommentsResponse,
     ListJobsResponse,
@@ -29,6 +30,7 @@ from aq_api.models import (
 from aq_api.models.db import Actor as DbActor
 from aq_api.models.labels import LabelName
 from aq_api.services.claim import claim_next_job as claim_next_job_service
+from aq_api.services.heartbeat import heartbeat_job as heartbeat_job_service
 from aq_api.services.job_comments import (
     InvalidJobCommentCursorError,
     JobCommentJobNotFoundError,
@@ -161,6 +163,18 @@ async def reset_claim(
             request=request,
             actor_id=actor.id,
         )
+    except BusinessRuleException as exc:
+        return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)
+
+
+@router.post("/jobs/{job_id}/heartbeat", response_model=HeartbeatJobResponse)
+async def heartbeat_job(
+    job_id: UUID,
+    actor: AuthenticatedActor,
+    session: SessionDep,
+) -> HeartbeatJobResponse | JSONResponse:
+    try:
+        return await heartbeat_job_service(session, job_id=job_id, actor_id=actor.id)
     except BusinessRuleException as exc:
         return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)
 

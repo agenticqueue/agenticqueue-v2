@@ -1924,6 +1924,164 @@ def test_claim_next_job_matches_rest_cli_mcp_and_audit(
     )
 
 
+def test_heartbeat_job_matches_rest_cli_mcp_and_successes_do_not_audit(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    founder_actor_id: str,
+    artifact_dir: Path,
+    redact_evidence: Any,
+) -> None:
+    auth = {"Authorization": f"Bearer {founder_key}"}
+    fixture = _create_pipeline_triplet(
+        api_base_url,
+        mcp_base_url,
+        founder_key,
+        label="heartbeat",
+        mcp_request_start=160,
+    )
+    project_ids = {
+        surface: payload["project"]["id"]
+        for surface, payload in fixture["projects"].items()
+    }
+    pipeline_ids = fixture["pipeline_ids"]
+    contract = {
+        "contract_type": "coding-task",
+        "dod_items": [{"id": "heartbeat-parity"}],
+    }
+    contract_json = json.dumps(contract, separators=(",", ":"))
+
+    rest_job_response = httpx.post(
+        f"{api_base_url}/jobs",
+        headers=auth,
+        json={
+            "pipeline_id": pipeline_ids["rest"],
+            "title": "REST Heartbeat Job",
+            "contract": contract,
+        },
+        timeout=10,
+    )
+    rest_job_response.raise_for_status()
+    cli_job = _run_cli(
+        [
+            "job",
+            "create",
+            "--pipeline",
+            pipeline_ids["cli"],
+            "--title",
+            "CLI Heartbeat Job",
+            "--contract-json",
+            contract_json,
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_job = _call_mcp_tool(
+        mcp_base_url,
+        "create_job",
+        162,
+        api_key=founder_key,
+        arguments={
+            "pipeline_id": pipeline_ids["mcp"],
+            "title": "MCP Heartbeat Job",
+            "contract": contract,
+            "agent_identity": "parity-heartbeat",
+        },
+    )
+
+    rest_claim_response = httpx.post(
+        f"{api_base_url}/jobs/claim",
+        headers=auth,
+        json={"project_id": project_ids["rest"]},
+        timeout=10,
+    )
+    rest_claim_response.raise_for_status()
+    claims = {
+        "rest": rest_claim_response.json(),
+        "cli": _run_cli(
+            ["job", "claim", "--project", project_ids["cli"]],
+            api_base_url,
+            api_key=founder_key,
+        ),
+        "mcp": _call_mcp_tool(
+            mcp_base_url,
+            "claim_next_job",
+            163,
+            api_key=founder_key,
+            arguments={
+                "project_id": project_ids["mcp"],
+                "agent_identity": "parity-heartbeat",
+            },
+        ),
+    }
+    source_jobs = {
+        "rest": rest_job_response.json(),
+        "cli": cli_job,
+        "mcp": mcp_job,
+    }
+    for surface, claim in claims.items():
+        assert claim["job"]["id"] == source_jobs[surface]["job"]["id"]
+        assert claim["job"]["state"] == "in_progress"
+
+    rest_heartbeat_response = httpx.post(
+        f"{api_base_url}/jobs/{claims['rest']['job']['id']}/heartbeat",
+        headers=auth,
+        timeout=10,
+    )
+    rest_heartbeat_response.raise_for_status()
+    heartbeats = {
+        "rest": rest_heartbeat_response.json(),
+        "cli": _run_cli(
+            ["job", "heartbeat", claims["cli"]["job"]["id"]],
+            api_base_url,
+            api_key=founder_key,
+        ),
+        "mcp": _call_mcp_tool(
+            mcp_base_url,
+            "heartbeat_job",
+            164,
+            api_key=founder_key,
+            arguments={
+                "job_id": claims["mcp"]["job"]["id"],
+                "agent_identity": "parity-heartbeat",
+            },
+        ),
+    }
+
+    for surface, payload in heartbeats.items():
+        job = payload["job"]
+        claimed_job = claims[surface]["job"]
+        assert job["id"] == claimed_job["id"]
+        assert job["state"] == "in_progress"
+        assert job["claimed_by_actor_id"] == founder_actor_id
+        assert job["claimed_at"] == claimed_job["claimed_at"]
+        assert parse_utc(job["claim_heartbeat_at"]) > parse_utc(
+            claimed_job["claim_heartbeat_at"]
+        )
+
+    audit = _get_json(
+        f"{api_base_url}/audit",
+        api_key=founder_key,
+        params={"actor": founder_actor_id, "limit": 160},
+    )
+    heartbeat_ops = [row for row in audit["entries"] if row["op"] == "heartbeat_job"]
+    assert heartbeat_ops == []
+    claim_ops = [row for row in audit["entries"] if row["op"] == "claim_next_job"]
+    assert len(claim_ops) == 3
+
+    artifact = {
+        "fixture": fixture,
+        "jobs": source_jobs,
+        "claims": claims,
+        "heartbeats": heartbeats,
+        "audit": audit,
+    }
+    (artifact_dir / "heartbeat-parity.txt").write_text(
+        redact_evidence(_json_text(artifact)),
+        encoding="utf-8",
+    )
+
+
 def test_release_and_reset_claim_ops_match_rest_cli_mcp_and_audit(
     api_base_url: str,
     mcp_base_url: str,

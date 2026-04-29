@@ -727,6 +727,16 @@ def job_reset_claim(
     )
 
 
+@job_app.command("heartbeat")
+def job_heartbeat(
+    job_id: Annotated[str, typer.Argument(help="Job UUID.")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Refresh the claim heartbeat for a Job claimed by the authenticated actor."""
+    typer.echo(_post_auth(f"/jobs/{job_id}/heartbeat", {}, timeout, config))
+
+
 app.add_typer(job_app, name="job")
 
 

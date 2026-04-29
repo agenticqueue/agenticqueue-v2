@@ -44,6 +44,7 @@ from aq_api.models import (
     GetPipelineResponse,
     GetProjectResponse,
     HealthStatus,
+    HeartbeatJobResponse,
     ListActorsResponse,
     ListJobCommentsResponse,
     ListJobsResponse,
@@ -83,6 +84,7 @@ from aq_api.services.actors import list_actors as list_actor_service
 from aq_api.services.api_keys import revoke_api_key as revoke_api_key_service
 from aq_api.services.audit import query_audit_log as query_audit_log_service
 from aq_api.services.claim import claim_next_job as claim_next_job_service
+from aq_api.services.heartbeat import heartbeat_job as heartbeat_job_service
 from aq_api.services.job_comments import comment_on_job as comment_on_job_service
 from aq_api.services.job_comments import list_job_comments as list_comments_service
 from aq_api.services.job_lifecycle import cancel_job as cancel_job_service
@@ -795,6 +797,32 @@ def create_mcp_server() -> FastMCP:
                     session,
                     job_id=job_id,
                     request=request,
+                    actor_id=actor_id,
+                )
+
+    @server.tool(
+        description=(
+            "Refresh the claim heartbeat for a Job claimed by the authenticated "
+            "actor. Successful heartbeats are lease maintenance and are not audited."
+        ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": True,
+            "idempotentHint": False,
+        },
+    )
+    async def heartbeat_job(
+        job_id: UUID,
+        agent_identity: AgentIdentity = None,
+    ) -> HeartbeatJobResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await heartbeat_job_service(
+                    session,
+                    job_id=job_id,
                     actor_id=actor_id,
                 )
 

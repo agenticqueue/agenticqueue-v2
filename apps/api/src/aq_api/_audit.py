@@ -29,6 +29,7 @@ async def audited_op(
     target_kind: str | None = None,
     target_id: UUID | None = None,
     request_payload: Mapping[str, object] | None = None,
+    skip_success_audit: bool = False,
 ) -> AsyncIterator[AuditOperation]:
     audit = AuditOperation(target_id=target_id)
     try:
@@ -56,15 +57,16 @@ async def audited_op(
         raise
     else:
         try:
-            await record(
-                session,
-                op=op,
-                target_kind=target_kind,
-                target_id=audit.target_id,
-                request_payload=request_payload,
-                response_payload=audit.response_payload,
-                error_code=None,
-            )
+            if not skip_success_audit:
+                await record(
+                    session,
+                    op=op,
+                    target_kind=target_kind,
+                    target_id=audit.target_id,
+                    request_payload=request_payload,
+                    response_payload=audit.response_payload,
+                    error_code=None,
+                )
             await session.commit()
         except Exception:
             await session.rollback()
