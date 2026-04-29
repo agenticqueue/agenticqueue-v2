@@ -96,7 +96,7 @@ These are cap #4-specific commitments **beyond** what cap #1, cap #2, cap #3, an
    - `AQ_CLAIM_LEASE_SECONDS` — default `900` (15 min), validator-checked range `[60, 86400]`. Field on `_settings.py:Settings`.
    - `AQ_CLAIM_SWEEP_INTERVAL_SECONDS` — default `60`, validator-checked range `[5, 3600]`. Field on `_settings.py:Settings`.
    - **No** `AQ_CLAIM_TIMEOUT_SECONDS`, `AQ_HEARTBEAT_INTERVAL_SECONDS`, `AQ_SWEEPER_RUN_INTERVAL_SECONDS`. AQ2-16 named those in the gap-ticket era; the AQ2-36 amendment to capabilities.md superseded them. One source of truth.
-   - Heartbeat client cadence (~30s recommendation) is MCP `set_instructions` text, NOT a server env var.
+   - Heartbeat client cadence (~30s recommendation) is MCP server-instructions text, NOT a server env var.
 
 4. **`audited_op` refactor — four-path semantics.** The cap-2 context manager (`apps/api/src/aq_api/_audit.py`) gains a `skip_success_audit: bool = False` keyword-only argument. The four paths:
 
@@ -191,7 +191,7 @@ These are cap #4-specific commitments **beyond** what cap #1, cap #2, cap #3, an
 
 14. **CLI under `aq job` group only.** Four commands: `aq job claim`, `aq job release`, `aq job reset-claim`, `aq job heartbeat`. No top-level `aq claim` / `aq release` aliases. Resolves capabilities.md cap-4's `aq claim` / `aq release` shorthand to the cap-3 singular-group convention. Verified by inspection: `apps/cli/src/aq_cli/main.py` already groups job-related commands under `aq job` (cap-3 Story 3.8).
 
-15. **Parity-test timing — Option A (incremental snapshot updates per story).** Stories 4.2, 4.3, 4.4 each regenerate `tests/parity/openapi.snapshot.json` and `tests/parity/mcp_schema.snapshot.json` for their own ops. C1 (after Story 4.2) requires parity green for `claim_next_job`. Story 4.6 ships **MCP richness refinement** (`set_instructions` server-level block + multi-part `claim_next_job` content list refinement) + **race + atomicity tests**, NOT snapshot regeneration. Each push has clean snapshots.
+15. **Parity-test timing — Option A (incremental snapshot updates per story).** Stories 4.2, 4.3, 4.4 each regenerate `tests/parity/openapi.snapshot.json` and `tests/parity/mcp_schema.snapshot.json` for their own ops. C1 (after Story 4.2) requires parity green for `claim_next_job`. Story 4.6 ships **MCP richness refinement** (server-instructions block + multi-part `claim_next_job` content list refinement) + **race + atomicity tests**, NOT snapshot regeneration. Each push has clean snapshots.
 
 16. **`capabilities.md` fix-up commit** lands alongside Story 4.7 (the C2 evidence pack). Surgical edits to lines 264, 265, 267, 271, 272, 281, 290, 297. See "Risks / deviations" item 1 for exact replacement text.
 
@@ -201,7 +201,7 @@ These are cap #4-specific commitments **beyond** what cap #1, cap #2, cap #3, an
     - `explain-sweeper-stale-claim.txt` — sweep query (`WHERE state='in_progress' AND claim_heartbeat_at < now() - lease`), asserts `idx_jobs_in_progress_heartbeat` use.
 
 18. **MCP richness pattern locked from cap #4 forward** (carried into every later cap):
-    - `mcp.set_instructions(...)` server-level block (brand-new wiring; FastMCP supports it but cap-3 didn't ship it).
+    - Server-level instructions block via FastMCP's `instructions` constructor argument / property (brand-new wiring; cap-3 didn't ship it).
     - Tool annotations: every cap-4 mutation gets `{"destructiveHint": True, "readOnlyHint": False, "idempotentHint": False}`. (Existing reads in cap-1/2/3 use `{"readOnlyHint": True}`.)
     - Tool descriptions auto-derived from Pydantic field docstrings + a per-op "why-to-use / when-to-use" line authored at the MCP tool decorator.
     - `claim_next_job` returns a multi-part MCP content list: Job JSON + Packet stub JSON + natural-language text block.
@@ -216,7 +216,7 @@ These are cap #4-specific commitments **beyond** what cap #1, cap #2, cap #3, an
       recommended_heartbeat_after_seconds: int  # = 30 (module-level constant, NOT an env var)
     }
     ```
-    `recommended_heartbeat_after_seconds = 30` is a module-level constant in `apps/api/src/aq_api/services/claim.py`, not an env var (per Locked Decision 3 — only two env vars in cap-4). Clients across all surfaces receive identical lease facts in the success response. The MCP `set_instructions` text continues to mention the ~30s recommendation as fallback documentation; structured clients should read `recommended_heartbeat_after_seconds` from the response.
+    `recommended_heartbeat_after_seconds = 30` is a module-level constant in `apps/api/src/aq_api/services/claim.py`, not an env var (per Locked Decision 3 — only two env vars in cap-4). Clients across all surfaces receive identical lease facts in the success response. The MCP server-instructions text continues to mention the ~30s recommendation as fallback documentation; structured clients should read `recommended_heartbeat_after_seconds` from the response.
 
 20. **API startup is robust to transient `ensure_system_actor` failure** (Mario lock 5). On startup, the lifespan attempts `ensure_system_actor` once. On exception (transient DB unavailability, race), it logs a warning and proceeds with `system_actor_id = None`. The sweep coroutine then calls `ensure_system_actor` at the top of each iteration until success; the resolved UUID is cached for subsequent iterations. **API request handling is NOT taken down by transient sweep setup failure.** Auditability of mutations served by request handlers is unaffected (request mutations use the per-request authenticated actor, not the system actor). If the operator prefers fail-fast startup, that's a v1.1+ config flag — not the v1 default.
 
@@ -286,7 +286,7 @@ Repeated from `capabilities.md` cap #4 scope guardrails plus carry-forward locks
 **Cap-4-specific forbids:**
 - No `pg_cron` dependency. Sweep is in-process asyncio per Locked Decision 6.
 - No multi-tenant / per-project lease overrides (single global `AQ_CLAIM_LEASE_SECONDS`). Per-project override deferred to v1.1.
-- No exponential backoff on heartbeat. Constant cadence guidance (~30s) in MCP `set_instructions` text.
+- No exponential backoff on heartbeat. Constant cadence guidance (~30s) in MCP server-instructions text.
 - No client-side reconnection logic — caller's responsibility.
 - No graceful claim release on agent shutdown — agents that crash trigger sweeper recovery.
 - No path-finding / multi-hop dependency analysis (cap-10).
@@ -361,7 +361,7 @@ docker compose exec -T api uv run mypy --strict apps/api/src/aq_api/models/ apps
 **Scope (out):**
 - No release / reset / heartbeat (Stories 4.3, 4.4).
 - No sweep (Story 4.5).
-- No `set_instructions` server-level block (Story 4.6).
+- No MCP server-instructions block (Story 4.6).
 - No race / atomicity tests (Story 4.6).
 - No web view (cap #11).
 
@@ -550,7 +550,7 @@ docker compose exec -T api uv run pytest -q apps/api/tests apps/cli/tests   # fu
 
 **Scope (out):**
 - No race / atomicity injection tests (Story 4.6).
-- No MCP `set_instructions` block (Story 4.6).
+- No MCP server-instructions block (Story 4.6).
 - No `capabilities.md` fix-up (Story 4.7).
 
 **Verification:**
@@ -581,15 +581,15 @@ docker compose exec -T db psql -U aq -d aq2 -c "EXPLAIN (ANALYZE, BUFFERS) SELEC
 
 ---
 
-### Story 4.6 — MCP richness (`set_instructions` + multi-part response refinement) + race + atomicity
+### Story 4.6 — MCP richness (server instructions + multi-part response refinement) + race + atomicity
 
-**Objective:** Ship the MCP richness pattern locked from cap #4 forward (Locked Decision 18). Add `mcp.set_instructions(...)` server-level block to `mcp.py` with the agent_identity + error-shape + heartbeat-cadence + "next call" guidance text. Refine `claim_next_job`'s multi-part content list to match the spec exactly (Job + Packet + text). Ship the race test (`tests/parity/test_claim_race.py` — 50× concurrent claimers) and the per-Job atomicity tests (`tests/atomicity/test_claim_atomicity.py` for the claim path; `tests/atomicity/test_claim_auto_release_atomicity.py` for the sweep). Create the `tests/atomicity/` directory if it doesn't exist.
+**Objective:** Ship the MCP richness pattern locked from cap #4 forward (Locked Decision 18). Add the FastMCP server-instructions block to `mcp.py` with the agent_identity + error-shape + heartbeat-cadence + "next call" guidance text. Refine `claim_next_job`'s multi-part content list to match the spec exactly (Job + Packet + text). Ship the race test (`tests/parity/test_claim_race.py` — 50× concurrent claimers) and the per-Job atomicity tests (`tests/atomicity/test_claim_atomicity.py` for the claim path; `tests/atomicity/test_claim_auto_release_atomicity.py` for the sweep). Create the `tests/atomicity/` directory if it doesn't exist.
 
 **Why this matters (human outcome):** Cap-4 unblocks cap-5 (submit), cap-6 (dogfood), and the entire downstream agent-claims-and-works flow. The riskiest assumption from the brief — "SKIP-LOCKED + same-tx audit holds at 50× concurrency without producing duplicate winners or missed audit rows" — gets validated mechanically here. The MCP richness pattern (instructions + multi-part output) sets the contract every cap from #4 forward inherits.
 
 **Scope (in):**
 - **FastMCP multi-part output preflight spike (FIRST commit of Story 4.6)** per Locked Decision 22. Write a throwaway test (`apps/api/tests/test_fastmcp_multipart_spike.py`) that registers a temporary FastMCP tool returning a `list[Content]` (or whatever the installed FastMCP version's exact return type is — read `pyproject.toml` for the pinned FastMCP version, then check the installed package's type signatures). Run the live MCP HTTP transport against it and assert the multi-part response shape arrives at a real MCP client. Capture the exact return-type signature in `artifacts/cap-04/fastmcp-multipart-spike.txt`. **If the installed FastMCP version's API differs from the assumption (`list[Content]` blocks with type+data fields)**, amend Story 4.6 with a one-line clarification of the actual return type BEFORE wiring `claim_next_job`'s multi-part response. The spike test is deleted in the same Story 4.6 commit cycle once the real `claim_next_job` multi-part wiring is shipped (no need to keep the throwaway test in the suite).
-- `apps/api/src/aq_api/mcp.py` (modify) — add `mcp.set_instructions(...)` call before tool registrations. Instructions text:
+- `apps/api/src/aq_api/mcp.py` (modify) — FastMCP 2.14.7 exposes server instructions via the `FastMCP(..., instructions=...)` constructor argument / `.instructions` property, not `set_instructions(...)`; set instructions before tool registrations. Instructions text:
   ```
   You are connected to AgenticQueue 2.0's MCP server.
 
@@ -717,7 +717,7 @@ grep -n "AQ_CLAIM_SWEEP_INTERVAL_SECONDS" plans/v2-rebuild/capabilities.md   # a
 
 Carries forward cap #2's locked pattern (Bearer + agent_identity decorative-only) and cap #3's annotations. Cap #4 ships the additions locked from this capability forward:
 
-1. **`mcp.set_instructions(...)`** — the server-level block per Locked Decision 18 / Story 4.6's exact text.
+1. **FastMCP server instructions** — the server-level block per Locked Decision 18 / Story 4.6's exact text, wired through FastMCP 2.14.7's `instructions` constructor argument / property.
 2. **Tool annotations** — every cap-4 mutation: `{"destructiveHint": True, "readOnlyHint": False, "idempotentHint": False}`. Heartbeat is technically idempotent on `claim_heartbeat_at` (calling it twice in the same second produces identical timestamps), but the lease semantics ARE state-changing from the agent's perspective ("I'm still working"), so it ships as `idempotentHint: False` for clarity.
 3. **Tool descriptions** — auto-derived from Pydantic field docstrings; per-op "why-to-use / when-to-use" line in the MCP tool decorator's `description=` string. Example for `claim_next_job`: "Atomically claim the next `ready` Job from a Project's queue, optionally filtered by labels. Use this when your agent is ready to take on new work. Returns the Job + a Context Packet (currently a stub; cap #8 will populate it) + a next-step text hint. Call `heartbeat_job` while working, `release_job` to return the work, or `submit_job` (cap #5) when done."
 4. **Output content bundling** — `claim_next_job` returns a 3-block FastMCP content list. The other three cap-4 ops (release, reset, heartbeat) return single Pydantic dumps (no multi-part needed; they don't carry navigation context).
@@ -800,7 +800,7 @@ Run `scripts/validate-cap04.sh` end-to-end. The script:
 
 8. **`ensure_system_actor` is race-safe via `IntegrityError` rollback + reselect** (Mario lock 3 / Locked Decision 20). Function pattern: SELECT active actor by name; if found, return UUID; else INSERT; on `IntegrityError` (concurrent winner inserted first), rollback and re-SELECT to fetch the winner's UUID. Tests cover four cases: (a) missing — inserts; (b) active row exists — no-op; (c) deactivated row exists — inserts new active row alongside (the partial-unique index permits multiple inactive + one active); (d) two concurrent calls race — both succeed, exactly one active row remains. Startup is robust to transient failure (per Locked Decision 20) — the lifespan logs and proceeds with `system_actor_id=None`; the sweep loop retries `ensure_system_actor` per iteration until it succeeds.
 
-9. **No client-cadence enforcement.** The MCP `set_instructions` block recommends ~30s heartbeat cadence, but the server enforces only the 15-minute lease. An agent that heartbeats every 14 minutes is technically compliant but at high risk of clock-skew expiry. Documented as MCP guidance; if a future operator reports lost claims due to skew, file a gap-ticket for client-side cadence validation.
+9. **No client-cadence enforcement.** The MCP server-instructions block recommends ~30s heartbeat cadence, but the server enforces only the 15-minute lease. An agent that heartbeats every 14 minutes is technically compliant but at high risk of clock-skew expiry. Documented as MCP guidance; if a future operator reports lost claims due to skew, file a gap-ticket for client-side cadence validation.
 
 10. **Forward-compat empty Packet.** The `previous_jobs[]` and `next_job_id` fields are empty/null in cap #4. Cap #8 fills them in once cap #10's `sequence_next` edges exist. Agents reading the Packet must handle both shapes (cap #8 won't be a breaking change). The cap-3 precedent for empty arrays in `decisions`/`learnings` covers this pattern; cap-4 inherits it.
 

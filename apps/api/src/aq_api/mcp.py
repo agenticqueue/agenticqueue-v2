@@ -112,6 +112,23 @@ from aq_api.services.release import reset_claim as reset_claim_service
 
 MCP_NAME = "AgenticQueue 2.0 MCP"
 MCP_HTTP_PATH = "/mcp"
+MCP_INSTRUCTIONS = """You are connected to AgenticQueue 2.0's MCP server.
+
+Conventions:
+- Pass `agent_identity` (your API key alias) on every call. AQ does not infer it.
+- Errors come back as structured objects: {error_code, rule_violated, details}.
+  On `rule_violated`, do NOT retry — it indicates a fixable client mistake
+  (wrong claimant, wrong state, missing field), not a transient failure.
+- After a successful `claim_next_job`: the response includes a Context Packet
+  (cap #8 forward-compat — currently a stub with empty `previous_jobs[]` and
+  `next_job_id: null`). Read the Job's inline `contract` field for the DoD,
+  call `heartbeat_job` every ~30 seconds while working, and call `submit_job`
+  (cap #5 — not yet shipped) when done. For now, use `release_job` to return
+  the Job to `ready` if you cannot complete it.
+- Heartbeat cadence is recommended ~30 seconds. The server enforces only the
+  AQ_CLAIM_LEASE_SECONDS lease (default 900s = 15 minutes); shorter cadence
+  is friendlier to the auto-release sweep.
+"""
 AGENT_IDENTITY_PATTERN = r"^$|^[A-Za-z0-9_./:-]+$"
 AgentIdentity = Annotated[
     str | None,
@@ -151,7 +168,7 @@ def _claimed_agent_identity(agent_identity: str | None) -> Iterator[None]:
 
 def create_mcp_server() -> FastMCP:
     # No background task queue is needed for these synchronous read-only tools.
-    server = FastMCP(MCP_NAME, tasks=False)
+    server = FastMCP(MCP_NAME, tasks=False, instructions=MCP_INSTRUCTIONS)
 
     @server.tool(
         description=(
@@ -665,8 +682,9 @@ def create_mcp_server() -> FastMCP:
         payload = response.model_dump(mode="json")
         packet_payload = response.packet.model_dump(mode="json")
         next_step = (
-            "Read the Job's inline contract field; call heartbeat_job while "
-            "working; submit_job ships in cap #5."
+            f"You claimed Job {response.job.id} ({response.job.title}). "
+            "Read the inline contract for the DoD; call heartbeat_job every "
+            "~30s; submit_job ships in cap #5."
         )
         return ToolResult(
             content=[
