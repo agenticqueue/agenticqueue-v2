@@ -1,4 +1,5 @@
 import asyncio
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
@@ -9,6 +10,13 @@ import aq_api.services.claim_auto_release as sweep_service
 import httpx
 import pytest
 from aq_api._request_context import get_authenticated_actor_id
+
+DATABASE_URL_SYNC = os.environ.get("DATABASE_URL_SYNC")
+
+pytestmark = pytest.mark.skipif(
+    not DATABASE_URL_SYNC,
+    reason="DATABASE_URL_SYNC is required for live lifespan sweep tests",
+)
 
 
 @asynccontextmanager

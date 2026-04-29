@@ -16,7 +16,6 @@ from _jobs_test_support import (
     truncate_job_state,
 )
 from aq_api._datetime import parse_utc
-from aq_api._db import SessionLocal, engine
 from aq_api._request_context import get_authenticated_actor_id
 from aq_api.services.claim_auto_release import (
     SYSTEM_ACTOR_NAME,
@@ -33,6 +32,12 @@ pytestmark = pytest.mark.skipif(
 )
 
 
+def _session_local() -> object:
+    from aq_api._db import SessionLocal
+
+    return SessionLocal
+
+
 @pytest.fixture()
 def conn() -> Iterator[Connection[tuple[object, ...]]]:
     assert DATABASE_URL_SYNC is not None
@@ -46,6 +51,8 @@ def conn() -> Iterator[Connection[tuple[object, ...]]]:
 @pytest_asyncio.fixture(autouse=True)
 async def dispose_engine_after_test() -> AsyncIterator[None]:
     yield
+    from aq_api._db import engine
+
     await engine.dispose()
 
 
@@ -168,7 +175,7 @@ async def test_run_claim_auto_release_once_releases_stale_job_and_audits(
     stale_heartbeat = now - timedelta(seconds=901)
     claimant_id, job_id = _claimed_job(conn, heartbeat_at=stale_heartbeat)
 
-    async with SessionLocal() as session:
+    async with _session_local()() as session:
         released = await run_claim_auto_release_once(session, now=now)
 
     assert released == 1
@@ -201,7 +208,7 @@ async def test_run_claim_auto_release_once_does_not_touch_fresh_job(
     fresh_heartbeat = now - timedelta(seconds=450)
     claimant_id, job_id = _claimed_job(conn, heartbeat_at=fresh_heartbeat)
 
-    async with SessionLocal() as session:
+    async with _session_local()() as session:
         released = await run_claim_auto_release_once(session, now=now)
 
     assert released == 0
@@ -225,7 +232,7 @@ async def test_run_claim_auto_release_once_releases_multiple_stale_jobs(
         for index in range(3)
     ]
 
-    async with SessionLocal() as session:
+    async with _session_local()() as session:
         released = await run_claim_auto_release_once(session, now=now)
 
     assert released == 3
@@ -242,7 +249,7 @@ async def test_ensure_system_actor_idempotent_missing_and_deactivated_cases(
 ) -> None:
     _deactivate_active_system_actor(conn)
 
-    async with SessionLocal() as session:
+    async with _session_local()() as session:
         first_id = await ensure_system_actor(session)
         await session.commit()
         second_id = await ensure_system_actor(session)
@@ -263,7 +270,7 @@ async def test_ensure_system_actor_idempotent_missing_and_deactivated_cases(
             (first_id,),
         )
 
-    async with SessionLocal() as session:
+    async with _session_local()() as session:
         replacement_id = await ensure_system_actor(session)
         await session.commit()
 
@@ -278,7 +285,7 @@ async def test_ensure_system_actor_concurrent_calls_return_one_active_row(
     _deactivate_active_system_actor(conn)
 
     async def call_ensure() -> UUID:
-        async with SessionLocal() as session:
+        async with _session_local()() as session:
             actor_id = await ensure_system_actor(session)
             await session.commit()
             return actor_id
@@ -300,7 +307,7 @@ async def test_run_claim_auto_release_once_recreates_missing_system_actor(
         heartbeat_at=now - timedelta(seconds=901),
     )
 
-    async with SessionLocal() as session:
+    async with _session_local()() as session:
         released = await run_claim_auto_release_once(session, now=now)
 
     assert released == 1

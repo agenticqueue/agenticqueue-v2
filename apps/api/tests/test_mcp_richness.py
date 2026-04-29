@@ -13,7 +13,6 @@ from _jobs_test_support import (
     insert_project,
     truncate_job_state,
 )
-from aq_api._db import engine
 from aq_api._request_context import (
     reset_authenticated_actor_id,
     set_authenticated_actor_id,
@@ -61,6 +60,10 @@ def conn() -> Iterator[Connection[tuple[object, ...]]]:
 @pytest_asyncio.fixture(autouse=True)
 async def dispose_engine_after_test() -> AsyncIterator[None]:
     yield
+    if not DATABASE_URL_SYNC:
+        return
+    from aq_api._db import engine
+
     await engine.dispose()
 
 

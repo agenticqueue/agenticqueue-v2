@@ -11,7 +11,6 @@ from _jobs_test_support import (
     truncate_job_state,
 )
 from aq_api._audit import BusinessRuleException, audited_op
-from aq_api._db import SessionLocal, engine
 from aq_api._request_context import (
     reset_authenticated_actor_id,
     set_authenticated_actor_id,
@@ -27,6 +26,12 @@ pytestmark = pytest.mark.skipif(
 )
 
 
+def _session_local() -> object:
+    from aq_api._db import SessionLocal
+
+    return SessionLocal
+
+
 @pytest.fixture()
 def conn() -> Iterator[Connection[tuple[object, ...]]]:
     assert DATABASE_URL_SYNC is not None
@@ -40,6 +45,8 @@ def conn() -> Iterator[Connection[tuple[object, ...]]]:
 @pytest_asyncio.fixture(autouse=True)
 async def dispose_engine_after_test() -> AsyncIterator[None]:
     yield
+    from aq_api._db import engine
+
     await engine.dispose()
 
 
@@ -64,7 +71,7 @@ async def test_audited_op_success_writes_audit_and_commits(
     token = set_authenticated_actor_id(actor_id)
 
     try:
-        async with SessionLocal() as session:
+        async with _session_local()() as session:
             async with audited_op(
                 session,
                 op="audit_test_success",
@@ -113,7 +120,7 @@ async def test_audited_op_skip_success_audit_commits_without_audit(
     token = set_authenticated_actor_id(actor_id)
 
     try:
-        async with SessionLocal() as session:
+        async with _session_local()() as session:
             async with audited_op(
                 session,
                 op="audit_test_skip",
@@ -153,7 +160,7 @@ async def test_audited_op_success_can_record_error_code(
     token = set_authenticated_actor_id(actor_id)
 
     try:
-        async with SessionLocal() as session:
+        async with _session_local()() as session:
             async with audited_op(
                 session,
                 op="audit_test_success_error_code",
@@ -204,7 +211,7 @@ async def test_audited_op_business_rule_rolls_back_and_audits_denial(
 
     try:
         with pytest.raises(BusinessRuleException):
-            async with SessionLocal() as session:
+            async with _session_local()() as session:
                 async with audited_op(
                     session,
                     op="audit_test_denial",
@@ -258,7 +265,7 @@ async def test_audited_op_unexpected_exception_rolls_back_without_audit(
 
     try:
         with pytest.raises(RuntimeError, match="boom"):
-            async with SessionLocal() as session:
+            async with _session_local()() as session:
                 async with audited_op(
                     session,
                     op="audit_test_exception",
