@@ -1,0 +1,37 @@
+                                                                                 QUERY PLAN
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=128.22..128.23 rows=1 width=36) (actual time=0.220..0.222 rows=1 loops=1)
+   Buffers: shared hit=44 dirtied=2
+   ->  LockRows  (cost=128.22..128.30 rows=6 width=36) (actual time=0.220..0.221 rows=1 loops=1)
+         Buffers: shared hit=44 dirtied=2
+         ->  Sort  (cost=128.22..128.24 rows=6 width=36) (actual time=0.198..0.199 rows=1 loops=1)
+               Sort Key: j.created_at, j.id
+               Sort Method: quicksort  Memory: 25kB
+               Buffers: shared hit=41
+               ->  Hash Join  (cost=91.66..128.19 rows=6 width=36) (actual time=0.174..0.176 rows=1 loops=1)
+                     Hash Cond: (j.pipeline_id = p.id)
+                     Buffers: shared hit=35
+                     ->  Bitmap Heap Scan on jobs j  (cost=90.17..126.67 rows=10 width=46) (actual time=0.151..0.152 rows=1 loops=1)
+                           Recheck Cond: ((labels @> '{area:web}'::text[]) AND (state = 'ready'::text) AND (project_id = '[UUID_REDACTED]'::uuid))
+                           Heap Blocks: exact=1
+                           Buffers: shared hit=34
+                           ->  BitmapAnd  (cost=90.17..90.17 rows=10 width=0) (actual time=0.145..0.145 rows=0 loops=1)
+                                 Buffers: shared hit=33
+                                 ->  Bitmap Index Scan on idx_jobs_labels_gin  (cost=0.00..17.27 rows=50 width=0) (actual time=0.030..0.030 rows=238 loops=1)
+                                       Index Cond: (labels @> '{area:web}'::text[])
+                                       Buffers: shared hit=4
+                                 ->  Bitmap Index Scan on idx_jobs_state_project_created  (cost=0.00..72.64 rows=1236 width=0) (actual time=0.109..0.109 rows=2501 loops=1)
+                                       Index Cond: ((state = 'ready'::text) AND (project_id = '[UUID_REDACTED]'::uuid))
+                                       Buffers: shared hit=29
+                     ->  Hash  (cost=1.28..1.28 rows=17 width=22) (actual time=0.014..0.014 rows=16 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on pipelines p  (cost=0.00..1.28 rows=17 width=22) (actual time=0.006..0.009 rows=16 loops=1)
+                                 Filter: ((NOT is_template) AND (archived_at IS NULL))
+                                 Rows Removed by Filter: 11
+                                 Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=282
+ Planning Time: 1.551 ms
+ Execution Time: 0.295 ms
+(34 rows)

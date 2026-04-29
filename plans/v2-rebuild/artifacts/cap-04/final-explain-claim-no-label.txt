@@ -1,0 +1,30 @@
+                                                                              QUERY PLAN
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=2.20..4.02 rows=1 width=36) (actual time=0.125..0.126 rows=1 loops=1)
+   Buffers: shared hit=18 dirtied=2
+   ->  LockRows  (cost=2.20..1363.18 rows=750 width=36) (actual time=0.124..0.124 rows=1 loops=1)
+         Buffers: shared hit=18 dirtied=2
+         ->  Incremental Sort  (cost=2.20..1355.68 rows=750 width=36) (actual time=0.079..0.080 rows=1 loops=1)
+               Sort Key: j.created_at, j.id
+               Presorted Key: j.created_at
+               Full-sort Groups: 1  Sort Method: quicksort  Average Memory: 27kB  Peak Memory: 27kB
+               Buffers: shared hit=15
+               ->  Nested Loop  (cost=0.43..1321.93 rows=750 width=36) (actual time=0.028..0.039 rows=33 loops=1)
+                     Buffers: shared hit=6
+                     ->  Index Scan using idx_jobs_state_project_created on jobs j  (cost=0.28..1287.20 rows=1236 width=46) (actual time=0.020..0.025 rows=33 loops=1)
+                           Index Cond: ((state = 'ready'::text) AND (project_id = '[UUID_REDACTED]'::uuid))
+                           Buffers: shared hit=4
+                     ->  Memoize  (cost=0.15..0.17 rows=1 width=22) (actual time=0.000..0.000 rows=1 loops=33)
+                           Cache Key: j.pipeline_id
+                           Cache Mode: logical
+                           Hits: 32  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                           Buffers: shared hit=2
+                           ->  Index Scan using pipelines_pkey on pipelines p  (cost=0.14..0.16 rows=1 width=22) (actual time=0.004..0.004 rows=1 loops=1)
+                                 Index Cond: (id = j.pipeline_id)
+                                 Filter: ((NOT is_template) AND (archived_at IS NULL))
+                                 Buffers: shared hit=2
+ Planning:
+   Buffers: shared hit=221
+ Planning Time: 0.947 ms
+ Execution Time: 0.195 ms
+(27 rows)

@@ -1,0 +1,7 @@
+Command attempted first: bash scripts/redact-evidence.sh plans/v2-rebuild/artifacts/cap-04
+Wrapper attempt result: failed because /bin/bash is not present in this Windows shell.
+Command used: python scripts/redact_evidence.py plans/v2-rebuild/artifacts/cap-04
+Exit code: 0
+Post-redaction regex checks: argon2 hashes, aq2_* long tokens, UUIDs, and 32+ hex strings.
+Result: no matches.
+Gitleaks artifact scan: see gitleaks-artifacts.txt; no leaks found.
