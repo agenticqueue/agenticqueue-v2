@@ -699,6 +699,34 @@ def job_cancel(
     typer.echo(_post_auth(f"/jobs/{job_id}/cancel", {}, timeout, config))
 
 
+@job_app.command("release")
+def job_release(
+    job_id: Annotated[str, typer.Argument(help="Job UUID.")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Release a Job claimed by the authenticated actor."""
+    typer.echo(_post_auth(f"/jobs/{job_id}/release", {}, timeout, config))
+
+
+@job_app.command("reset-claim")
+def job_reset_claim(
+    job_id: Annotated[str, typer.Argument(help="Job UUID.")],
+    reason: Annotated[str, typer.Option("--reason")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Reset a stuck claim and return the Job to ready."""
+    typer.echo(
+        _post_auth(
+            f"/jobs/{job_id}/reset-claim",
+            {"reason": reason},
+            timeout,
+            config,
+        )
+    )
+
+
 app.add_typer(job_app, name="job")
 
 

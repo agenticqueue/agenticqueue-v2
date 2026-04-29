@@ -52,6 +52,9 @@ from aq_api.models import (
     ListReadyJobsResponse,
     RegisterLabelRequest,
     RegisterLabelResponse,
+    ReleaseJobResponse,
+    ResetClaimRequest,
+    ResetClaimResponse,
     RevokeApiKeyResponse,
     UpdateJobResponse,
     UpdatePipelineRequest,
@@ -102,6 +105,8 @@ from aq_api.services.projects import create_project as create_project_service
 from aq_api.services.projects import get_project as get_project_service
 from aq_api.services.projects import list_projects as list_project_service
 from aq_api.services.projects import update_project as update_project_service
+from aq_api.services.release import release_job as release_job_service
+from aq_api.services.release import reset_claim as reset_claim_service
 
 MCP_NAME = "AgenticQueue 2.0 MCP"
 MCP_HTTP_PATH = "/mcp"
@@ -737,6 +742,61 @@ def create_mcp_server() -> FastMCP:
             _authenticated_actor_id()
             async with SessionLocal() as session:
                 return await cancel_job_service(session, job_id)
+
+    @server.tool(
+        description=(
+            "Release a Job claimed by the authenticated actor and return it "
+            "to ready."
+        ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": True,
+            "idempotentHint": False,
+        },
+    )
+    async def release_job(
+        job_id: UUID,
+        agent_identity: AgentIdentity = None,
+    ) -> ReleaseJobResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await release_job_service(
+                    session,
+                    job_id=job_id,
+                    actor_id=actor_id,
+                )
+
+    @server.tool(
+        description=(
+            "Reset a stuck claim with a required reason and return the Job "
+            "to ready."
+        ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": True,
+            "idempotentHint": False,
+        },
+    )
+    async def reset_claim(
+        job_id: UUID,
+        reason: Annotated[str, Field(min_length=1)],
+        agent_identity: AgentIdentity = None,
+    ) -> ResetClaimResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = ResetClaimRequest(reason=reason)
+            async with SessionLocal() as session:
+                return await reset_claim_service(
+                    session,
+                    job_id=job_id,
+                    request=request,
+                    actor_id=actor_id,
+                )
 
     @server.tool(
         description="Register a Project-scoped Label for future Job attachment.",

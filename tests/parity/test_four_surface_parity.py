@@ -1924,6 +1924,285 @@ def test_claim_next_job_matches_rest_cli_mcp_and_audit(
     )
 
 
+def test_release_and_reset_claim_ops_match_rest_cli_mcp_and_audit(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    founder_actor_id: str,
+    artifact_dir: Path,
+    redact_evidence: Any,
+) -> None:
+    auth = {"Authorization": f"Bearer {founder_key}"}
+    contract = {
+        "contract_type": "coding-task",
+        "dod_items": [{"id": "release-reset-parity"}],
+    }
+    contract_json = json.dumps(contract, separators=(",", ":"))
+
+    release_fixture = _create_pipeline_triplet(
+        api_base_url,
+        mcp_base_url,
+        founder_key,
+        label="release",
+        mcp_request_start=140,
+    )
+    release_pipeline_ids = release_fixture["pipeline_ids"]
+    release_project_ids = {
+        surface: payload["project"]["id"]
+        for surface, payload in release_fixture["projects"].items()
+    }
+    rest_release_job_response = httpx.post(
+        f"{api_base_url}/jobs",
+        headers=auth,
+        json={
+            "pipeline_id": release_pipeline_ids["rest"],
+            "title": "REST Release Job",
+            "contract": contract,
+        },
+        timeout=10,
+    )
+    rest_release_job_response.raise_for_status()
+    cli_release_job = _run_cli(
+        [
+            "job",
+            "create",
+            "--pipeline",
+            release_pipeline_ids["cli"],
+            "--title",
+            "CLI Release Job",
+            "--contract-json",
+            contract_json,
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_release_job = _call_mcp_tool(
+        mcp_base_url,
+        "create_job",
+        142,
+        api_key=founder_key,
+        arguments={
+            "pipeline_id": release_pipeline_ids["mcp"],
+            "title": "MCP Release Job",
+            "contract": contract,
+            "agent_identity": "parity-release-reset",
+        },
+    )
+
+    rest_release_claim_response = httpx.post(
+        f"{api_base_url}/jobs/claim",
+        headers=auth,
+        json={"project_id": release_project_ids["rest"]},
+        timeout=10,
+    )
+    rest_release_claim_response.raise_for_status()
+    release_claims = {
+        "rest": rest_release_claim_response.json(),
+        "cli": _run_cli(
+            ["job", "claim", "--project", release_project_ids["cli"]],
+            api_base_url,
+            api_key=founder_key,
+        ),
+        "mcp": _call_mcp_tool(
+            mcp_base_url,
+            "claim_next_job",
+            143,
+            api_key=founder_key,
+            arguments={
+                "project_id": release_project_ids["mcp"],
+                "agent_identity": "parity-release-reset",
+            },
+        ),
+    }
+    release_job_ids = {
+        "rest": rest_release_claim_response.json()["job"]["id"],
+        "cli": release_claims["cli"]["job"]["id"],
+        "mcp": release_claims["mcp"]["job"]["id"],
+    }
+    assert release_job_ids["rest"] == rest_release_job_response.json()["job"]["id"]
+    assert release_job_ids["cli"] == cli_release_job["job"]["id"]
+    assert release_job_ids["mcp"] == mcp_release_job["job"]["id"]
+
+    rest_release_response = httpx.post(
+        f"{api_base_url}/jobs/{release_job_ids['rest']}/release",
+        headers=auth,
+        timeout=10,
+    )
+    rest_release_response.raise_for_status()
+    releases = {
+        "rest": rest_release_response.json(),
+        "cli": _run_cli(
+            ["job", "release", release_job_ids["cli"]],
+            api_base_url,
+            api_key=founder_key,
+        ),
+        "mcp": _call_mcp_tool(
+            mcp_base_url,
+            "release_job",
+            144,
+            api_key=founder_key,
+            arguments={
+                "job_id": release_job_ids["mcp"],
+                "agent_identity": "parity-release-reset",
+            },
+        ),
+    }
+    for surface, payload in releases.items():
+        assert payload["job"]["id"] == release_job_ids[surface]
+        assert payload["job"]["state"] == "ready"
+        assert payload["job"]["claimed_by_actor_id"] is None
+        assert payload["job"]["claimed_at"] is None
+        assert payload["job"]["claim_heartbeat_at"] is None
+
+    reset_fixture = _create_pipeline_triplet(
+        api_base_url,
+        mcp_base_url,
+        founder_key,
+        label="reset",
+        mcp_request_start=150,
+    )
+    reset_pipeline_ids = reset_fixture["pipeline_ids"]
+    reset_project_ids = {
+        surface: payload["project"]["id"]
+        for surface, payload in reset_fixture["projects"].items()
+    }
+    rest_reset_job_response = httpx.post(
+        f"{api_base_url}/jobs",
+        headers=auth,
+        json={
+            "pipeline_id": reset_pipeline_ids["rest"],
+            "title": "REST Reset Job",
+            "contract": contract,
+        },
+        timeout=10,
+    )
+    rest_reset_job_response.raise_for_status()
+    cli_reset_job = _run_cli(
+        [
+            "job",
+            "create",
+            "--pipeline",
+            reset_pipeline_ids["cli"],
+            "--title",
+            "CLI Reset Job",
+            "--contract-json",
+            contract_json,
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_reset_job = _call_mcp_tool(
+        mcp_base_url,
+        "create_job",
+        152,
+        api_key=founder_key,
+        arguments={
+            "pipeline_id": reset_pipeline_ids["mcp"],
+            "title": "MCP Reset Job",
+            "contract": contract,
+            "agent_identity": "parity-release-reset",
+        },
+    )
+    rest_reset_claim_response = httpx.post(
+        f"{api_base_url}/jobs/claim",
+        headers=auth,
+        json={"project_id": reset_project_ids["rest"]},
+        timeout=10,
+    )
+    rest_reset_claim_response.raise_for_status()
+    reset_claims = {
+        "rest": rest_reset_claim_response.json(),
+        "cli": _run_cli(
+            ["job", "claim", "--project", reset_project_ids["cli"]],
+            api_base_url,
+            api_key=founder_key,
+        ),
+        "mcp": _call_mcp_tool(
+            mcp_base_url,
+            "claim_next_job",
+            153,
+            api_key=founder_key,
+            arguments={
+                "project_id": reset_project_ids["mcp"],
+                "agent_identity": "parity-release-reset",
+            },
+        ),
+    }
+    reset_job_ids = {
+        "rest": reset_claims["rest"]["job"]["id"],
+        "cli": reset_claims["cli"]["job"]["id"],
+        "mcp": reset_claims["mcp"]["job"]["id"],
+    }
+    assert reset_job_ids["rest"] == rest_reset_job_response.json()["job"]["id"]
+    assert reset_job_ids["cli"] == cli_reset_job["job"]["id"]
+    assert reset_job_ids["mcp"] == mcp_reset_job["job"]["id"]
+
+    reset_reason = "parity reset"
+    rest_reset_response = httpx.post(
+        f"{api_base_url}/jobs/{reset_job_ids['rest']}/reset-claim",
+        headers=auth,
+        json={"reason": reset_reason},
+        timeout=10,
+    )
+    rest_reset_response.raise_for_status()
+    resets = {
+        "rest": rest_reset_response.json(),
+        "cli": _run_cli(
+            ["job", "reset-claim", reset_job_ids["cli"], "--reason", reset_reason],
+            api_base_url,
+            api_key=founder_key,
+        ),
+        "mcp": _call_mcp_tool(
+            mcp_base_url,
+            "reset_claim",
+            154,
+            api_key=founder_key,
+            arguments={
+                "job_id": reset_job_ids["mcp"],
+                "reason": reset_reason,
+                "agent_identity": "parity-release-reset",
+            },
+        ),
+    }
+    for surface, payload in resets.items():
+        assert payload["job"]["id"] == reset_job_ids[surface]
+        assert payload["job"]["state"] == "ready"
+        assert payload["job"]["claimed_by_actor_id"] is None
+        assert payload["job"]["claimed_at"] is None
+        assert payload["job"]["claim_heartbeat_at"] is None
+
+    audit = _get_json(
+        f"{api_base_url}/audit",
+        api_key=founder_key,
+        params={"actor": founder_actor_id, "limit": 200},
+    )
+    release_ops = [row for row in audit["entries"] if row["op"] == "release_job"]
+    reset_ops = [row for row in audit["entries"] if row["op"] == "reset_claim"]
+    assert len(release_ops) == 3
+    assert len(reset_ops) == 3
+    assert all(row["target_kind"] == "job" for row in release_ops)
+    assert all(row["target_id"] is not None for row in release_ops)
+    assert all(row["error_code"] is None for row in release_ops)
+    assert all(row["target_kind"] == "job" for row in reset_ops)
+    assert all(row["target_id"] is not None for row in reset_ops)
+    assert all(row["error_code"] is None for row in reset_ops)
+    assert all(row["request_payload"]["reason"] == reset_reason for row in reset_ops)
+
+    artifact = {
+        "release_fixture": release_fixture,
+        "release_claims": release_claims,
+        "releases": releases,
+        "reset_fixture": reset_fixture,
+        "reset_claims": reset_claims,
+        "resets": resets,
+        "audit": audit,
+    }
+    (artifact_dir / "release-reset-parity.txt").write_text(
+        redact_evidence(_json_text(artifact)),
+        encoding="utf-8",
+    )
+
+
 def test_comment_and_cancel_ops_match_rest_cli_mcp_and_audit(
     api_base_url: str,
     mcp_base_url: str,

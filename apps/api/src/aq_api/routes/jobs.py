@@ -21,6 +21,9 @@ from aq_api.models import (
     ListJobCommentsResponse,
     ListJobsResponse,
     ListReadyJobsResponse,
+    ReleaseJobResponse,
+    ResetClaimRequest,
+    ResetClaimResponse,
     UpdateJobResponse,
 )
 from aq_api.models.db import Actor as DbActor
@@ -40,6 +43,8 @@ from aq_api.services.jobs import list_jobs as list_jobs_service
 from aq_api.services.jobs import update_job as update_job_service
 from aq_api.services.list_ready_jobs import InvalidReadyJobCursorError
 from aq_api.services.list_ready_jobs import list_ready_jobs as list_ready_jobs_service
+from aq_api.services.release import release_job as release_job_service
+from aq_api.services.release import reset_claim as reset_claim_service
 
 router = APIRouter()
 
@@ -126,6 +131,36 @@ async def cancel_job(
 ) -> CancelJobResponse | JSONResponse:
     try:
         return await cancel_job_service(session, job_id)
+    except BusinessRuleException as exc:
+        return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)
+
+
+@router.post("/jobs/{job_id}/release", response_model=ReleaseJobResponse)
+async def release_job(
+    job_id: UUID,
+    actor: AuthenticatedActor,
+    session: SessionDep,
+) -> ReleaseJobResponse | JSONResponse:
+    try:
+        return await release_job_service(session, job_id=job_id, actor_id=actor.id)
+    except BusinessRuleException as exc:
+        return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)
+
+
+@router.post("/jobs/{job_id}/reset-claim", response_model=ResetClaimResponse)
+async def reset_claim(
+    job_id: UUID,
+    request: ResetClaimRequest,
+    actor: AuthenticatedActor,
+    session: SessionDep,
+) -> ResetClaimResponse | JSONResponse:
+    try:
+        return await reset_claim_service(
+            session,
+            job_id=job_id,
+            request=request,
+            actor_id=actor.id,
+        )
     except BusinessRuleException as exc:
         return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)
 

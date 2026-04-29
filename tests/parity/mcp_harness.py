@@ -40,6 +40,8 @@ TOOL_NAMES = [
     "comment_on_job",
     "list_job_comments",
     "cancel_job",
+    "release_job",
+    "reset_claim",
     "register_label",
     "attach_label",
     "detach_label",
