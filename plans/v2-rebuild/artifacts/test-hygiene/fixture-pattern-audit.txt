@@ -1,0 +1,96 @@
+AQ2-70 fixture pattern audit
+
+Command: Get-ChildItem apps/api/tests -Recurse -File -Include *.py | Select-String -Pattern 'aq-system-sweeper|SYSTEM_ACTOR_NAME|ensure_system_actor|claim_auto_release'
+System-actor-related refs:
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:26: from aq_api.services.claim_auto_release import (
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:27: SYSTEM_ACTOR_NAME,
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:28: ensure_system_actor,
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:29: run_claim_auto_release_once,
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:155: (SYSTEM_ACTOR_NAME,),
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:168: (SYSTEM_ACTOR_NAME,),
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:191: WHERE audit_log.op = 'claim_auto_release'
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:204: async def [TOKEN_REDACTED](
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:212: released = await run_claim_auto_release_once(session, now=now)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:223: assert audit["op"] == "claim_auto_release"
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:226: assert audit["actor_name"] == SYSTEM_ACTOR_NAME
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:237: async def [TOKEN_REDACTED](
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:245: released = await run_claim_auto_release_once(session, now=now)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:255: async def [TOKEN_REDACTED](
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:269: released = await run_claim_auto_release_once(session, now=now)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:280: async def [TOKEN_REDACTED](
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:286: first_id = await ensure_system_actor(session)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:288: second_id = await ensure_system_actor(session)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:290: third_id = await ensure_system_actor(session)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:307: replacement_id = await ensure_system_actor(session)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:315: async def [TOKEN_REDACTED](
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:322: actor_id = await ensure_system_actor(session)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:333: async def [TOKEN_REDACTED](
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:344: released = await run_claim_auto_release_once(session, now=now)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_lifespan_sweep.py:9: import aq_api.services.claim_auto_release as sweep_service
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_lifespan_sweep.py:36: async def fake_ensure_system_actor(_session: object) -> UUID:
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_lifespan_sweep.py:49: monkeypatch.setattr(app_module, "ensure_system_actor", fake_ensure_system_actor)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_lifespan_sweep.py:50: monkeypatch.setattr(app_module, "claim_auto_release_loop", fake_loop)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_lifespan_sweep.py:69: async def fake_ensure_system_actor(_session: object) -> UUID:
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_lifespan_sweep.py:82: monkeypatch.setattr(app_module, "ensure_system_actor", fake_ensure_system_actor)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_lifespan_sweep.py:83: monkeypatch.setattr(app_module, "claim_auto_release_loop", fake_loop)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_lifespan_sweep.py:102: async def [TOKEN_REDACTED](
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_lifespan_sweep.py:110: async def fake_ensure_system_actor(_session: object) -> UUID:
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_lifespan_sweep.py:134: monkeypatch.setattr(sweep_service, "ensure_system_actor", fake_ensure_system_actor)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_lifespan_sweep.py:137: "run_claim_auto_release_once",
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_lifespan_sweep.py:142: await sweep_service.claim_auto_release_loop(
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_lifespan_sweep.py:153: async def [TOKEN_REDACTED](
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_lifespan_sweep.py:162: async def fake_ensure_system_actor(_session: object) -> UUID:
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_lifespan_sweep.py:184: monkeypatch.setattr(sweep_service, "ensure_system_actor", fake_ensure_system_actor)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_lifespan_sweep.py:187: "run_claim_auto_release_once",
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_lifespan_sweep.py:192: await sweep_service.claim_auto_release_loop(
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_models_cap04.py:180: WHERE name = 'aq-system-sweeper'
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_models_cap04.py:203: WHERE name = 'aq-system-sweeper'
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_models_cap04.py:342: WHERE name = 'aq-system-sweeper'
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_setup.py:21: SYSTEM_ACTOR_NAME = "aq-system-sweeper"
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_setup.py:152: (SYSTEM_ACTOR_NAME, SYSTEM_ACTOR_KIND),
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_setup.py:205: def _ensure_system_actor(conn: Connection[tuple[object, ...]]) -> None:
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_setup.py:220: SYSTEM_ACTOR_NAME,
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_setup.py:222: SYSTEM_ACTOR_NAME,
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_setup.py:356: _ensure_system_actor(conn)
+
+Interpretation:
+- apps/api/tests/test_claim_auto_release_sweep.py is the only live DB test that mutates SYSTEM_ACTOR_NAME; it now uses per-test schemas via apps/api/tests/_isolated_schema.py.
+- apps/api/tests/test_lifespan_sweep.py uses monkeypatched UUIDs and fake ensure/run callables; it does not insert or deactivate actor rows.
+- apps/api/tests/test_models_cap04.py uses its own cap04_seed isolated-schema fixture for migration/model checks.
+- apps/api/tests/test_setup.py only verifies setup ignores the reserved system actor and cleans isolated test DBs.
+
+Command: Get-ChildItem apps/api/tests -Recurse -File -Include *.py | Select-String -Pattern 'INSERT INTO actors|DELETE FROM actors|UPDATE actors\\s+SET deactivated_at|SET deactivated_at = now\\(\\)'
+Direct actor SQL refs:
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\_db_cleanup.py:30: cursor.execute("DELETE FROM actors WHERE name LIKE %s", (actor_like,))
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\_db_cleanup.py:162: cursor.execute("DELETE FROM actors WHERE name LIKE %s", (actor_like,))
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\_jobs_test_support.py:49: INSERT INTO actors (name, kind)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_actors.py:72: INSERT INTO actors (name, kind, deactivated_at)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_api_keys.py:75: INSERT INTO actors (name, kind)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_audit_query.py:70: INSERT INTO actors (name, kind)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_audit_writer.py:63: cursor.execute("DELETE FROM actors WHERE name LIKE 'audit-test-%'")
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_audit_writer.py:70: INSERT INTO actors (name, kind)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_auth_lookup_amplification.py:60: INSERT INTO actors (name, kind)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_auth.py:38: cursor.execute("DELETE FROM actors WHERE name LIKE 'auth-test-%'")
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_auth.py:67: INSERT INTO actors (name, kind, deactivated_at)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:152: SET deactivated_at = now()
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_claim_auto_release_sweep.py:300: SET deactivated_at = now()
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_clone_pipeline_atomicity.py:102: cursor.execute("DELETE FROM actors WHERE name LIKE %s", (actor_like,))
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_clone_pipeline_atomicity.py:110: INSERT INTO actors (name, kind)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_db_schema.py:26: cursor.execute("DELETE FROM actors WHERE name LIKE 'schema-%'")
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_db_schema.py:33: INSERT INTO actors (name, kind)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_db_schema.py:104: "UPDATE actors SET deactivated_at = now() WHERE id = %s",
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_labels_concurrency.py:79: INSERT INTO actors (name, kind)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_mcp_agent_identity.py:61: INSERT INTO actors (name, kind)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_models_cap04.py:341: SET deactivated_at = now()
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_pipeline_template_and_clone.py:189: cursor.execute("DELETE FROM actors WHERE name LIKE %s", (actor_like,))
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_pipeline_template_and_clone.py:197: INSERT INTO actors (name, kind)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_pipelines.py:80: INSERT INTO actors (name, kind)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_projects.py:81: INSERT INTO actors (name, kind)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_setup.py:72: cursor.execute("DELETE FROM actors")
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_setup.py:120: cursor.execute("DELETE FROM actors WHERE name = %s", (FOUNDER_ACTOR_NAME,))
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_setup.py:173: INSERT INTO actors (name, kind)
+D:\mmmmm\mmmmm-aq2.0\apps\api\tests\test_setup.py:209: INSERT INTO actors (name, kind)
+
+Interpretation:
+- Existing non-cap-4 actor tests use scoped names or dedicated cleanup helpers.
+- The cap-4 sweeper/audited_op leak path has been moved off public schema.

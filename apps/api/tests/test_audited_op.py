@@ -2,9 +2,14 @@ import os
 from collections.abc import AsyncIterator, Iterator
 from uuid import UUID, uuid4
 
-import psycopg
 import pytest
-import pytest_asyncio
+from _isolated_schema import (
+    connect_in_schema,
+    create_async_engine_in_schema,
+    create_cap04_schema,
+    drop_schema,
+    sync_conninfo,
+)
 from _jobs_test_support import (
     audit_rows,
     insert_actor_with_key,
@@ -17,12 +22,14 @@ from aq_api._request_context import (
 )
 from psycopg import Connection
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 DATABASE_URL_SYNC = os.environ.get("DATABASE_URL_SYNC")
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 pytestmark = pytest.mark.skipif(
-    not DATABASE_URL_SYNC,
-    reason="DATABASE_URL_SYNC is required for live audited_op tests",
+    not DATABASE_URL_SYNC or not DATABASE_URL,
+    reason="DATABASE_URL and DATABASE_URL_SYNC are required for live audited_op tests",
 )
 
 
@@ -33,22 +40,44 @@ def _session_local() -> object:
 
 
 @pytest.fixture()
-def conn() -> Iterator[Connection[tuple[object, ...]]]:
+def isolated_schema() -> Iterator[str]:
     assert DATABASE_URL_SYNC is not None
-    conninfo = DATABASE_URL_SYNC.replace("postgresql+psycopg://", "postgresql://", 1)
-    with psycopg.connect(conninfo, autocommit=True) as connection:
+    conninfo = sync_conninfo(DATABASE_URL_SYNC)
+    schema = create_cap04_schema(conninfo, prefix="cap04_audit")
+    try:
+        yield schema
+    finally:
+        drop_schema(conninfo, schema)
+
+
+@pytest.fixture(autouse=True)
+async def isolate_async_session_local(
+    monkeypatch: pytest.MonkeyPatch,
+    isolated_schema: str,
+) -> AsyncIterator[None]:
+    assert DATABASE_URL is not None
+    import aq_api._db as db_module
+
+    isolated_engine = create_async_engine_in_schema(DATABASE_URL, isolated_schema)
+    isolated_session_local = async_sessionmaker(isolated_engine, expire_on_commit=False)
+    monkeypatch.setattr(db_module, "engine", isolated_engine)
+    monkeypatch.setattr(db_module, "SessionLocal", isolated_session_local)
+    try:
+        yield
+    finally:
+        await isolated_engine.dispose()
+
+
+@pytest.fixture()
+def conn(
+    isolated_schema: str,
+) -> Iterator[Connection[tuple[object, ...]]]:
+    assert DATABASE_URL_SYNC is not None
+    conninfo = sync_conninfo(DATABASE_URL_SYNC)
+    with connect_in_schema(conninfo, isolated_schema) as connection:
         truncate_job_state(connection)
         yield connection
         truncate_job_state(connection)
-
-
-@pytest_asyncio.fixture(autouse=True)
-async def dispose_engine_after_test() -> AsyncIterator[None]:
-    yield
-    from aq_api._db import engine
-
-    await engine.dispose()
-
 
 def _project_exists(conn: Connection[tuple[object, ...]], project_id: UUID) -> bool:
     with conn.cursor() as cursor:

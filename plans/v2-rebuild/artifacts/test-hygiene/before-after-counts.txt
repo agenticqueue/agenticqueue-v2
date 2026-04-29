@@ -1,0 +1,21 @@
+AQ2-70 before full-suite leakage check
+Command: docker compose exec -T db psql -U aq -d aq2 -c "SELECT count(*) AS total, count(*) FILTER (WHERE deactivated_at IS NULL) AS active FROM actors WHERE name='aq-system-sweeper';"
+Result:
+ total | active
+-------+--------
+    73 |      1
+(1 row)
+
+AQ2-70 after full-suite leakage check
+Command: docker compose exec -T api uv run pytest -q apps/api/tests/ apps/cli/tests/ tests/parity/ tests/atomicity/
+Result summary: 199 passed, 7 skipped, 1 warning in 93.30s
+
+Command: docker compose exec -T db psql -U aq -d aq2 -c "SELECT count(*) AS total, count(*) FILTER (WHERE deactivated_at IS NULL) AS active FROM actors WHERE name='aq-system-sweeper';"
+Result:
+ total | active
+-------+--------
+    73 |      1
+(1 row)
+
+
+Conclusion: count did not grow (before total=73 active=1; after total=73 active=1).
