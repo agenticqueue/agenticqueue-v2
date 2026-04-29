@@ -1,4 +1,8 @@
-from collections.abc import Awaitable, Callable
+import asyncio
+import logging
+from collections.abc import AsyncIterator, Awaitable, Callable
+from contextlib import asynccontextmanager
+from uuid import UUID
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse, Response
@@ -9,6 +13,7 @@ from aq_api._auth import (
     current_actor,
     unauthenticated_response,
 )
+from aq_api._db import SessionLocal
 from aq_api._health import current_health_status
 from aq_api._version import OPENAPI_VERSION, VERSION_INFO
 from aq_api.mcp import mcp_http_app
@@ -21,12 +26,49 @@ from aq_api.routes.labels import router as labels_router
 from aq_api.routes.pipelines import router as pipelines_router
 from aq_api.routes.projects import router as projects_router
 from aq_api.routes.setup import router as setup_router
+from aq_api.services.claim_auto_release import (
+    claim_auto_release_loop,
+    ensure_system_actor,
+)
+
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def _mcp_lifespan(fastapi_app: FastAPI) -> AsyncIterator[None]:
+    async with mcp_http_app.lifespan(fastapi_app):
+        yield
+
+
+@asynccontextmanager
+async def app_lifespan(fastapi_app: FastAPI) -> AsyncIterator[None]:
+    async with _mcp_lifespan(fastapi_app):
+        system_actor_id: UUID | None = None
+        try:
+            async with SessionLocal() as session:
+                system_actor_id = await ensure_system_actor(session)
+                await session.commit()
+        except Exception as exc:
+            logger.warning(
+                "ensure_system_actor failed at startup; sweep loop will retry: %s",
+                exc,
+            )
+
+        sweep_task = asyncio.create_task(claim_auto_release_loop(system_actor_id))
+        try:
+            yield
+        finally:
+            sweep_task.cancel()
+            try:
+                await sweep_task
+            except asyncio.CancelledError:
+                pass
 
 # OpenAPI uses the same env-driven version path as the runtime `/version` surface.
 app = FastAPI(
     title="AgenticQueue 2.0 API",
     version=OPENAPI_VERSION,
-    lifespan=mcp_http_app.lifespan,
+    lifespan=app_lifespan,
 )
 
 

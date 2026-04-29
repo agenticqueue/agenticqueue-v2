@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="0.446" timestamp="2026-04-29T16:04:13.497064+00:00" hostname="b393c3c6e15c"><testcase classname="apps.api.tests.test_audited_op" name="[TOKEN_REDACTED]" time="0.138" /></testsuite></testsuites>

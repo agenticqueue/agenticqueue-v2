@@ -19,6 +19,8 @@ class BusinessRuleException(Exception):
 class AuditOperation:
     target_id: UUID | None = None
     response_payload: Mapping[str, object] | None = None
+    # Cap #4 auto-release is a successful system mutation with a diagnostic code.
+    error_code: str | None = None
 
 
 @asynccontextmanager
@@ -65,7 +67,7 @@ async def audited_op(
                     target_id=audit.target_id,
                     request_payload=request_payload,
                     response_payload=audit.response_payload,
-                    error_code=None,
+                    error_code=audit.error_code,
                 )
             await session.commit()
         except Exception:

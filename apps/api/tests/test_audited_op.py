@@ -145,6 +145,56 @@ async def test_audited_op_skip_success_audit_commits_without_audit(
 
 
 @pytest.mark.asyncio
+async def test_audited_op_success_can_record_error_code(
+    conn: Connection[tuple[object, ...]],
+) -> None:
+    actor_id, _key = insert_actor_with_key(conn, name="job-test-audit-error-code")
+    project_id = uuid4()
+    token = set_authenticated_actor_id(actor_id)
+
+    try:
+        async with SessionLocal() as session:
+            async with audited_op(
+                session,
+                op="audit_test_success_error_code",
+                target_kind="project",
+                target_id=project_id,
+                request_payload={"path": "success_error_code"},
+            ) as audit:
+                await session.execute(
+                    text(
+                        """
+                        INSERT INTO projects
+                            (id, name, slug, created_by_actor_id)
+                        VALUES (:id, :name, :slug, :actor_id)
+                        """
+                    ),
+                    {
+                        "id": project_id,
+                        "name": "Audit success error code",
+                        "slug": "job-test-audit-error-code",
+                        "actor_id": actor_id,
+                    },
+                )
+                audit.error_code = "lease_expired"
+                audit.response_payload = {"released": True}
+    finally:
+        reset_authenticated_actor_id(token)
+
+    assert _project_exists(conn, project_id) is True
+    assert audit_rows(conn) == [
+        {
+            "op": "audit_test_success_error_code",
+            "target_kind": "project",
+            "target_id": str(project_id),
+            "request_payload": {"path": "success_error_code"},
+            "response_payload": {"released": True},
+            "error_code": "lease_expired",
+        }
+    ]
+
+
+@pytest.mark.asyncio
 async def test_audited_op_business_rule_rolls_back_and_audits_denial(
     conn: Connection[tuple[object, ...]],
 ) -> None:

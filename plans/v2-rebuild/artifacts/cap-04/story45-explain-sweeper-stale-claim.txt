@@ -1,0 +1,15 @@
+                                                                    QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.13..8.16 rows=1 width=22) (actual time=0.017..0.017 rows=0 loops=1)
+   Buffers: shared hit=1
+   ->  LockRows  (cost=0.13..8.16 rows=1 width=22) (actual time=0.016..0.016 rows=0 loops=1)
+         Buffers: shared hit=1
+         ->  Index Scan using idx_jobs_in_progress_heartbeat on jobs  (cost=0.13..8.15 rows=1 width=22) (actual time=0.015..0.015 rows=0 loops=1)
+               Index Cond: (claim_heartbeat_at < (now() - '00:15:00'::interval))
+               Filter: (state = 'in_progress'::text)
+               Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=140
+ Planning Time: 1.394 ms
+ Execution Time: 0.091 ms
+(12 rows)
