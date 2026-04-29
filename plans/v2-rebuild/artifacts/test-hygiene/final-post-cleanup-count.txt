@@ -1,0 +1,4 @@
+ total | active | auditless_deactivated
+-------+--------+-----------------------
+    31 |      1 |                     0
+(1 row)
