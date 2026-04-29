@@ -1,0 +1,16 @@
+AQ2-70 one-time dev DB cleanup
+
+Cleanup command:
+docker compose exec -T db psql -U aq -d aq2 -c "DELETE FROM actors WHERE name = 'aq-system-sweeper' AND deactivated_at IS NOT NULL AND NOT EXISTS (SELECT 1 FROM audit_log WHERE audit_log.authenticated_actor_id = actors.id);"
+
+Cleanup result:
+DELETE 42
+
+Post-cleanup shape command:
+docker compose exec -T db psql -U aq -d aq2 -c "SELECT count(*) AS total, count(*) FILTER (WHERE deactivated_at IS NULL) AS active, count(*) FILTER (WHERE deactivated_at IS NOT NULL AND NOT EXISTS (SELECT 1 FROM audit_log WHERE audit_log.authenticated_actor_id = actors.id)) AS auditless_deactivated FROM actors WHERE name='aq-system-sweeper';"
+
+Post-cleanup shape:
+ total | active | auditless_deactivated
+-------+--------+-----------------------
+    31 |      1 |                     0
+(1 row)

@@ -1,0 +1,24 @@
+AQ2-70 post-cleanup production sweep smoke
+
+Created via AQ MCP tools:
+project_id=[UUID_REDACTED]
+pipeline_id=[UUID_REDACTED]
+job_id=[UUID_REDACTED]
+claimant_actor_id=[UUID_REDACTED]
+
+Note: mcp__agenticqueue__claim_next_job is not exposed in this Codex session, so the job was created via AQ MCP and claim fields were backdated via SQL to exercise the real in-process sweep loop.
+
+Backdate command output:
+UPDATE 1
+
+Poll results:
+poll_0: in_progress,f,f,f
+poll_1: in_progress,f,f,f
+poll_2: in_progress,f,f,f
+poll_3: ready,t,t,t
+
+Audit row:
+         op         | target_kind |              target_id               |  error_code   | authenticated_actor_name |      previous_claimant_actor_id      |     stale_claim_heartbeat_at     | lease_seconds |    reason     | released
+--------------------+-------------+--------------------------------------+---------------+--------------------------+--------------------------------------+----------------------------------+---------------+---------------+----------
+ claim_auto_release | job         | [UUID_REDACTED] | lease_expired | aq-system-sweeper        | [UUID_REDACTED] | 2026-04-29T22:21:34.062290+00:00 | 900           | lease_expired | true
+(1 row)
