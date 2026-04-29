@@ -393,7 +393,7 @@ async def test_claim_next_job_lease_fields_honor_settings(
     async_client: httpx.AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import aq_api.services.claim as claim_service
+    from aq_api._settings import settings
 
     actor_id, key, project_id, pipeline_id = _fixture_project(conn)
     insert_job(
@@ -403,7 +403,7 @@ async def test_claim_next_job_lease_fields_honor_settings(
         created_by_actor_id=actor_id,
         title="lease check",
     )
-    monkeypatch.setattr(claim_service.settings, "claim_lease_seconds", 120)
+    monkeypatch.setattr(settings, "claim_lease_seconds", 120)
 
     response = await async_client.post(
         "/jobs/claim",

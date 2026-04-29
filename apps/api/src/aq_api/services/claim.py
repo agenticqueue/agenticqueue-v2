@@ -5,7 +5,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from aq_api._audit import BusinessRuleException, audited_op
-from aq_api._settings import settings
 from aq_api.models import (
     ClaimNextJobRequest,
     ClaimNextJobResponse,
@@ -72,6 +71,8 @@ async def claim_next_job(
         db_job.claimed_at = now
         db_job.claim_heartbeat_at = now
         await session.flush()
+
+        from aq_api._settings import settings
 
         lease_seconds = settings.claim_lease_seconds
         response = ClaimNextJobResponse(

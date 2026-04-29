@@ -13,7 +13,6 @@ from aq_api._auth import (
     current_actor,
     unauthenticated_response,
 )
-from aq_api._db import SessionLocal
 from aq_api._health import current_health_status
 from aq_api._version import OPENAPI_VERSION, VERSION_INFO
 from aq_api.mcp import mcp_http_app
@@ -43,6 +42,8 @@ async def _mcp_lifespan(fastapi_app: FastAPI) -> AsyncIterator[None]:
 @asynccontextmanager
 async def app_lifespan(fastapi_app: FastAPI) -> AsyncIterator[None]:
     async with _mcp_lifespan(fastapi_app):
+        from aq_api._db import SessionLocal
+
         system_actor_id: UUID | None = None
         try:
             async with SessionLocal() as session:

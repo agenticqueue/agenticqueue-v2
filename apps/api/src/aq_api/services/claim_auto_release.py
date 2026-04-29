@@ -10,12 +10,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from aq_api._audit import audited_op
-from aq_api._db import SessionLocal
 from aq_api._request_context import (
     reset_authenticated_actor_id,
     set_authenticated_actor_id,
 )
-from aq_api._settings import settings
 from aq_api.models import JobState
 from aq_api.models.db import Actor as DbActor
 from aq_api.models.db import Job as DbJob
@@ -72,6 +70,8 @@ async def run_claim_auto_release_once(
     now: datetime,
     system_actor_id: UUID | None = None,
 ) -> int:
+    from aq_api._settings import settings
+
     lease_seconds = settings.claim_lease_seconds
     if system_actor_id is None:
         system_actor_id = await ensure_system_actor(session)
@@ -143,6 +143,9 @@ async def claim_auto_release_loop(
     sleep: SleepCallable = asyncio.sleep,
     now_factory: NowFactory = lambda: datetime.now(UTC),
 ) -> None:
+    from aq_api._db import SessionLocal
+    from aq_api._settings import settings
+
     system_actor_id = initial_system_actor_id
     while True:
         try:
