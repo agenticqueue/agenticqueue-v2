@@ -115,5 +115,47 @@ class ListReadyJobsResponse(AQModel):
     next_cursor: Cursor = None
 
 
+class ContextPacketStub(AQModel):
+    project_id: UUID
+    pipeline_id: UUID
+    current_job_id: UUID
+    previous_jobs: list[UUID] = Field(default_factory=list)
+    next_job_id: UUID | None = None
+
+
+class ClaimNextJobRequest(AQModel):
+    project_id: UUID
+    label_filter: list[LabelName] | None = None
+
+
+class ClaimNextJobResponse(AQModel):
+    job: Job
+    packet: ContextPacketStub
+    lease_seconds: int = Field(ge=60, le=86400)
+    lease_expires_at: datetime
+    recommended_heartbeat_after_seconds: int = Field(default=30, ge=1)
+
+    @field_validator("lease_expires_at", mode="before")
+    @classmethod
+    def lease_expires_at_must_be_utc(cls, value: object) -> datetime:
+        return coerce_utc_datetime(value)
+
+
+class ReleaseJobResponse(AQModel):
+    job: Job
+
+
+class ResetClaimRequest(AQModel):
+    reason: str = Field(min_length=1)
+
+
+class ResetClaimResponse(AQModel):
+    job: Job
+
+
+class HeartbeatJobResponse(AQModel):
+    job: Job
+
+
 class CancelJobResponse(AQModel):
     job: Job

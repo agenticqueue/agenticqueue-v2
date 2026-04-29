@@ -251,6 +251,12 @@ class Job(Base):
             "created_at",
             postgresql_where=text("state = 'ready'"),
         ),
+        Index(
+            "idx_jobs_in_progress_heartbeat",
+            "claim_heartbeat_at",
+            "id",
+            postgresql_where=text("state = 'in_progress'"),
+        ),
     )
 
     id: Mapped[UUID] = mapped_column(
