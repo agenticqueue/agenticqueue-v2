@@ -1,0 +1,7 @@
+VAULT_TOKEN=... python scripts/three-surface-sweep.py
+exit 0
+
+See SUMMARY.md for per-op results.
+29 ops x 3 surfaces = 87 invocations captured.
+All PASS (revoke_api_key: PASS(409-expected) — documented last-key protection).
+Canary [HTTP 200] at start and end.

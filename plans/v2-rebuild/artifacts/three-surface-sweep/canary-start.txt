@@ -1,0 +1,11 @@
+[HTTP 200]
+key_prefix=aq2_-RY-***
+{
+  "actor": {
+    "id": "[UUID_REDACTED]",
+    "name": "founder",
+    "kind": "human",
+    "created_at": "2026-04-27T23:42:13.027189Z",
+    "deactivated_at": null
+  }
+}

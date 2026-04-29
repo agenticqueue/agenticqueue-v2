@@ -1,0 +1,42 @@
+[HTTP 200]
+{
+  "projects": [
+    {
+      "id": "[UUID_REDACTED]",
+      "name": "C1 Label Explain Project",
+      "slug": "c1-label-explain-b792f7da",
+      "description": null,
+      "archived_at": null,
+      "created_at": "2026-04-27T22:53:28.836535Z",
+      "created_by_actor_id": null
+    },
+    {
+      "id": "[UUID_REDACTED]",
+      "name": "PipelineAudit",
+      "slug": "pipe-audit",
+      "description": "AQ2-45 audit",
+      "archived_at": null,
+      "created_at": "2026-04-28T01:50:14.647931Z",
+      "created_by_actor_id": "[UUID_REDACTED]"
+    },
+    {
+      "id": "[UUID_REDACTED]",
+      "name": "InstantiateAudit",
+      "slug": "inst-audit",
+      "description": "AQ2-46",
+      "archived_at": null,
+      "created_at": "2026-04-28T03:59:21.679858Z",
+      "created_by_actor_id": "[UUID_REDACTED]"
+    },
+    {
+      "id": "[UUID_REDACTED]",
+      "name": "qa-sweep-cli",
+      "slug": "qa-sweep-cli-1d3d4c",
+      "description": null,
+      "archived_at": null,
+      "created_at": "2026-04-29T00:44:30.770177Z",
+      "created_by_actor_id": "[UUID_REDACTED]"
+    }
+  ],
+  "next_cursor": null
+}

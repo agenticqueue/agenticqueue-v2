@@ -1,0 +1,97 @@
+[HTTP 200]
+{
+  "actors": [
+    {
+      "id": "[UUID_REDACTED]",
+      "name": "founder",
+      "kind": "human",
+      "created_at": "2026-04-27T23:42:13.027189Z",
+      "deactivated_at": null
+    },
+    {
+      "id": "[UUID_REDACTED]",
+      "name": "qa-sweep-rest-actor",
+      "kind": "agent",
+      "created_at": "2026-04-29T00:38:30.013871Z",
+      "deactivated_at": null
+    },
+    {
+      "id": "[UUID_REDACTED]",
+      "name": "qa-sweep-mcp-actor",
+      "kind": "agent",
+      "created_at": "2026-04-29T00:38:30.733853Z",
+      "deactivated_at": null
+    },
+    {
+      "id": "[UUID_REDACTED]",
+      "name": "qa-sweep-rest-revoke-actor",
+      "kind": "agent",
+      "created_at": "2026-04-29T00:38:33.799426Z",
+      "deactivated_at": null
+    },
+    {
+      "id": "[UUID_REDACTED]",
+      "name": "qa-sweep-mcp-revoke-actor",
+      "kind": "agent",
+      "created_at": "2026-04-29T00:38:34.797799Z",
+      "deactivated_at": null
+    },
+    {
+      "id": "[UUID_REDACTED]",
+      "name": "qa-sweep-cli-actor",
+      "kind": "agent",
+      "created_at": "2026-04-29T00:44:29.603247Z",
+      "deactivated_at": null
+    },
+    {
+      "id": "[UUID_REDACTED]",
+      "name": "qa-sweep-cli-revoke-actor",
+      "kind": "agent",
+      "created_at": "2026-04-29T00:44:34.410862Z",
+      "deactivated_at": null
+    },
+    {
+      "id": "[UUID_REDACTED]",
+      "name": "qa-sweep-rest-actor-63c537",
+      "kind": "agent",
+      "created_at": "2026-04-29T00:46:03.153399Z",
+      "deactivated_at": null
+    },
+    {
+      "id": "[UUID_REDACTED]",
+      "name": "qa-sweep-cli-actor-63c537",
+      "kind": "agent",
+      "created_at": "2026-04-29T00:46:03.821720Z",
+      "deactivated_at": null
+    },
+    {
+      "id": "[UUID_REDACTED]",
+      "name": "qa-sweep-mcp-actor-63c537",
+      "kind": "agent",
+      "created_at": "2026-04-29T00:46:04.232841Z",
+      "deactivated_at": null
+    },
+    {
+      "id": "[UUID_REDACTED]",
+      "name": "qa-sweep-rest-revoke-63c537",
+      "kind": "agent",
+      "created_at": "2026-04-29T00:46:24.381156Z",
+      "deactivated_at": null
+    },
+    {
+      "id": "[UUID_REDACTED]",
+      "name": "qa-sweep-cli-revoke-63c537",
+      "kind": "agent",
+      "created_at": "2026-04-29T00:46:25.320799Z",
+      "deactivated_at": null
+    },
+    {
+      "id": "[UUID_REDACTED]",
+      "name": "qa-sweep-mcp-revoke-63c537",
+      "kind": "agent",
+      "created_at": "2026-04-29T00:46:26.678996Z",
+      "deactivated_at": null
+    }
+  ],
+  "next_cursor": null
+}

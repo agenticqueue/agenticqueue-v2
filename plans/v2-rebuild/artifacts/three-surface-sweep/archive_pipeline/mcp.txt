@@ -1,0 +1,13 @@
+[HTTP 200]
+{
+  "pipeline": {
+    "id": "[UUID_REDACTED]",
+    "project_id": "[UUID_REDACTED]",
+    "name": "qa-sweep-mcp-pipeline-updated",
+    "is_template": false,
+    "cloned_from_pipeline_id": null,
+    "archived_at": "2026-04-29T00:47:46.950997Z",
+    "created_at": "2026-04-29T00:47:28.903695Z",
+    "created_by_actor_id": "[UUID_REDACTED]"
+  }
+}

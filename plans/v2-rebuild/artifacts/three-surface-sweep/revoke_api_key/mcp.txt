@@ -1,0 +1,2 @@
+[HTTP 200]
+Error calling tool 'revoke_api_key': cannot revoke last active key

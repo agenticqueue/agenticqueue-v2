@@ -1,0 +1,13 @@
+[HTTP 200]
+{
+  "pipeline": {
+    "id": "[UUID_REDACTED]",
+    "project_id": "[UUID_REDACTED]",
+    "name": "qa-sweep-rest-pipeline-updated",
+    "is_template": false,
+    "cloned_from_pipeline_id": null,
+    "archived_at": "2026-04-29T00:47:46.126727Z",
+    "created_at": "2026-04-29T00:47:27.771402Z",
+    "created_by_actor_id": "[UUID_REDACTED]"
+  }
+}

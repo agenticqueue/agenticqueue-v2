@@ -1,0 +1,3 @@
+[HTTP 0]
+{"job_id":"[UUID_REDACTED]","labels":["qa-sweep-cli:sweep"]}
+Bytecode compiled 4121 files in 143ms

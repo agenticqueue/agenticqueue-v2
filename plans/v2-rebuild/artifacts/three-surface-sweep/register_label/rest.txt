@@ -1,0 +1,11 @@
+[HTTP 200]
+{
+  "label": {
+    "id": "[UUID_REDACTED]",
+    "project_id": "[UUID_REDACTED]",
+    "name": "qa-sweep-rest:sweep",
+    "color": null,
+    "created_at": "2026-04-29T00:47:26.609127Z",
+    "archived_at": null
+  }
+}

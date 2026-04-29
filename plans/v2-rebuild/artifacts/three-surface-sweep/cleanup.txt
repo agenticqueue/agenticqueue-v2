@@ -1,0 +1,16 @@
+[HTTP 200] post-sweep project list (all including archived)
+
+  C1 Label Explain Project | id=[UUID_REDACTED] | archived=ACTIVE
+  PipelineAudit | id=[UUID_REDACTED] | archived=ACTIVE
+  InstantiateAudit | id=[UUID_REDACTED] | archived=ACTIVE
+  qa-sweep-rest-updated | id=[UUID_REDACTED] | archived=2026-04-29T00:38:35.192764Z
+  qa-sweep-mcp-updated | id=[UUID_REDACTED] | archived=2026-04-29T00:38:35.265334Z
+  qa-sweep-rest-updated | id=[UUID_REDACTED] | archived=2026-04-29T00:44:35.082698Z
+  qa-sweep-cli | id=[UUID_REDACTED] | archived=2026-04-29T00:48:42.961603Z
+  qa-sweep-mcp-updated | id=[UUID_REDACTED] | archived=2026-04-29T00:44:35.157943Z
+  qa-sweep-rest-updated | id=[UUID_REDACTED] | archived=2026-04-29T00:46:28.483674Z
+  qa-sweep-cli-updated | id=[UUID_REDACTED] | archived=2026-04-29T00:46:29.228071Z
+  qa-sweep-mcp-updated | id=[UUID_REDACTED] | archived=2026-04-29T00:46:29.567373Z
+  qa-sweep-rest-updated | id=[UUID_REDACTED] | archived=2026-04-29T00:47:47.062983Z
+  qa-sweep-cli-updated | id=[UUID_REDACTED] | archived=2026-04-29T00:47:47.700717Z
+  qa-sweep-mcp-updated | id=[UUID_REDACTED] | archived=2026-04-29T00:47:48.030507Z

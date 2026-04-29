@@ -1,0 +1,32 @@
+[HTTP 200]
+{
+  "pipeline": {
+    "id": "[UUID_REDACTED]",
+    "project_id": "[UUID_REDACTED]",
+    "name": "qa-sweep-mcp-pipeline-clone",
+    "is_template": false,
+    "cloned_from_pipeline_id": "[UUID_REDACTED]",
+    "archived_at": null,
+    "created_at": "2026-04-29T00:47:42.547770Z",
+    "created_by_actor_id": "[UUID_REDACTED]"
+  },
+  "jobs": [
+    {
+      "id": "[UUID_REDACTED]",
+      "pipeline_id": "[UUID_REDACTED]",
+      "project_id": "[UUID_REDACTED]",
+      "state": "ready",
+      "title": "qa-sweep-mcp sweep job updated",
+      "description": null,
+      "contract": {
+        "dod_items": []
+      },
+      "labels": [],
+      "claimed_by_actor_id": null,
+      "claimed_at": null,
+      "claim_heartbeat_at": null,
+      "created_at": "2026-04-29T00:47:42.547770Z",
+      "created_by_actor_id": "[UUID_REDACTED]"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+gitleaks v8.30.1 — detect run on plans/v2-rebuild/artifacts/three-surface-sweep
+exit 0 — no leaks found
+
+79 commits scanned.
+scanned ~3319104 bytes (3.32 MB) in 8.42s
+no leaks found

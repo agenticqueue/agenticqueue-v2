@@ -1,0 +1,4 @@
+[HTTP 409]
+{
+  "error": "cannot_revoke_last_key"
+}

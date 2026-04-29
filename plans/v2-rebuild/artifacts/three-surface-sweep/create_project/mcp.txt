@@ -1,0 +1,12 @@
+[HTTP 200]
+{
+  "project": {
+    "id": "[UUID_REDACTED]",
+    "name": "qa-sweep-mcp",
+    "slug": "qa-sweep-mcp-751508",
+    "description": null,
+    "archived_at": null,
+    "created_at": "2026-04-29T00:47:26.502980Z",
+    "created_by_actor_id": "[UUID_REDACTED]"
+  }
+}

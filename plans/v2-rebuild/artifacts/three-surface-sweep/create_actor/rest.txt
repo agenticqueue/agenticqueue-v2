@@ -1,0 +1,19 @@
+[HTTP 200]
+{
+  "actor": {
+    "id": "[UUID_REDACTED]",
+    "name": "qa-sweep-rest-actor-751508",
+    "kind": "agent",
+    "created_at": "2026-04-29T00:47:24.236473Z",
+    "deactivated_at": null
+  },
+  "api_key": {
+    "id": "[UUID_REDACTED]",
+    "actor_id": "[UUID_REDACTED]",
+    "name": "default",
+    "prefix": "aq2_6AVT",
+    "created_at": "2026-04-29T00:47:24.236473Z",
+    "revoked_at": null
+  },
+  "key": "[TOKEN_REDACTED]"
+}

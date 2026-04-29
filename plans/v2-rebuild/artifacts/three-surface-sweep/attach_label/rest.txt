@@ -1,0 +1,7 @@
+[HTTP 200]
+{
+  "job_id": "[UUID_REDACTED]",
+  "labels": [
+    "qa-sweep-rest:sweep"
+  ]
+}

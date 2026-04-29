@@ -1,0 +1,128 @@
+[HTTP 200]
+{
+  "entries": [
+    {
+      "id": "[UUID_REDACTED]",
+      "ts": "2026-04-29T00:46:29.566847Z",
+      "op": "archive_project",
+      "authenticated_actor_id": "[UUID_REDACTED]",
+      "claimed_actor_identity": null,
+      "target_kind": "project",
+      "target_id": "[UUID_REDACTED]",
+      "request_payload": {
+        "project_id": "[UUID_REDACTED]"
+      },
+      "response_payload": {
+        "project": {
+          "id": "[UUID_REDACTED]",
+          "name": "qa-sweep-mcp-updated",
+          "slug": "qa-sweep-mcp-63c537",
+          "created_at": "2026-04-29T00:46:05.468142Z",
+          "archived_at": "2026-04-29T00:46:29.567373Z",
+          "description": null,
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "error_code": null
+    },
+    {
+      "id": "[UUID_REDACTED]",
+      "ts": "2026-04-29T00:46:29.227435Z",
+      "op": "archive_project",
+      "authenticated_actor_id": "[UUID_REDACTED]",
+      "claimed_actor_identity": null,
+      "target_kind": "project",
+      "target_id": "[UUID_REDACTED]",
+      "request_payload": {
+        "project_id": "[UUID_REDACTED]"
+      },
+      "response_payload": {
+        "project": {
+          "id": "[UUID_REDACTED]",
+          "name": "qa-sweep-cli-updated",
+          "slug": "qa-sweep-cli-63c537",
+          "created_at": "2026-04-29T00:46:05.140320Z",
+          "archived_at": "2026-04-29T00:46:29.228071Z",
+          "description": null,
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "error_code": null
+    },
+    {
+      "id": "[UUID_REDACTED]",
+      "ts": "2026-04-29T00:46:28.483263Z",
+      "op": "archive_project",
+      "authenticated_actor_id": "[UUID_REDACTED]",
+      "claimed_actor_identity": null,
+      "target_kind": "project",
+      "target_id": "[UUID_REDACTED]",
+      "request_payload": {
+        "project_id": "[UUID_REDACTED]"
+      },
+      "response_payload": {
+        "project": {
+          "id": "[UUID_REDACTED]",
+          "name": "qa-sweep-rest-updated",
+          "slug": "qa-sweep-rest-63c537",
+          "created_at": "2026-04-29T00:46:04.373411Z",
+          "archived_at": "2026-04-29T00:46:28.483674Z",
+          "description": null,
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "error_code": null
+    },
+    {
+      "id": "[UUID_REDACTED]",
+      "ts": "2026-04-29T00:46:28.416607Z",
+      "op": "archive_pipeline",
+      "authenticated_actor_id": "[UUID_REDACTED]",
+      "claimed_actor_identity": null,
+      "target_kind": "pipeline",
+      "target_id": "[UUID_REDACTED]",
+      "request_payload": {
+        "pipeline_id": "[UUID_REDACTED]"
+      },
+      "response_payload": {
+        "pipeline": {
+          "id": "[UUID_REDACTED]",
+          "name": "qa-sweep-mcp-pipeline-updated",
+          "created_at": "2026-04-29T00:46:07.790770Z",
+          "project_id": "[UUID_REDACTED]",
+          "archived_at": "2026-04-29T00:46:28.417190Z",
+          "is_template": false,
+          "created_by_actor_id": "[UUID_REDACTED]",
+          "cloned_from_pipeline_id": null
+        }
+      },
+      "error_code": null
+    },
+    {
+      "id": "[UUID_REDACTED]",
+      "ts": "2026-04-29T00:46:28.038480Z",
+      "op": "archive_pipeline",
+      "authenticated_actor_id": "[UUID_REDACTED]",
+      "claimed_actor_identity": null,
+      "target_kind": "pipeline",
+      "target_id": "[UUID_REDACTED]",
+      "request_payload": {
+        "pipeline_id": "[UUID_REDACTED]"
+      },
+      "response_payload": {
+        "pipeline": {
+          "id": "[UUID_REDACTED]",
+          "name": "qa-sweep-cli-pipeline-updated",
+          "created_at": "2026-04-29T00:46:07.335989Z",
+          "project_id": "[UUID_REDACTED]",
+          "archived_at": "2026-04-29T00:46:28.039013Z",
+          "is_template": false,
+          "created_by_actor_id": "[UUID_REDACTED]",
+          "cloned_from_pipeline_id": null
+        }
+      },
+      "error_code": null
+    }
+  ],
+  "next_cursor": "[TOKEN_REDACTED]"
+}

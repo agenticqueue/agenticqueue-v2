@@ -1,0 +1,3 @@
+[HTTP 0]
+{"pipeline":{"id":"[UUID_REDACTED]","project_id":"[UUID_REDACTED]","name":"qa-sweep-cli-pipeline-clone","is_template":false,"cloned_from_pipeline_id":"[UUID_REDACTED]","archived_at":null,"created_at":"2026-04-29T00:47:42.164226Z","created_by_actor_id":"[UUID_REDACTED]"},"jobs":[{"id":"[UUID_REDACTED]","pipeline_id":"[UUID_REDACTED]","project_id":"[UUID_REDACTED]","state":"ready","title":"qa-sweep-cli sweep job updated","description":null,"contract":{"dod_items":[]},"labels":[],"claimed_by_actor_id":null,"claimed_at":null,"claim_heartbeat_at":null,"created_at":"2026-04-29T00:47:42.164226Z","created_by_actor_id":"[UUID_REDACTED]"}]}
+Bytecode compiled 4121 files in 133ms
