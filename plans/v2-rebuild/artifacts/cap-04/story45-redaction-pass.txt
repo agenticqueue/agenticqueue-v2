@@ -1,0 +1,1 @@
+redact_evidence.py completed for plans/v2-rebuild/artifacts/cap-04/story45-* on 2026-04-29T11:09:04.3948331-05:00

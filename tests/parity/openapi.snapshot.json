@@ -1553,6 +1553,62 @@
         }
       }
     },
+    "/jobs/claim": {
+      "post": {
+        "summary": "Claim Next Job",
+        "operationId": "claim_next_job_jobs_claim_post",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimNextJobRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimNextJobResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/jobs/{job_id}/comments": {
       "post": {
         "summary": "Comment On Job",
@@ -1740,6 +1796,184 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CancelJobResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{job_id}/release": {
+      "post": {
+        "summary": "Release Job",
+        "operationId": "release_job_jobs__job_id__release_post",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseJobResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{job_id}/reset-claim": {
+      "post": {
+        "summary": "Reset Claim",
+        "operationId": "reset_claim_jobs__job_id__reset_claim_post",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetClaimRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResetClaimResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{job_id}/heartbeat": {
+      "post": {
+        "summary": "Heartbeat Job",
+        "operationId": "heartbeat_job_jobs__job_id__heartbeat_post",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HeartbeatJobResponse"
                 }
               }
             }
@@ -2293,6 +2527,74 @@
         ],
         "title": "CancelJobResponse"
       },
+      "ClaimNextJobRequest": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id"
+          },
+          "label_filter": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "pattern": "^[a-z0-9][a-z0-9:_-]{0,127}$"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label Filter"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "project_id"
+        ],
+        "title": "ClaimNextJobRequest"
+      },
+      "ClaimNextJobResponse": {
+        "properties": {
+          "job": {
+            "$ref": "#/components/schemas/Job"
+          },
+          "packet": {
+            "$ref": "#/components/schemas/ContextPacketStub"
+          },
+          "lease_seconds": {
+            "type": "integer",
+            "maximum": 86400.0,
+            "minimum": 60.0,
+            "title": "Lease Seconds"
+          },
+          "lease_expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Lease Expires At"
+          },
+          "recommended_heartbeat_after_seconds": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Recommended Heartbeat After Seconds",
+            "default": 30
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "job",
+          "packet",
+          "lease_seconds",
+          "lease_expires_at"
+        ],
+        "title": "ClaimNextJobResponse"
+      },
       "ClonePipelineRequest": {
         "properties": {
           "name": {
@@ -2359,6 +2661,53 @@
           "comment"
         ],
         "title": "CommentOnJobResponse"
+      },
+      "ContextPacketStub": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id"
+          },
+          "pipeline_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Pipeline Id"
+          },
+          "current_job_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Current Job Id"
+          },
+          "previous_jobs": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Previous Jobs"
+          },
+          "next_job_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Job Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "project_id",
+          "pipeline_id",
+          "current_job_id"
+        ],
+        "title": "ContextPacketStub"
       },
       "CreateActorRequest": {
         "properties": {
@@ -2666,6 +3015,19 @@
           "timestamp"
         ],
         "title": "HealthStatus"
+      },
+      "HeartbeatJobResponse": {
+        "properties": {
+          "job": {
+            "$ref": "#/components/schemas/Job"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "job"
+        ],
+        "title": "HeartbeatJobResponse"
       },
       "InheritanceReferenceLists": {
         "properties": {
@@ -3280,6 +3642,47 @@
           "label"
         ],
         "title": "RegisterLabelResponse"
+      },
+      "ReleaseJobResponse": {
+        "properties": {
+          "job": {
+            "$ref": "#/components/schemas/Job"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "job"
+        ],
+        "title": "ReleaseJobResponse"
+      },
+      "ResetClaimRequest": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "ResetClaimRequest"
+      },
+      "ResetClaimResponse": {
+        "properties": {
+          "job": {
+            "$ref": "#/components/schemas/Job"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "job"
+        ],
+        "title": "ResetClaimResponse"
       },
       "RevokeApiKeyResponse": {
         "properties": {

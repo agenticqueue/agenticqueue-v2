@@ -18,6 +18,18 @@ class Settings(BaseSettings):
         min_length=1,
         validation_alias="AQ_KEY_LOOKUP_SECRET",
     )
+    claim_lease_seconds: int = Field(
+        default=900,
+        validation_alias="AQ_CLAIM_LEASE_SECONDS",
+        ge=60,
+        le=86400,
+    )
+    claim_sweep_interval_seconds: int = Field(
+        default=60,
+        validation_alias="AQ_CLAIM_SWEEP_INTERVAL_SECONDS",
+        ge=5,
+        le=3600,
+    )
 
 
 try:

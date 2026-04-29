@@ -10,19 +10,27 @@ from aq_api._audit import BusinessRuleException
 from aq_api._auth import current_actor
 from aq_api.models import (
     CancelJobResponse,
+    ClaimNextJobRequest,
+    ClaimNextJobResponse,
     CommentOnJobRequest,
     CommentOnJobResponse,
     CreateJobRequest,
     CreateJobResponse,
     GetJobResponse,
+    HeartbeatJobResponse,
     JobState,
     ListJobCommentsResponse,
     ListJobsResponse,
     ListReadyJobsResponse,
+    ReleaseJobResponse,
+    ResetClaimRequest,
+    ResetClaimResponse,
     UpdateJobResponse,
 )
 from aq_api.models.db import Actor as DbActor
 from aq_api.models.labels import LabelName
+from aq_api.services.claim import claim_next_job as claim_next_job_service
+from aq_api.services.heartbeat import heartbeat_job as heartbeat_job_service
 from aq_api.services.job_comments import (
     InvalidJobCommentCursorError,
     JobCommentJobNotFoundError,
@@ -37,6 +45,8 @@ from aq_api.services.jobs import list_jobs as list_jobs_service
 from aq_api.services.jobs import update_job as update_job_service
 from aq_api.services.list_ready_jobs import InvalidReadyJobCursorError
 from aq_api.services.list_ready_jobs import list_ready_jobs as list_ready_jobs_service
+from aq_api.services.release import release_job as release_job_service
+from aq_api.services.release import reset_claim as reset_claim_service
 
 router = APIRouter()
 
@@ -60,6 +70,18 @@ async def create_job(
 ) -> CreateJobResponse | JSONResponse:
     try:
         return await create_job_service(session, request, actor_id=actor.id)
+    except BusinessRuleException as exc:
+        return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)
+
+
+@router.post("/jobs/claim", response_model=ClaimNextJobResponse)
+async def claim_next_job(
+    request: ClaimNextJobRequest,
+    actor: AuthenticatedActor,
+    session: SessionDep,
+) -> ClaimNextJobResponse | JSONResponse:
+    try:
+        return await claim_next_job_service(session, request=request, actor_id=actor.id)
     except BusinessRuleException as exc:
         return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)
 
@@ -111,6 +133,48 @@ async def cancel_job(
 ) -> CancelJobResponse | JSONResponse:
     try:
         return await cancel_job_service(session, job_id)
+    except BusinessRuleException as exc:
+        return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)
+
+
+@router.post("/jobs/{job_id}/release", response_model=ReleaseJobResponse)
+async def release_job(
+    job_id: UUID,
+    actor: AuthenticatedActor,
+    session: SessionDep,
+) -> ReleaseJobResponse | JSONResponse:
+    try:
+        return await release_job_service(session, job_id=job_id, actor_id=actor.id)
+    except BusinessRuleException as exc:
+        return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)
+
+
+@router.post("/jobs/{job_id}/reset-claim", response_model=ResetClaimResponse)
+async def reset_claim(
+    job_id: UUID,
+    request: ResetClaimRequest,
+    actor: AuthenticatedActor,
+    session: SessionDep,
+) -> ResetClaimResponse | JSONResponse:
+    try:
+        return await reset_claim_service(
+            session,
+            job_id=job_id,
+            request=request,
+            actor_id=actor.id,
+        )
+    except BusinessRuleException as exc:
+        return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)
+
+
+@router.post("/jobs/{job_id}/heartbeat", response_model=HeartbeatJobResponse)
+async def heartbeat_job(
+    job_id: UUID,
+    actor: AuthenticatedActor,
+    session: SessionDep,
+) -> HeartbeatJobResponse | JSONResponse:
+    try:
+        return await heartbeat_job_service(session, job_id=job_id, actor_id=actor.id)
     except BusinessRuleException as exc:
         return JSONResponse({"error": exc.error_code}, status_code=exc.status_code)
 

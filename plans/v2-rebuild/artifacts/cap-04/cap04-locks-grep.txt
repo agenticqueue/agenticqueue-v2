@@ -1,0 +1,68 @@
+# cap-04 lock grep evidence
+Generated: 2026-04-29T13:16:33.5433195-05:00
+
+## SKIP LOCKED claim query
+Pattern: with_for_update(skip_locked=True, of=DbJob)
+apps/api/src/aq_api/services/claim.py:56:            .with_for_update(skip_locked=True, of=DbJob)
+
+## Claim query excludes template and archived pipelines
+Pattern: DbPipeline.is_template.is_(False)
+apps/api/src/aq_api/services/claim.py:51:                DbPipeline.is_template.is_(False),
+apps/api/src/aq_api/services/list_ready_jobs.py:46:            DbPipeline.is_template.is_(False),
+
+## Claim query excludes archived pipelines
+Pattern: DbPipeline.archived_at.is_(None)
+apps/api/src/aq_api/services/claim.py:52:                DbPipeline.archived_at.is_(None),
+apps/api/src/aq_api/services/list_ready_jobs.py:47:            DbPipeline.archived_at.is_(None),
+
+## Cap-4 env vars only
+Pattern: AQ_CLAIM_
+apps/api/src/aq_api/_settings.py:23:        validation_alias="AQ_CLAIM_LEASE_SECONDS",
+apps/api/src/aq_api/_settings.py:29:        validation_alias="AQ_CLAIM_SWEEP_INTERVAL_SECONDS",
+apps/api/src/aq_api/mcp.py:129:  AQ_CLAIM_LEASE_SECONDS lease (default 900s = 15 minutes); shorter cadence
+apps/api/tests/test_models_cap04.py:303:    assert _settings(AQ_CLAIM_LEASE_SECONDS=60).claim_lease_seconds == 60
+apps/api/tests/test_models_cap04.py:304:    assert _settings(AQ_CLAIM_LEASE_SECONDS=86400).claim_lease_seconds == 86400
+apps/api/tests/test_models_cap04.py:306:        _settings(AQ_CLAIM_SWEEP_INTERVAL_SECONDS=5).claim_sweep_interval_seconds
+apps/api/tests/test_models_cap04.py:310:        _settings(AQ_CLAIM_SWEEP_INTERVAL_SECONDS=3600).claim_sweep_interval_seconds
+apps/api/tests/test_models_cap04.py:316:            _settings(AQ_CLAIM_LEASE_SECONDS=value)
+apps/api/tests/test_models_cap04.py:320:            _settings(AQ_CLAIM_SWEEP_INTERVAL_SECONDS=value)
+
+## Heartbeat success skips audit
+Pattern: skip_success_audit=True
+apps/api/src/aq_api/services/heartbeat.py:37:        skip_success_audit=True,
+apps/api/tests/test_audited_op.py:123:                skip_success_audit=True,
+
+## Auto-release success audit error_code
+Pattern: lease_expired
+apps/api/src/aq_api/services/claim_auto_release.py:28:LEASE_EXPIRED_ERROR = "lease_expired"
+apps/api/tests/test_audited_op.py:179:                audit.error_code = "lease_expired"
+apps/api/tests/test_audited_op.py:192:            "error_code": "lease_expired",
+apps/api/tests/test_claim_auto_release_sweep.py:187:    assert audit["error_code"] == "lease_expired"
+apps/api/tests/test_claim_auto_release_sweep.py:192:    assert request_payload["reason"] == "lease_expired"
+apps/api/tests/test_claim_auto_release_sweep.py:236:        assert _auto_release_audit_row(conn, job_id)["error_code"] == "lease_expired"
+
+## FastMCP instructions constructor
+Pattern: instructions=
+apps/api/src/aq_api/mcp.py:171:    server = FastMCP(MCP_NAME, tasks=False, instructions=MCP_INSTRUCTIONS)
+
+## Atomicity tests
+Pattern: atomic
+tests/atomicity/test_claim_atomicity.py:22:ACTOR_PREFIX = "atomicity-claim-"
+tests/atomicity/test_claim_atomicity.py:23:PROJECT_SLUG_PREFIX = "atomicity-claim-"
+tests/atomicity/test_claim_atomicity.py:27:    reason="DATABASE_URL_SYNC is required for live claim atomicity tests",
+tests/atomicity/test_claim_atomicity.py:118:    actor_key = f"aq2_atomicity_claim_{uuid.uuid4().hex}"
+tests/atomicity/test_claim_atomicity.py:176:            (project_id, "claim atomicity pipeline", actor_id),
+tests/atomicity/test_claim_atomicity.py:200:                "claim atomicity target",
+tests/atomicity/test_claim_auto_release_atomicity.py:18:ACTOR_PREFIX = "atomicity-sweep-"
+tests/atomicity/test_claim_auto_release_atomicity.py:19:PROJECT_SLUG_PREFIX = "atomicity-sweep-"
+tests/atomicity/test_claim_auto_release_atomicity.py:23:    reason="DATABASE_URL_SYNC is required for live sweep atomicity tests",
+tests/atomicity/test_claim_auto_release_atomicity.py:140:            (project_id, "sweep atomicity pipeline", actor_id),
+tests/atomicity/test_claim_auto_release_atomicity.py:171:                    f"sweep atomicity target {index}",
+
+## 50-claimer race count
+Pattern: CLAIMER_COUNT = 50
+tests/parity/test_claim_race.py:21:CLAIMER_COUNT = 50
+
+## 50-claimer race test name
+Pattern: [TOKEN_REDACTED]
+tests/parity/test_claim_race.py:273:async def [TOKEN_REDACTED](

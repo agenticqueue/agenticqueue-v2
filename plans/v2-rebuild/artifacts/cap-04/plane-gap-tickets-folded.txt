@@ -1,0 +1,8 @@
+# Plane gap tickets folded / carry-overs
+
+Generated during AQ2-69 Story 4.7 C2 evidence packaging.
+
+- AQ2-16: Folded into cap #4 Story 4.5 (auto-release sweep) plus Story 4.1 (system actor/schema). Comment posted: [UUID_REDACTED].
+- AQ2-17: Folded into cap #4 Story 4.1 (`idx_jobs_in_progress_heartbeat`). Comment posted: [UUID_REDACTED]. Existing `idx_jobs_state_project_created` remains the claim-path index.
+- AQ2-70: Paused by Mario/Ghost decision Option 2 until after cap-4 PR merge. Codex-B stash remains preserved; Story 4.7 cites this as known dev-DB/test-hygiene follow-up, not a cap-4 blocker.
+- AQ2-71: Auth DB session lifetime gap found by Story 4.6 50-claimer race. Resolved in commit 6c0e73b and transitioned to done before AQ2-69.

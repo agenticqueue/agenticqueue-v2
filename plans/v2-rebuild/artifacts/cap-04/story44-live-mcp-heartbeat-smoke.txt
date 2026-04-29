@@ -1,0 +1,12 @@
+{
+  "smoke": "story44-heartbeat-via-raw-mcp",
+  "actor_id": "[UUID_REDACTED]",
+  "project_id": "[UUID_REDACTED]",
+  "pipeline_id": "[UUID_REDACTED]",
+  "job_id": "[UUID_REDACTED]",
+  "claim_state": "in_progress",
+  "heartbeat_state": "in_progress",
+  "heartbeat_advanced": true,
+  "heartbeat_audit_rows": 0,
+  "mcp_is_error": false
+}

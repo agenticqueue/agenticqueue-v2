@@ -1,0 +1,27 @@
+Bytecode compiled 4121 files in 154ms
+/app/.venv/lib/python3.12/site-packages/fastmcp/server/auth/providers/jwt.py:10: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+It will be compatible before version 2.0.0.
+  from authlib.jose import JsonWebKey, JsonWebToken
+FastMCP multipart preflight spike
+fastmcp_version=2.14.7
+mcp_TextContent_signature=(*, type: Literal['text'], text: str, annotations: mcp.types.Annotations | None = None, _meta: dict[str, typing.Any] | None = None, **extra_data: Any) -> None
+mcp_CallToolResult_signature=(*, _meta: dict[str, typing.Any] | None = None, content: list[mcp.types.TextContent | mcp.types.ImageContent | mcp.types.AudioContent | mcp.types.ResourceLink | mcp.types.EmbeddedResource], structuredContent: dict[str, typing.Any] | None = None, isError: bool = False, **extra_data: Any) -> None
+ToolResult_signature=(content: 'list[ContentBlock] | Any | None' = None, structured_content: 'dict[str, Any] | Any | None' = None, meta: 'dict[str, Any] | None' = None)
+FastMCP.tool_signature=(self, name_or_fn: 'str | AnyFunction | None' = None, *, name: 'str | None' = None, title: 'str | None' = None, description: 'str | None' = None, icons: 'list[mcp.types.Icon] | None' = None, tags: 'set[str] | None' = None, output_schema: 'dict[str, Any] | NotSetT | None' = Ellipsis, annotations: 'ToolAnnotations | dict[str, Any] | None' = None, exclude_args: 'list[str] | None' = None, meta: 'dict[str, Any] | None' = None, enabled: 'bool | None' = None, task: 'bool | TaskConfig | None' = None) -> 'Callable[[AnyFunction], FunctionTool] | FunctionTool'
+FastMCP.http_app_signature=(self, path: 'str | None' = None, middleware: 'list[ASGIMiddleware] | None' = None, json_response: 'bool | None' = None, stateless_http: 'bool | None' = None, transport: "Literal['http', 'streamable-http', 'sse']" = 'http', event_store: 'EventStore | None' = None, retry_interval: 'int | None' = None) -> 'StarletteWithLifespan'
+Client_signature=(transport: 'ClientTransportT | FastMCP | FastMCP1Server | AnyUrl | Path | MCPConfig | dict[str, Any] | str', name: 'str | None' = None, roots: 'RootsList | RootsHandler | None' = None, sampling_handler: 'SamplingHandler | None' = None, sampling_capabilities: 'mcp.types.SamplingCapability | None' = None, elicitation_handler: 'ElicitationHandler | None' = None, log_handler: 'LogHandler | None' = None, message_handler: 'MessageHandlerT | MessageHandler | None' = None, progress_handler: 'ProgressHandler | None' = None, timeout: 'datetime.timedelta | float | int | None' = None, auto_initialize: 'bool' = True, init_timeout: 'datetime.timedelta | float | int | None' = None, client_info: 'mcp.types.Implementation | None' = None, auth: "httpx.Auth | Literal['oauth'] | str | None" = None) -> 'None'
+StreamableHttpTransport_signature=(url: str | pydantic.networks.AnyUrl, headers: dict[str, str] | None = None, auth: Union[str, Literal['oauth'], httpx.Auth, NoneType] = None, sse_read_timeout: datetime.timedelta | float | int | None = None, httpx_client_factory: mcp.shared._httpx_utils.McpHttpClientFactory | None = None)
+run_server_async_signature=(server: 'FastMCP', port: 'int | None' = None, transport: "Literal['http', 'streamable-http', 'sse']" = 'http', path: 'str' = '/mcp', host: 'str' = '127.0.0.1') -> 'AsyncGenerator[str, None]'
+assumption_result=ToolResult(content=list[TextContent], structured_content=dict) is preserved over streamable-http
+
+pytest output:
+Bytecode compiled 4121 files in 139ms
+.                                                                        [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/fastmcp/server/auth/providers/jwt.py:10
+  /app/.venv/lib/python3.12/site-packages/fastmcp/server/auth/providers/jwt.py:10: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+  It will be compatible before version 2.0.0.
+    from authlib.jose import JsonWebKey, JsonWebToken
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 1 warning in 1.22s

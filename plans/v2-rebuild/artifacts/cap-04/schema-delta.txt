@@ -1,0 +1,31 @@
+                                    Table "public.jobs"
+       Column        |           Type           | Collation | Nullable |      Default
+---------------------+--------------------------+-----------+----------+-------------------
+ id                  | uuid                     |           | not null | gen_random_uuid()
+ pipeline_id         | uuid                     |           | not null |
+ project_id          | uuid                     |           | not null |
+ state               | text                     |           | not null |
+ title               | text                     |           | not null |
+ description         | text                     |           |          |
+ labels              | text[]                   |           | not null | '{}'::text[]
+ claimed_by_actor_id | uuid                     |           |          |
+ claimed_at          | timestamp with time zone |           |          |
+ claim_heartbeat_at  | timestamp with time zone |           |          |
+ created_at          | timestamp with time zone |           | not null | now()
+ created_by_actor_id | uuid                     |           |          |
+ contract            | jsonb                    |           | not null | '{}'::jsonb
+Indexes:
+    "jobs_pkey" PRIMARY KEY, btree (id)
+    "idx_jobs_in_progress_heartbeat" btree (claim_heartbeat_at, id) WHERE state = 'in_progress'::text
+    "idx_jobs_labels_gin" gin (labels)
+    "idx_jobs_state_project_created" btree (state, project_id, created_at) WHERE state = 'ready'::text
+Check constraints:
+    "jobs_state_check" CHECK (state = ANY (ARRAY['draft'::text, 'ready'::text, 'in_progress'::text, 'done'::text, 'failed'::text, 'blocked'::text, 'pending_review'::text, 'cancelled'::text]))
+Foreign-key constraints:
+    "jobs_claimed_by_actor_id_fkey" FOREIGN KEY (claimed_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    "jobs_created_by_actor_id_fkey" FOREIGN KEY (created_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    "jobs_project_id_fkey" FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE RESTRICT
+Referenced by:
+    TABLE "job_comments" CONSTRAINT "job_comments_job_id_fkey" FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+    TABLE "job_edges" CONSTRAINT "job_edges_from_job_id_fkey" FOREIGN KEY (from_job_id) REFERENCES jobs(id) ON DELETE CASCADE
+    TABLE "job_edges" CONSTRAINT "job_edges_to_job_id_fkey" FOREIGN KEY (to_job_id) REFERENCES jobs(id) ON DELETE CASCADE

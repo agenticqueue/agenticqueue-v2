@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="3.216" timestamp="2026-04-29T15:26:51.427752+00:00" hostname="a65f343a0131"><testcase classname="tests.parity.test_four_surface_parity" name="[TOKEN_REDACTED]" time="3.170" /></testsuite></testsuites>

@@ -2,7 +2,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import Depends, Header, Request
+from fastapi import Header, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -33,13 +33,6 @@ def extract_bearer_token(authorization: str | None) -> str | None:
     return token
 
 
-async def _session_dependency() -> AsyncIterator[AsyncSession]:
-    from aq_api._db import get_session
-
-    async for session in get_session():
-        yield session
-
-
 async def authenticate_bearer(
     session: AsyncSession,
     authorization: str | None,
@@ -56,10 +49,13 @@ async def authenticate_bearer(
 
 
 async def current_actor(
-    session: Annotated[AsyncSession, Depends(_session_dependency)],
     authorization: Annotated[str | None, Header(alias="Authorization")] = None,
 ) -> AsyncIterator[DbActor]:
-    actor = await authenticate_bearer(session, authorization)
+    from aq_api._db import SessionLocal
+
+    async with SessionLocal() as session:
+        actor = await authenticate_bearer(session, authorization)
+
     context_token = set_authenticated_actor_id(actor.id)
     try:
         yield actor

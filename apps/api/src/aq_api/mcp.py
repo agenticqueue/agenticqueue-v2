@@ -1,9 +1,12 @@
+import json
 from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Annotated
 from uuid import UUID
 
 from fastmcp import FastMCP
+from fastmcp.tools.tool import ToolResult
+from mcp.types import TextContent
 from pydantic import Field
 
 from aq_api._health import current_health_status
@@ -22,6 +25,7 @@ from aq_api.models import (
     AuditLogPage,
     AuditQueryParams,
     CancelJobResponse,
+    ClaimNextJobRequest,
     ClonePipelineRequest,
     ClonePipelineResponse,
     CommentOnJobRequest,
@@ -40,6 +44,7 @@ from aq_api.models import (
     GetPipelineResponse,
     GetProjectResponse,
     HealthStatus,
+    HeartbeatJobResponse,
     ListActorsResponse,
     ListJobCommentsResponse,
     ListJobsResponse,
@@ -48,6 +53,9 @@ from aq_api.models import (
     ListReadyJobsResponse,
     RegisterLabelRequest,
     RegisterLabelResponse,
+    ReleaseJobResponse,
+    ResetClaimRequest,
+    ResetClaimResponse,
     RevokeApiKeyResponse,
     UpdateJobResponse,
     UpdatePipelineRequest,
@@ -75,6 +83,8 @@ from aq_api.services.actors import get_self_by_id
 from aq_api.services.actors import list_actors as list_actor_service
 from aq_api.services.api_keys import revoke_api_key as revoke_api_key_service
 from aq_api.services.audit import query_audit_log as query_audit_log_service
+from aq_api.services.claim import claim_next_job as claim_next_job_service
+from aq_api.services.heartbeat import heartbeat_job as heartbeat_job_service
 from aq_api.services.job_comments import comment_on_job as comment_on_job_service
 from aq_api.services.job_comments import list_job_comments as list_comments_service
 from aq_api.services.job_lifecycle import cancel_job as cancel_job_service
@@ -97,9 +107,28 @@ from aq_api.services.projects import create_project as create_project_service
 from aq_api.services.projects import get_project as get_project_service
 from aq_api.services.projects import list_projects as list_project_service
 from aq_api.services.projects import update_project as update_project_service
+from aq_api.services.release import release_job as release_job_service
+from aq_api.services.release import reset_claim as reset_claim_service
 
 MCP_NAME = "AgenticQueue 2.0 MCP"
 MCP_HTTP_PATH = "/mcp"
+MCP_INSTRUCTIONS = """You are connected to AgenticQueue 2.0's MCP server.
+
+Conventions:
+- Pass `agent_identity` (your API key alias) on every call. AQ does not infer it.
+- Errors come back as structured objects: {error_code, rule_violated, details}.
+  On `rule_violated`, do NOT retry — it indicates a fixable client mistake
+  (wrong claimant, wrong state, missing field), not a transient failure.
+- After a successful `claim_next_job`: the response includes a Context Packet
+  (cap #8 forward-compat — currently a stub with empty `previous_jobs[]` and
+  `next_job_id: null`). Read the Job's inline `contract` field for the DoD,
+  call `heartbeat_job` every ~30 seconds while working, and call `submit_job`
+  (cap #5 — not yet shipped) when done. For now, use `release_job` to return
+  the Job to `ready` if you cannot complete it.
+- Heartbeat cadence is recommended ~30 seconds. The server enforces only the
+  AQ_CLAIM_LEASE_SECONDS lease (default 900s = 15 minutes); shorter cadence
+  is friendlier to the auto-release sweep.
+"""
 AGENT_IDENTITY_PATTERN = r"^$|^[A-Za-z0-9_./:-]+$"
 AgentIdentity = Annotated[
     str | None,
@@ -121,6 +150,13 @@ def _authenticated_actor_id() -> UUID:
     return actor_id
 
 
+def _json_block(payload: object) -> TextContent:
+    return TextContent(
+        type="text",
+        text=json.dumps(payload, separators=(",", ":"), sort_keys=True),
+    )
+
+
 @contextmanager
 def _claimed_agent_identity(agent_identity: str | None) -> Iterator[None]:
     token = set_claimed_actor_identity(agent_identity or None)
@@ -132,7 +168,7 @@ def _claimed_agent_identity(agent_identity: str | None) -> Iterator[None]:
 
 def create_mcp_server() -> FastMCP:
     # No background task queue is needed for these synchronous read-only tools.
-    server = FastMCP(MCP_NAME, tasks=False)
+    server = FastMCP(MCP_NAME, tasks=False, instructions=MCP_INSTRUCTIONS)
 
     @server.tool(
         description=(
@@ -613,6 +649,54 @@ def create_mcp_server() -> FastMCP:
 
     @server.tool(
         description=(
+            "Atomically claim the next ready Job in a Project, optionally filtered "
+            "by labels. Returns the Job, a stub Context Packet, and next-step text."
+        ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": True,
+            "idempotentHint": False,
+        },
+        output_schema=None,
+    )
+    async def claim_next_job(
+        project_id: UUID,
+        label_filter: list[LabelName] | None = None,
+        agent_identity: AgentIdentity = None,
+    ) -> ToolResult:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = ClaimNextJobRequest(
+                project_id=project_id,
+                label_filter=label_filter,
+            )
+            async with SessionLocal() as session:
+                response = await claim_next_job_service(
+                    session,
+                    request=request,
+                    actor_id=actor_id,
+                )
+
+        payload = response.model_dump(mode="json")
+        packet_payload = response.packet.model_dump(mode="json")
+        next_step = (
+            f"You claimed Job {response.job.id} ({response.job.title}). "
+            "Read the inline contract for the DoD; call heartbeat_job every "
+            "~30s; submit_job ships in cap #5."
+        )
+        return ToolResult(
+            content=[
+                _json_block({"job": payload["job"]}),
+                _json_block({"packet": packet_payload}),
+                TextContent(type="text", text=next_step),
+            ],
+            structured_content=payload,
+        )
+
+    @server.tool(
+        description=(
             "Add a durable Job comment. Audit rows record body_length only; "
             "the body is stored in job_comments."
         ),
@@ -678,6 +762,87 @@ def create_mcp_server() -> FastMCP:
             _authenticated_actor_id()
             async with SessionLocal() as session:
                 return await cancel_job_service(session, job_id)
+
+    @server.tool(
+        description=(
+            "Release a Job claimed by the authenticated actor and return it "
+            "to ready."
+        ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": True,
+            "idempotentHint": False,
+        },
+    )
+    async def release_job(
+        job_id: UUID,
+        agent_identity: AgentIdentity = None,
+    ) -> ReleaseJobResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await release_job_service(
+                    session,
+                    job_id=job_id,
+                    actor_id=actor_id,
+                )
+
+    @server.tool(
+        description=(
+            "Reset a stuck claim with a required reason and return the Job "
+            "to ready."
+        ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": True,
+            "idempotentHint": False,
+        },
+    )
+    async def reset_claim(
+        job_id: UUID,
+        reason: Annotated[str, Field(min_length=1)],
+        agent_identity: AgentIdentity = None,
+    ) -> ResetClaimResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = ResetClaimRequest(reason=reason)
+            async with SessionLocal() as session:
+                return await reset_claim_service(
+                    session,
+                    job_id=job_id,
+                    request=request,
+                    actor_id=actor_id,
+                )
+
+    @server.tool(
+        description=(
+            "Refresh the claim heartbeat for a Job claimed by the authenticated "
+            "actor. Successful heartbeats are lease maintenance and are not audited."
+        ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": True,
+            "idempotentHint": False,
+        },
+    )
+    async def heartbeat_job(
+        job_id: UUID,
+        agent_identity: AgentIdentity = None,
+    ) -> HeartbeatJobResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await heartbeat_job_service(
+                    session,
+                    job_id=job_id,
+                    actor_id=actor_id,
+                )
 
     @server.tool(
         description="Register a Project-scoped Label for future Job attachment.",

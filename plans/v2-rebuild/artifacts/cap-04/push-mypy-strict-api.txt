@@ -1,0 +1,2 @@
+Bytecode compiled 4121 files in 319ms
+Success: no issues found in 44 source files

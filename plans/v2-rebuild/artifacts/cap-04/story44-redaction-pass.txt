@@ -1,0 +1,3 @@
+python scripts/redact_evidence.py plans/v2-rebuild/artifacts/cap-04/story44-*
+exit_code=0
+timestamp=2026-04-29T10:30:25.1533076-05:00

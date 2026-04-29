@@ -18,6 +18,8 @@ ALREADY_SETUP_BODY = b'{"error":"already_setup"}'
 FOUNDER_ACTOR_NAME = "founder"
 BOOTSTRAP_PROJECT_SLUG = "default"
 BOOTSTRAP_PROJECT_DESCRIPTION = "AQ default project for first-run installs."
+SYSTEM_ACTOR_NAME = "aq-system-sweeper"
+SYSTEM_ACTOR_KIND = "script"
 
 pytestmark = pytest.mark.skipif(
     not DATABASE_URL_SYNC,
@@ -30,11 +32,12 @@ def conn() -> Iterator[Connection[tuple[object, ...]]]:
     assert DATABASE_URL_SYNC is not None
     conninfo = DATABASE_URL_SYNC.replace("postgresql+psycopg://", "postgresql://", 1)
     with psycopg.connect(conninfo, autocommit=True) as connection:
-        if _has_any_actor(connection) and not _is_isolated_test_db(conninfo):
+        isolated_test_db = _is_isolated_test_db(conninfo)
+        if _has_any_actor(connection) and not isolated_test_db:
             pytest.skip("setup tests require an isolated empty actor table")
-        _truncate_cap02_state(connection)
+        _truncate_cap02_state(connection, isolated_test_db=isolated_test_db)
         yield connection
-        _truncate_cap02_state(connection)
+        _truncate_cap02_state(connection, isolated_test_db=isolated_test_db)
 
 
 @pytest_asyncio.fixture()
@@ -51,8 +54,24 @@ async def async_client() -> AsyncIterator[httpx.AsyncClient]:
     await engine.dispose()
 
 
-def _truncate_cap02_state(conn: Connection[tuple[object, ...]]) -> None:
+def _truncate_cap02_state(
+    conn: Connection[tuple[object, ...]],
+    *,
+    isolated_test_db: bool,
+) -> None:
     with conn.cursor() as cursor:
+        if isolated_test_db:
+            cursor.execute("DELETE FROM audit_log")
+            cursor.execute("DELETE FROM job_comments")
+            cursor.execute("DELETE FROM job_edges")
+            cursor.execute("DELETE FROM jobs")
+            cursor.execute("DELETE FROM labels")
+            cursor.execute("DELETE FROM pipelines")
+            cursor.execute("DELETE FROM projects")
+            cursor.execute("DELETE FROM api_keys")
+            cursor.execute("DELETE FROM actors")
+            return
+
         cursor.execute(
             """
             DELETE FROM audit_log
@@ -124,7 +143,14 @@ def _audit_count(conn: Connection[tuple[object, ...]]) -> int:
 
 def _actor_count(conn: Connection[tuple[object, ...]]) -> int:
     with conn.cursor() as cursor:
-        cursor.execute("SELECT count(*) FROM actors")
+        cursor.execute(
+            """
+            SELECT count(*)
+            FROM actors
+            WHERE NOT (name = %s AND kind = %s)
+            """,
+            (SYSTEM_ACTOR_NAME, SYSTEM_ACTOR_KIND),
+        )
         row = cursor.fetchone()
     assert row is not None
     return int(row[0])
@@ -174,6 +200,29 @@ def _insert_founder_project_without_template(
         project_id = project_row[0]
         assert isinstance(project_id, UUID)
     return actor_id, project_id
+
+
+def _ensure_system_actor(conn: Connection[tuple[object, ...]]) -> None:
+    with conn.cursor() as cursor:
+        cursor.execute(
+            """
+            INSERT INTO actors (name, kind)
+            SELECT %s, %s
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM actors
+                WHERE name = %s
+                  AND kind = %s
+                  AND deactivated_at IS NULL
+            )
+            """,
+            (
+                SYSTEM_ACTOR_NAME,
+                SYSTEM_ACTOR_KIND,
+                SYSTEM_ACTOR_NAME,
+                SYSTEM_ACTOR_KIND,
+            ),
+        )
 
 
 def _founder_row(
@@ -294,6 +343,21 @@ async def test_setup_second_call_returns_409_already_setup(
     assert first.status_code == 200
     assert second.status_code == 409
     assert second.content == ALREADY_SETUP_BODY
+    assert _actor_count(conn) == 1
+    assert _api_key_count(conn) == 1
+    assert _bootstrap_shape(conn)["job_count"] == 3
+
+
+@pytest.mark.asyncio
+async def test_setup_ignores_reserved_system_actor_on_first_call(
+    conn: Connection[tuple[object, ...]],
+    async_client: httpx.AsyncClient,
+) -> None:
+    _ensure_system_actor(conn)
+
+    response = await async_client.post("/setup", json={})
+
+    assert response.status_code == 200
     assert _actor_count(conn) == 1
     assert _api_key_count(conn) == 1
     assert _bootstrap_shape(conn)["job_count"] == 3

@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="0.395" timestamp="2026-04-29T17:12:01.173882+00:00" hostname="c0940a230d02"><testcase classname="tests.atomicity.test_claim_auto_release_atomicity" name="[TOKEN_REDACTED]" time="0.089" /></testsuite></testsuites>
