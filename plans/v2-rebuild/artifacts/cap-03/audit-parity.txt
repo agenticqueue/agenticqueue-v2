@@ -1,0 +1,99 @@
+{
+  "rest": {
+    "entries": [
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:43:56.546008Z",
+        "op": "create_actor",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "actor",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "kind": "agent",
+          "name": "parity-test-created-actor-c496f6a87353",
+          "key_name": "[REDACTED]"
+        },
+        "response_payload": {
+          "key": "[REDACTED]",
+          "actor": {
+            "id": "[UUID_REDACTED]",
+            "kind": "agent",
+            "name": "parity-test-created-actor-c496f6a87353",
+            "created_at": "2026-04-29T00:43:56.546008Z",
+            "deactivated_at": null
+          },
+          "api_key": "[REDACTED]"
+        },
+        "error_code": null
+      }
+    ],
+    "next_cursor": null
+  },
+  "cli": {
+    "entries": [
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:43:56.546008Z",
+        "op": "create_actor",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "actor",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "kind": "agent",
+          "name": "parity-test-created-actor-c496f6a87353",
+          "key_name": "[REDACTED]"
+        },
+        "response_payload": {
+          "key": "[REDACTED]",
+          "actor": {
+            "id": "[UUID_REDACTED]",
+            "kind": "agent",
+            "name": "parity-test-created-actor-c496f6a87353",
+            "created_at": "2026-04-29T00:43:56.546008Z",
+            "deactivated_at": null
+          },
+          "api_key": "[REDACTED]"
+        },
+        "error_code": null
+      }
+    ],
+    "next_cursor": null
+  },
+  "mcp": {
+    "entries": [
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:43:56.546008Z",
+        "op": "create_actor",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "actor",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "kind": "agent",
+          "name": "parity-test-created-actor-c496f6a87353",
+          "key_name": "[REDACTED]"
+        },
+        "response_payload": {
+          "key": "[REDACTED]",
+          "actor": {
+            "id": "[UUID_REDACTED]",
+            "kind": "agent",
+            "name": "parity-test-created-actor-c496f6a87353",
+            "created_at": "2026-04-29T00:43:56.546008Z",
+            "deactivated_at": null
+          },
+          "api_key": "[REDACTED]"
+        },
+        "error_code": null
+      }
+    ],
+    "next_cursor": null
+  },
+  "injection": {
+    "entries": [],
+    "next_cursor": null
+  }
+}

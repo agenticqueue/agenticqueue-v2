@@ -1,0 +1,37 @@
+{
+  "rest": {
+    "actor": {
+      "id": "[UUID_REDACTED]",
+      "name": "parity-test-founder-99e7b090927f",
+      "kind": "human",
+      "created_at": "2026-04-29T00:43:55.630919Z",
+      "deactivated_at": null
+    }
+  },
+  "cli": {
+    "actor": {
+      "id": "[UUID_REDACTED]",
+      "name": "parity-test-founder-99e7b090927f",
+      "kind": "human",
+      "created_at": "2026-04-29T00:43:55.630919Z",
+      "deactivated_at": null
+    }
+  },
+  "mcp": {
+    "actor": {
+      "id": "[UUID_REDACTED]",
+      "name": "parity-test-founder-99e7b090927f",
+      "kind": "human",
+      "created_at": "2026-04-29T00:43:55.630919Z",
+      "deactivated_at": null
+    }
+  },
+  "audit_before": {
+    "entries": [],
+    "next_cursor": null
+  },
+  "audit_after": {
+    "entries": [],
+    "next_cursor": null
+  }
+}

@@ -1,0 +1,553 @@
+{
+  "fixture": {
+    "projects": {
+      "rest": {
+        "project": {
+          "id": "[UUID_REDACTED]",
+          "name": "REST archive Project",
+          "slug": "parity-rest-archive-90f418874b97",
+          "description": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:44:09.564861Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "cli": {
+        "project": {
+          "id": "[UUID_REDACTED]",
+          "name": "CLI archive Project",
+          "slug": "parity-cli-archive-90f418874b97",
+          "description": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:44:09.992569Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "mcp": {
+        "project": {
+          "id": "[UUID_REDACTED]",
+          "name": "MCP archive Project",
+          "slug": "parity-mcp-archive-90f418874b97",
+          "description": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:44:10.093822Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      }
+    },
+    "pipelines": {
+      "rest": {
+        "pipeline": {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "REST archive Pipeline",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:44:10.154327Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "cli": {
+        "pipeline": {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "CLI archive Pipeline",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:44:10.518039Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      },
+      "mcp": {
+        "pipeline": {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "MCP archive Pipeline",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-29T00:44:10.619566Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      }
+    },
+    "pipeline_ids": {
+      "rest": "[UUID_REDACTED]",
+      "cli": "[UUID_REDACTED]",
+      "mcp": "[UUID_REDACTED]"
+    }
+  },
+  "archives": {
+    "rest": {
+      "pipeline": {
+        "id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "name": "REST archive Pipeline",
+        "is_template": false,
+        "cloned_from_pipeline_id": null,
+        "archived_at": "2026-04-29T00:44:10.689470Z",
+        "created_at": "2026-04-29T00:44:10.154327Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    },
+    "cli": {
+      "pipeline": {
+        "id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "name": "CLI archive Pipeline",
+        "is_template": false,
+        "cloned_from_pipeline_id": null,
+        "archived_at": "2026-04-29T00:44:11.065508Z",
+        "created_at": "2026-04-29T00:44:10.518039Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    },
+    "mcp": {
+      "pipeline": {
+        "id": "[UUID_REDACTED]",
+        "project_id": "[UUID_REDACTED]",
+        "name": "MCP archive Pipeline",
+        "is_template": false,
+        "cloned_from_pipeline_id": null,
+        "archived_at": "2026-04-29T00:44:11.178201Z",
+        "created_at": "2026-04-29T00:44:10.619566Z",
+        "created_by_actor_id": "[UUID_REDACTED]"
+      }
+    }
+  },
+  "lists": {
+    "rest": {
+      "pipelines": [
+        {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "c1-label-explain-pipeline",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-27T22:53:28.836535Z",
+          "created_by_actor_id": null
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "hotfix-renamed",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-28T01:50:14.931776Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "inst-1",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-28T03:59:22.067105Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "audit-clone-1",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-28T21:48:37.520502Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "qa-sweep-rest-pipeline-clone",
+          "is_template": false,
+          "cloned_from_pipeline_id": "[UUID_REDACTED]",
+          "archived_at": null,
+          "created_at": "2026-04-29T00:38:33.518013Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "qa-sweep-mcp-pipeline-clone",
+          "is_template": false,
+          "cloned_from_pipeline_id": "[UUID_REDACTED]",
+          "archived_at": null,
+          "created_at": "2026-04-29T00:38:33.584155Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      ],
+      "next_cursor": null
+    },
+    "cli": {
+      "pipelines": [
+        {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "c1-label-explain-pipeline",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-27T22:53:28.836535Z",
+          "created_by_actor_id": null
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "hotfix-renamed",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-28T01:50:14.931776Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "inst-1",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-28T03:59:22.067105Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "audit-clone-1",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-28T21:48:37.520502Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "qa-sweep-rest-pipeline-clone",
+          "is_template": false,
+          "cloned_from_pipeline_id": "[UUID_REDACTED]",
+          "archived_at": null,
+          "created_at": "2026-04-29T00:38:33.518013Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "qa-sweep-mcp-pipeline-clone",
+          "is_template": false,
+          "cloned_from_pipeline_id": "[UUID_REDACTED]",
+          "archived_at": null,
+          "created_at": "2026-04-29T00:38:33.584155Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      ],
+      "next_cursor": null
+    },
+    "mcp": {
+      "pipelines": [
+        {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "c1-label-explain-pipeline",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-27T22:53:28.836535Z",
+          "created_by_actor_id": null
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "hotfix-renamed",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-28T01:50:14.931776Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "inst-1",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-28T03:59:22.067105Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "audit-clone-1",
+          "is_template": false,
+          "cloned_from_pipeline_id": null,
+          "archived_at": null,
+          "created_at": "2026-04-28T21:48:37.520502Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "qa-sweep-rest-pipeline-clone",
+          "is_template": false,
+          "cloned_from_pipeline_id": "[UUID_REDACTED]",
+          "archived_at": null,
+          "created_at": "2026-04-29T00:38:33.518013Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        },
+        {
+          "id": "[UUID_REDACTED]",
+          "project_id": "[UUID_REDACTED]",
+          "name": "qa-sweep-mcp-pipeline-clone",
+          "is_template": false,
+          "cloned_from_pipeline_id": "[UUID_REDACTED]",
+          "archived_at": null,
+          "created_at": "2026-04-29T00:38:33.584155Z",
+          "created_by_actor_id": "[UUID_REDACTED]"
+        }
+      ],
+      "next_cursor": null
+    }
+  },
+  "audit": {
+    "entries": [
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:11.176913Z",
+        "op": "archive_pipeline",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-archive",
+        "target_kind": "pipeline",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "pipeline_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "pipeline": {
+            "id": "[UUID_REDACTED]",
+            "name": "MCP archive Pipeline",
+            "created_at": "2026-04-29T00:44:10.619566Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": "2026-04-29T00:44:11.178201Z",
+            "is_template": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "cloned_from_pipeline_id": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:11.064496Z",
+        "op": "archive_pipeline",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "pipeline",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "pipeline_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "pipeline": {
+            "id": "[UUID_REDACTED]",
+            "name": "CLI archive Pipeline",
+            "created_at": "2026-04-29T00:44:10.518039Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": "2026-04-29T00:44:11.065508Z",
+            "is_template": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "cloned_from_pipeline_id": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:10.688869Z",
+        "op": "archive_pipeline",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "pipeline",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "pipeline_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "pipeline": {
+            "id": "[UUID_REDACTED]",
+            "name": "REST archive Pipeline",
+            "created_at": "2026-04-29T00:44:10.154327Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": "2026-04-29T00:44:10.689470Z",
+            "is_template": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "cloned_from_pipeline_id": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:10.619566Z",
+        "op": "create_pipeline",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-archive",
+        "target_kind": "pipeline",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "MCP archive Pipeline",
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "pipeline": {
+            "id": "[UUID_REDACTED]",
+            "name": "MCP archive Pipeline",
+            "created_at": "2026-04-29T00:44:10.619566Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": null,
+            "is_template": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "cloned_from_pipeline_id": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:10.518039Z",
+        "op": "create_pipeline",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "pipeline",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "CLI archive Pipeline",
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "pipeline": {
+            "id": "[UUID_REDACTED]",
+            "name": "CLI archive Pipeline",
+            "created_at": "2026-04-29T00:44:10.518039Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": null,
+            "is_template": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "cloned_from_pipeline_id": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:10.154327Z",
+        "op": "create_pipeline",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "pipeline",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "REST archive Pipeline",
+          "project_id": "[UUID_REDACTED]"
+        },
+        "response_payload": {
+          "pipeline": {
+            "id": "[UUID_REDACTED]",
+            "name": "REST archive Pipeline",
+            "created_at": "2026-04-29T00:44:10.154327Z",
+            "project_id": "[UUID_REDACTED]",
+            "archived_at": null,
+            "is_template": false,
+            "created_by_actor_id": "[UUID_REDACTED]",
+            "cloned_from_pipeline_id": null
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:10.093822Z",
+        "op": "create_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": "parity-archive",
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "MCP archive Project",
+          "slug": "parity-mcp-archive-90f418874b97",
+          "description": null
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "MCP archive Project",
+            "slug": "parity-mcp-archive-90f418874b97",
+            "created_at": "2026-04-29T00:44:10.093822Z",
+            "archived_at": null,
+            "description": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:09.992569Z",
+        "op": "create_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "CLI archive Project",
+          "slug": "parity-cli-archive-90f418874b97",
+          "description": null
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "CLI archive Project",
+            "slug": "parity-cli-archive-90f418874b97",
+            "created_at": "2026-04-29T00:44:09.992569Z",
+            "archived_at": null,
+            "description": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      },
+      {
+        "id": "[UUID_REDACTED]",
+        "ts": "2026-04-29T00:44:09.564861Z",
+        "op": "create_project",
+        "authenticated_actor_id": "[UUID_REDACTED]",
+        "claimed_actor_identity": null,
+        "target_kind": "project",
+        "target_id": "[UUID_REDACTED]",
+        "request_payload": {
+          "name": "REST archive Project",
+          "slug": "parity-rest-archive-90f418874b97",
+          "description": null
+        },
+        "response_payload": {
+          "project": {
+            "id": "[UUID_REDACTED]",
+            "name": "REST archive Project",
+            "slug": "parity-rest-archive-90f418874b97",
+            "created_at": "2026-04-29T00:44:09.564861Z",
+            "archived_at": null,
+            "description": null,
+            "created_by_actor_id": "[UUID_REDACTED]"
+          }
+        },
+        "error_code": null
+      }
+    ],
+    "next_cursor": null
+  }
+}

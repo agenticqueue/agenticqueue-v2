@@ -325,11 +325,26 @@ async def test_list_actors_pagination_and_deactivated_filter(
     assert set(active_ids).issubset(all_active_ids)
     assert deactivated_id not in all_active_ids
 
-    with_deactivated = await async_client.get(
-        "/actors",
-        headers=_auth_headers(key),
-        params={"include_deactivated": "true", "limit": 10},
-    )
-    assert with_deactivated.status_code == 200
-    included = ListActorsResponse.model_validate(with_deactivated.json())
-    assert deactivated_id in {actor.id for actor in included.actors}
+    cursor: str | None = None
+    included_ids: set[UUID] = set()
+    while True:
+        params: dict[str, object] = {
+            "include_deactivated": "true",
+            "limit": 200,
+        }
+        if cursor is not None:
+            params["cursor"] = cursor
+
+        with_deactivated = await async_client.get(
+            "/actors",
+            headers=_auth_headers(key),
+            params=params,
+        )
+        assert with_deactivated.status_code == 200
+        included = ListActorsResponse.model_validate(with_deactivated.json())
+        included_ids.update(actor.id for actor in included.actors)
+        cursor = included.next_cursor
+        if cursor is None or deactivated_id in included_ids:
+            break
+
+    assert deactivated_id in included_ids

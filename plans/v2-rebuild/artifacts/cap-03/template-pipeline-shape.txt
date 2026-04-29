@@ -1,0 +1,4 @@
+ ship_a_thing_template_pipelines | ship_a_thing_ready_jobs | cloned_pipeline_rows | other_template_rows_allowed
+---------------------------------+-------------------------+----------------------+-----------------------------
+                               1 |                       3 |                   10 |                           0
+(1 row)

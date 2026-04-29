@@ -53,3 +53,25 @@ def test_redact_evidence_script_sanitizes_known_secret_patterns() -> None:
     _assert_redacts([sys.executable, str(Path("scripts/redact_evidence.py"))], sample)
     if _bash_available():
         _assert_redacts(["bash", str(Path("scripts/redact-evidence.sh"))], sample)
+
+
+def test_redact_evidence_script_sanitizes_cap03_evidence_payloads() -> None:
+    sample = """
+    {
+      "project": {"id": "123e4567-e89b-12d3-a456-426614174000"},
+      "pipeline": {"id": "223e4567-e89b-12d3-a456-426614174000"},
+      "job": {"id": "323e4567-e89b-12d3-a456-426614174000"},
+      "setup": {
+        "founder_key": "aq2_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "api_key": "aq2_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+        "key_hash": "$argon2id$v=19$m=65536,t=2,p=2$abcdef$abcdef"
+      },
+      "audit": {
+        "lookup_secret": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+      }
+    }
+    """
+
+    _assert_redacts([sys.executable, str(Path("scripts/redact_evidence.py"))], sample)
+    if _bash_available():
+        _assert_redacts(["bash", str(Path("scripts/redact-evidence.sh"))], sample)

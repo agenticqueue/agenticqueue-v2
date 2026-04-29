@@ -1,0 +1,4 @@
+git_head_short=8c3f1f1
+version_commit=8c3f1f1
+version_built_at=04/29/2026 00:55:28
+COMMIT_MATCHES_HEAD=true
