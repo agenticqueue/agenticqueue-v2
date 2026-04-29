@@ -45,6 +45,7 @@ from aq_api.models import (
     ListJobsResponse,
     ListPipelinesResponse,
     ListProjectsResponse,
+    ListReadyJobsResponse,
     RegisterLabelRequest,
     RegisterLabelResponse,
     RevokeApiKeyResponse,
@@ -84,6 +85,7 @@ from aq_api.services.jobs import update_job as update_job_service
 from aq_api.services.labels import attach_label as attach_label_service
 from aq_api.services.labels import detach_label as detach_label_service
 from aq_api.services.labels import register_label as register_label_service
+from aq_api.services.list_ready_jobs import list_ready_jobs as list_ready_jobs_service
 from aq_api.services.pipelines import archive_pipeline as archive_pipeline_service
 from aq_api.services.pipelines import clone_pipeline as clone_pipeline_service
 from aq_api.services.pipelines import create_pipeline as create_pipeline_service
@@ -581,6 +583,33 @@ def create_mcp_server() -> FastMCP:
                 data["description"] = description
             async with SessionLocal() as session:
                 return await update_job_service(session, job_id, data)
+
+    @server.tool(
+        description=(
+            "List ready Jobs in a Project, optionally filtered by labels. "
+            "Read-only and unaudited; template and archived Pipelines are excluded."
+        ),
+        annotations={"readOnlyHint": True},
+    )
+    async def list_ready_jobs(
+        project_id: UUID,
+        label_filter: list[LabelName] | None = None,
+        limit: int = 50,
+        cursor: str | None = None,
+        agent_identity: AgentIdentity = None,
+    ) -> ListReadyJobsResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await list_ready_jobs_service(
+                    session,
+                    project_id=project_id,
+                    label_filter=label_filter,
+                    limit=limit,
+                    cursor=cursor,
+                )
 
     @server.tool(
         description=(

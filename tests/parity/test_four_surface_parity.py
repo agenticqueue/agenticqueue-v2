@@ -1593,6 +1593,192 @@ def test_job_ops_match_rest_cli_mcp_and_audit(
     )
 
 
+def test_list_ready_jobs_matches_rest_cli_mcp_and_no_audit(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    founder_actor_id: str,
+    artifact_dir: Path,
+    redact_evidence: Any,
+) -> None:
+    auth = {"Authorization": f"Bearer {founder_key}"}
+    fixture = _create_pipeline_triplet(
+        api_base_url,
+        mcp_base_url,
+        founder_key,
+        label="ready",
+        mcp_request_start=110,
+    )
+    project_ids = {
+        surface: payload["project"]["id"]
+        for surface, payload in fixture["projects"].items()
+    }
+    pipeline_ids = fixture["pipeline_ids"]
+    contract = {
+        "contract_type": "coding-task",
+        "dod_items": [{"id": "ready-parity"}],
+    }
+    contract_json = json.dumps(contract, separators=(",", ":"))
+
+    rest_job_response = httpx.post(
+        f"{api_base_url}/jobs",
+        headers=auth,
+        json={
+            "pipeline_id": pipeline_ids["rest"],
+            "title": "REST Ready Job",
+            "contract": contract,
+        },
+        timeout=10,
+    )
+    rest_job_response.raise_for_status()
+    rest_job = rest_job_response.json()
+    cli_job = _run_cli(
+        [
+            "job",
+            "create",
+            "--pipeline",
+            pipeline_ids["cli"],
+            "--title",
+            "CLI Ready Job",
+            "--contract-json",
+            contract_json,
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_job = _call_mcp_tool(
+        mcp_base_url,
+        "create_job",
+        113,
+        api_key=founder_key,
+        arguments={
+            "pipeline_id": pipeline_ids["mcp"],
+            "title": "MCP Ready Job",
+            "contract": contract,
+            "agent_identity": "parity-ready",
+        },
+    )
+    job_ids = {
+        "rest": rest_job["job"]["id"],
+        "cli": cli_job["job"]["id"],
+        "mcp": mcp_job["job"]["id"],
+    }
+
+    rest_label_response = httpx.post(
+        f"{api_base_url}/projects/{project_ids['rest']}/labels",
+        headers=auth,
+        json={"name": "area:web"},
+        timeout=10,
+    )
+    rest_label_response.raise_for_status()
+    cli_label = _run_cli(
+        ["label", "register", "--project", project_ids["cli"], "--name", "area:web"],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_label = _call_mcp_tool(
+        mcp_base_url,
+        "register_label",
+        114,
+        api_key=founder_key,
+        arguments={
+            "project_id": project_ids["mcp"],
+            "name": "area:web",
+            "agent_identity": "parity-ready",
+        },
+    )
+
+    rest_attach_response = httpx.post(
+        f"{api_base_url}/jobs/{job_ids['rest']}/labels",
+        headers=auth,
+        json={"label_name": "area:web"},
+        timeout=10,
+    )
+    rest_attach_response.raise_for_status()
+    cli_attach = _run_cli(
+        ["label", "attach", job_ids["cli"], "--name", "area:web"],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_attach = _call_mcp_tool(
+        mcp_base_url,
+        "attach_label",
+        115,
+        api_key=founder_key,
+        arguments={
+            "job_id": job_ids["mcp"],
+            "label_name": "area:web",
+            "agent_identity": "parity-ready",
+        },
+    )
+
+    rest_ready = _get_json(
+        f"{api_base_url}/jobs/ready",
+        api_key=founder_key,
+        params={"project": project_ids["rest"], "label": "area:web", "limit": 100},
+    )
+    cli_ready = _run_cli(
+        [
+            "job",
+            "list-ready",
+            "--project",
+            project_ids["cli"],
+            "--label",
+            "area:web",
+            "--limit",
+            "100",
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_ready = _call_mcp_tool(
+        mcp_base_url,
+        "list_ready_jobs",
+        116,
+        api_key=founder_key,
+        arguments={
+            "project_id": project_ids["mcp"],
+            "label_filter": ["area:web"],
+            "limit": 100,
+            "agent_identity": "parity-ready",
+        },
+    )
+    ready_pages = {"rest": rest_ready, "cli": cli_ready, "mcp": mcp_ready}
+    for surface, page in ready_pages.items():
+        ready_ids = {job["id"] for job in page["jobs"]}
+        assert job_ids[surface] in ready_ids
+        assert all(job["state"] == "ready" for job in page["jobs"])
+        assert all(job["project_id"] == project_ids[surface] for job in page["jobs"])
+
+    audit = _get_json(
+        f"{api_base_url}/audit",
+        api_key=founder_key,
+        params={"actor": founder_actor_id, "limit": 100},
+    )
+    assert [row for row in audit["entries"] if row["op"] == "list_ready_jobs"] == []
+
+    artifact = {
+        "fixture": fixture,
+        "jobs": {"rest": rest_job, "cli": cli_job, "mcp": mcp_job},
+        "labels": {
+            "rest": rest_label_response.json(),
+            "cli": cli_label,
+            "mcp": mcp_label,
+        },
+        "attaches": {
+            "rest": rest_attach_response.json(),
+            "cli": cli_attach,
+            "mcp": mcp_attach,
+        },
+        "ready_pages": ready_pages,
+        "audit": audit,
+    }
+    (artifact_dir / "ready-jobs-parity.txt").write_text(
+        redact_evidence(_json_text(artifact)),
+        encoding="utf-8",
+    )
+
+
 def test_comment_and_cancel_ops_match_rest_cli_mcp_and_audit(
     api_base_url: str,
     mcp_base_url: str,

@@ -1,0 +1,35 @@
+# AQ2-49 list_ready_jobs label-filter EXPLAIN
+
+Seed project slug: [TOKEN_REDACTED]
+
+$ docker compose exec -T db psql -U aq -d aq2 -v ON_ERROR_STOP=1 -c "<seed + SET enable_seqscan=off + EXPLAIN ANALYZE>"
+
+INSERT 0 250
+SET
+                                                                     QUERY PLAN
+-----------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=309.74..309.80 rows=26 width=24) (actual time=0.713..0.717 rows=50 loops=1)
+   InitPlan 1 (returns $0)
+     ->  Index Scan using projects_slug_key on projects  (cost=0.13..8.15 rows=1 width=16) (actual time=0.015..0.015 rows=1 loops=1)
+           Index Cond: (slug = '[TOKEN_REDACTED]'::text)
+   ->  Sort  (cost=301.59..301.66 rows=26 width=24) (actual time=0.712..0.714 rows=50 loops=1)
+         Sort Key: j.created_at, j.id
+         Sort Method: top-N heapsort  Memory: 28kB
+         ->  Nested Loop  (cost=26.17..300.98 rows=26 width=24) (actual time=0.583..0.649 rows=250 loops=1)
+               ->  Bitmap Heap Scan on jobs j  (cost=26.03..297.91 rows=33 width=40) (actual time=0.560..0.588 rows=250 loops=1)
+                     Recheck Cond: (labels @> '{area:web}'::text[])
+                     Filter: ((state = 'ready'::text) AND (project_id = $0))
+                     Rows Removed by Filter: 100
+                     Heap Blocks: exact=212
+                     ->  Bitmap Index Scan on idx_jobs_labels_gin  (cost=0.00..26.02 rows=100 width=0) (actual time=0.081..0.081 rows=1052 loops=1)
+                           Index Cond: (labels @> '{area:web}'::text[])
+               ->  Memoize  (cost=0.14..0.52 rows=1 width=16) (actual time=0.000..0.000 rows=1 loops=250)
+                     Cache Key: j.pipeline_id
+                     Cache Mode: logical
+                     Hits: 249  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                     ->  Index Scan using pipelines_pkey on pipelines p  (cost=0.13..0.51 rows=1 width=16) (actual time=0.014..0.014 rows=1 loops=1)
+                           Index Cond: (id = j.pipeline_id)
+                           Filter: ((NOT is_template) AND (archived_at IS NULL))
+ Planning Time: 1.354 ms
+ Execution Time: 0.805 ms
+(24 rows)

@@ -105,16 +105,25 @@ def insert_pipeline(
     project_id: UUID,
     created_by_actor_id: UUID,
     name: str | None = None,
+    is_template: bool = False,
+    archived: bool = False,
 ) -> UUID:
     pipeline_name = name or f"job-test-pipeline-{uuid.uuid4().hex[:12]}"
     with conn.cursor() as cursor:
         cursor.execute(
             """
-            INSERT INTO pipelines (project_id, name, created_by_actor_id)
-            VALUES (%s, %s, %s)
+            INSERT INTO pipelines
+                (project_id, name, is_template, archived_at, created_by_actor_id)
+            VALUES (%s, %s, %s, %s, %s)
             RETURNING id
             """,
-            (project_id, pipeline_name, created_by_actor_id),
+            (
+                project_id,
+                pipeline_name,
+                is_template,
+                datetime.now().astimezone() if archived else None,
+                created_by_actor_id,
+            ),
         )
         row = cursor.fetchone()
     assert row is not None
@@ -132,6 +141,8 @@ def insert_job(
     title: str,
     state: str = "ready",
     contract: dict[str, object] | None = None,
+    labels: list[str] | None = None,
+    created_at_offset_seconds: int = 0,
 ) -> UUID:
     with conn.cursor() as cursor:
         cursor.execute(
@@ -144,9 +155,11 @@ def insert_job(
                     title,
                     description,
                     contract,
+                    labels,
+                    created_at,
                     created_by_actor_id
                 )
-            VALUES (%s, %s, %s, %s, %s, %s::jsonb, %s)
+            VALUES (%s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s)
             RETURNING id
             """,
             (
@@ -156,6 +169,10 @@ def insert_job(
                 title,
                 f"{title} description",
                 json.dumps(contract or CONTRACT),
+                labels or [],
+                datetime.now().astimezone() + timedelta(
+                    seconds=created_at_offset_seconds
+                ),
                 created_by_actor_id,
             ),
         )

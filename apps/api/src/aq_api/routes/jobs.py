@@ -18,9 +18,11 @@ from aq_api.models import (
     JobState,
     ListJobCommentsResponse,
     ListJobsResponse,
+    ListReadyJobsResponse,
     UpdateJobResponse,
 )
 from aq_api.models.db import Actor as DbActor
+from aq_api.models.labels import LabelName
 from aq_api.services.job_comments import (
     InvalidJobCommentCursorError,
     JobCommentJobNotFoundError,
@@ -33,6 +35,8 @@ from aq_api.services.jobs import create_job as create_job_service
 from aq_api.services.jobs import get_job as get_job_service
 from aq_api.services.jobs import list_jobs as list_jobs_service
 from aq_api.services.jobs import update_job as update_job_service
+from aq_api.services.list_ready_jobs import InvalidReadyJobCursorError
+from aq_api.services.list_ready_jobs import list_ready_jobs as list_ready_jobs_service
 
 router = APIRouter()
 
@@ -131,6 +135,27 @@ async def list_jobs(
             cursor=cursor,
         )
     except InvalidJobCursorError:
+        return JSONResponse({"error": "invalid_cursor"}, status_code=422)
+
+
+@router.get("/jobs/ready", response_model=ListReadyJobsResponse)
+async def list_ready_jobs(
+    _actor: AuthenticatedActor,
+    session: SessionDep,
+    project_id: Annotated[UUID, Query(alias="project")],
+    label_filter: Annotated[list[LabelName] | None, Query(alias="label")] = None,
+    limit: Annotated[int, Query(ge=1)] = 50,
+    cursor: str | None = None,
+) -> ListReadyJobsResponse | JSONResponse:
+    try:
+        return await list_ready_jobs_service(
+            session,
+            project_id=project_id,
+            label_filter=label_filter,
+            limit=limit,
+            cursor=cursor,
+        )
+    except InvalidReadyJobCursorError:
         return JSONResponse({"error": "invalid_cursor"}, status_code=422)
 
 

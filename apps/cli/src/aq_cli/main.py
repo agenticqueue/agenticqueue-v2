@@ -50,7 +50,7 @@ def _api_url(path: str) -> str:
     return f"{os.getenv(API_URL_ENV, DEFAULT_API_URL).rstrip('/')}{path}"
 
 
-QueryParams = dict[str, str | int | float | bool | None]
+QueryParams = dict[str, str | int | float | bool | None | list[str]]
 
 
 def _load_config(config_path: Path | None) -> StoredConfig:
@@ -602,6 +602,24 @@ def job_list(
     if cursor is not None:
         params["cursor"] = cursor
     typer.echo(_get_auth("/jobs", timeout, config, params=params))
+
+
+@job_app.command("list-ready")
+def job_list_ready(
+    project_id: Annotated[str, typer.Option("--project")],
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+    label: Annotated[list[str] | None, typer.Option("--label")] = None,
+    limit: Annotated[int, typer.Option("--limit", min=1)] = 50,
+    cursor: Annotated[str | None, typer.Option("--cursor")] = None,
+) -> None:
+    """Print the paginated ListReadyJobsResponse JSON payload."""
+    params: QueryParams = {"project": project_id, "limit": limit}
+    if label:
+        params["label"] = list(label)
+    if cursor is not None:
+        params["cursor"] = cursor
+    typer.echo(_get_auth("/jobs/ready", timeout, config, params=params))
 
 
 @job_app.command("get")

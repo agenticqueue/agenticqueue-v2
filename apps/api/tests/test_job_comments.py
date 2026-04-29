@@ -70,9 +70,17 @@ def _fixture_job(conn: Connection[tuple[object, ...]]) -> tuple[str, str, str]:
     return str(actor_id), key, str(job_id)
 
 
-def _comment_bodies(conn: Connection[tuple[object, ...]]) -> list[str]:
+def _comment_bodies(conn: Connection[tuple[object, ...]], job_id: str) -> list[str]:
     with conn.cursor() as cursor:
-        cursor.execute("SELECT body FROM job_comments ORDER BY created_at ASC, id ASC")
+        cursor.execute(
+            """
+            SELECT body
+            FROM job_comments
+            WHERE job_id = %s
+            ORDER BY created_at ASC, id ASC
+            """,
+            (job_id,),
+        )
         return [str(row[0]) for row in cursor.fetchall()]
 
 
@@ -95,7 +103,7 @@ async def test_comment_on_job_audits_body_length_only(
     assert str(payload.comment.job_id) == job_id
     assert str(payload.comment.author_actor_id) == actor_id
     assert payload.comment.body == body
-    assert _comment_bodies(conn) == [body]
+    assert _comment_bodies(conn, job_id) == [body]
 
     rows = audit_rows(conn)
     assert rows == [
@@ -133,7 +141,7 @@ async def test_comment_body_bounds_are_enforced(
     )
 
     assert response.status_code == 422
-    assert _comment_bodies(conn) == []
+    assert _comment_bodies(conn, job_id) == []
     assert audit_rows(conn) == []
 
 

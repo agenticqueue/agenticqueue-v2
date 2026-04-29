@@ -1005,6 +1005,62 @@ def test_job_comment_comments_and_cancel_use_expected_paths(
     ]
 
 
+def test_job_list_ready_uses_expected_path_and_query(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    project_id = "44444444-4444-4444-8444-444444444444"
+    body = '{"jobs":[],"next_cursor":"cursor-2"}'
+    calls: list[tuple[str, str, dict[str, object], float]] = []
+
+    def fake_get(
+        url: str,
+        *,
+        headers: dict[str, str],
+        params: dict[str, object],
+        timeout: float,
+    ) -> httpx.Response:
+        assert headers == {"Authorization": "Bearer aq2_cli_contract_key"}
+        calls.append(("GET", url, params, timeout))
+        return _json_response(url, body)
+
+    monkeypatch.setattr("aq_cli.main.httpx.get", fake_get)
+
+    result = runner.invoke(
+        app,
+        [
+            "job",
+            "list-ready",
+            "--project",
+            project_id,
+            "--label",
+            "area:web",
+            "--label",
+            "kind:fix",
+            "--limit",
+            "10",
+            "--cursor",
+            "cursor-1",
+        ],
+        env={API_URL_ENV: "http://api.test/", API_KEY_ENV: "aq2_cli_contract_key"},
+    )
+
+    assert result.exit_code == 0
+    assert result.stdout == f"{body}\n"
+    assert calls == [
+        (
+            "GET",
+            "http://api.test/jobs/ready",
+            {
+                "project": project_id,
+                "label": ["area:web", "kind:fix"],
+                "limit": 10,
+                "cursor": "cursor-1",
+            },
+            5.0,
+        )
+    ]
+
+
 def test_label_register_posts_body_and_prints_raw_json(
     monkeypatch: MonkeyPatch,
 ) -> None:
