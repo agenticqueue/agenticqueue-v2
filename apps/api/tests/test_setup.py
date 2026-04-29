@@ -30,11 +30,12 @@ def conn() -> Iterator[Connection[tuple[object, ...]]]:
     assert DATABASE_URL_SYNC is not None
     conninfo = DATABASE_URL_SYNC.replace("postgresql+psycopg://", "postgresql://", 1)
     with psycopg.connect(conninfo, autocommit=True) as connection:
-        if _has_any_actor(connection) and not _is_isolated_test_db(conninfo):
+        isolated_test_db = _is_isolated_test_db(conninfo)
+        if _has_any_actor(connection) and not isolated_test_db:
             pytest.skip("setup tests require an isolated empty actor table")
-        _truncate_cap02_state(connection)
+        _truncate_cap02_state(connection, isolated_test_db=isolated_test_db)
         yield connection
-        _truncate_cap02_state(connection)
+        _truncate_cap02_state(connection, isolated_test_db=isolated_test_db)
 
 
 @pytest_asyncio.fixture()
@@ -51,8 +52,24 @@ async def async_client() -> AsyncIterator[httpx.AsyncClient]:
     await engine.dispose()
 
 
-def _truncate_cap02_state(conn: Connection[tuple[object, ...]]) -> None:
+def _truncate_cap02_state(
+    conn: Connection[tuple[object, ...]],
+    *,
+    isolated_test_db: bool,
+) -> None:
     with conn.cursor() as cursor:
+        if isolated_test_db:
+            cursor.execute("DELETE FROM audit_log")
+            cursor.execute("DELETE FROM job_comments")
+            cursor.execute("DELETE FROM job_edges")
+            cursor.execute("DELETE FROM jobs")
+            cursor.execute("DELETE FROM labels")
+            cursor.execute("DELETE FROM pipelines")
+            cursor.execute("DELETE FROM projects")
+            cursor.execute("DELETE FROM api_keys")
+            cursor.execute("DELETE FROM actors")
+            return
+
         cursor.execute(
             """
             DELETE FROM audit_log
