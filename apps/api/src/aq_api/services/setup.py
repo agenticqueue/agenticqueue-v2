@@ -23,6 +23,8 @@ BOOTSTRAP_PROJECT_NAME = "default"
 BOOTSTRAP_PROJECT_SLUG = "default"
 BOOTSTRAP_PROJECT_DESCRIPTION = "AQ default project for first-run installs."
 SHIP_A_THING_TEMPLATE_NAME = "ship-a-thing"
+SYSTEM_ACTOR_NAME = "aq-system-sweeper"
+SYSTEM_ACTOR_KIND = "script"
 READY_STATE = "ready"
 BOOTSTRAP_CONTRACTS: tuple[tuple[str, dict[str, object]], ...] = (
     (
@@ -95,7 +97,17 @@ def generate_founder_key() -> str:
 
 
 async def _actors_exist(session: AsyncSession) -> bool:
-    result = await session.scalar(select(exists().where(DbActor.id.is_not(None))))
+    result = await session.scalar(
+        select(
+            exists().where(
+                DbActor.id.is_not(None),
+                ~(
+                    (DbActor.name == SYSTEM_ACTOR_NAME)
+                    & (DbActor.kind == SYSTEM_ACTOR_KIND)
+                ),
+            )
+        )
+    )
     return bool(result)
 
 

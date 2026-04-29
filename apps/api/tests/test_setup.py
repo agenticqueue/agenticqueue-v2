@@ -18,6 +18,8 @@ ALREADY_SETUP_BODY = b'{"error":"already_setup"}'
 FOUNDER_ACTOR_NAME = "founder"
 BOOTSTRAP_PROJECT_SLUG = "default"
 BOOTSTRAP_PROJECT_DESCRIPTION = "AQ default project for first-run installs."
+SYSTEM_ACTOR_NAME = "aq-system-sweeper"
+SYSTEM_ACTOR_KIND = "script"
 
 pytestmark = pytest.mark.skipif(
     not DATABASE_URL_SYNC,
@@ -141,7 +143,14 @@ def _audit_count(conn: Connection[tuple[object, ...]]) -> int:
 
 def _actor_count(conn: Connection[tuple[object, ...]]) -> int:
     with conn.cursor() as cursor:
-        cursor.execute("SELECT count(*) FROM actors")
+        cursor.execute(
+            """
+            SELECT count(*)
+            FROM actors
+            WHERE NOT (name = %s AND kind = %s)
+            """,
+            (SYSTEM_ACTOR_NAME, SYSTEM_ACTOR_KIND),
+        )
         row = cursor.fetchone()
     assert row is not None
     return int(row[0])
@@ -191,6 +200,29 @@ def _insert_founder_project_without_template(
         project_id = project_row[0]
         assert isinstance(project_id, UUID)
     return actor_id, project_id
+
+
+def _ensure_system_actor(conn: Connection[tuple[object, ...]]) -> None:
+    with conn.cursor() as cursor:
+        cursor.execute(
+            """
+            INSERT INTO actors (name, kind)
+            SELECT %s, %s
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM actors
+                WHERE name = %s
+                  AND kind = %s
+                  AND deactivated_at IS NULL
+            )
+            """,
+            (
+                SYSTEM_ACTOR_NAME,
+                SYSTEM_ACTOR_KIND,
+                SYSTEM_ACTOR_NAME,
+                SYSTEM_ACTOR_KIND,
+            ),
+        )
 
 
 def _founder_row(
@@ -311,6 +343,21 @@ async def test_setup_second_call_returns_409_already_setup(
     assert first.status_code == 200
     assert second.status_code == 409
     assert second.content == ALREADY_SETUP_BODY
+    assert _actor_count(conn) == 1
+    assert _api_key_count(conn) == 1
+    assert _bootstrap_shape(conn)["job_count"] == 3
+
+
+@pytest.mark.asyncio
+async def test_setup_ignores_reserved_system_actor_on_first_call(
+    conn: Connection[tuple[object, ...]],
+    async_client: httpx.AsyncClient,
+) -> None:
+    _ensure_system_actor(conn)
+
+    response = await async_client.post("/setup", json={})
+
+    assert response.status_code == 200
     assert _actor_count(conn) == 1
     assert _api_key_count(conn) == 1
     assert _bootstrap_shape(conn)["job_count"] == 3
