@@ -3396,6 +3396,51 @@
         }
       },
       {
+        "name": "submit_job",
+        "description": "Submit a claimed Job with outcome='done'. AQ validates dod_results against the Job's inline contract, clears claim fields, records inline decisions_made/learnings, and writes one audit row.",
+        "inputSchema": {
+          "properties": {
+            "job_id": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "payload": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "agent_identity": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+            }
+          },
+          "required": [
+            "job_id",
+            "payload"
+          ],
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "idempotentHint": false
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        }
+      },
+      {
         "name": "comment_on_job",
         "description": "Add a durable Job comment. Audit rows record body_length only; the body is stored in job_comments.",
         "inputSchema": {

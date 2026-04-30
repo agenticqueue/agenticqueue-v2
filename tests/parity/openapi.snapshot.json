@@ -1609,6 +1609,95 @@
         }
       }
     },
+    "/jobs/{job_id}/submit": {
+      "post": {
+        "summary": "Submit Job",
+        "operationId": "submit_job_jobs__job_id__submit_post",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/SubmitJobDoneRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SubmitJobPendingReviewRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SubmitJobFailedRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SubmitJobBlockedRequest"
+                  }
+                ],
+                "discriminator": {
+                  "propertyName": "outcome",
+                  "mapping": {
+                    "done": "#/components/schemas/SubmitJobDoneRequest",
+                    "pending_review": "#/components/schemas/SubmitJobPendingReviewRequest",
+                    "failed": "#/components/schemas/SubmitJobFailedRequest",
+                    "blocked": "#/components/schemas/SubmitJobBlockedRequest"
+                  }
+                },
+                "title": "Request"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitJobResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/jobs/{job_id}/comments": {
       "post": {
         "summary": "Comment On Job",
@@ -3729,6 +3818,466 @@
           "bootstrap_project_id"
         ],
         "title": "SetupResponse"
+      },
+      "SubmitDecisionInline": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "statement": {
+            "type": "string",
+            "maxLength": 16384,
+            "minLength": 1,
+            "title": "Statement"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16384
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rationale"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title",
+          "statement"
+        ],
+        "title": "SubmitDecisionInline"
+      },
+      "SubmitJobBlockedRequest": {
+        "properties": {
+          "files_changed": {
+            "items": {
+              "type": "string",
+              "maxLength": 4096,
+              "minLength": 1
+            },
+            "type": "array",
+            "title": "Files Changed"
+          },
+          "risks_or_deviations": {
+            "items": {
+              "type": "string",
+              "maxLength": 16384,
+              "minLength": 1
+            },
+            "type": "array",
+            "title": "Risks Or Deviations"
+          },
+          "handoff": {
+            "type": "string",
+            "maxLength": 16384,
+            "minLength": 1,
+            "title": "Handoff"
+          },
+          "learnings": {
+            "items": {
+              "$ref": "#/components/schemas/SubmitLearningInline"
+            },
+            "type": "array",
+            "title": "Learnings"
+          },
+          "decisions_made": {
+            "items": {
+              "$ref": "#/components/schemas/SubmitDecisionInline"
+            },
+            "type": "array",
+            "title": "Decisions Made"
+          },
+          "outcome": {
+            "type": "string",
+            "const": "blocked",
+            "title": "Outcome"
+          },
+          "gated_on_job_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Gated On Job Id"
+          },
+          "blocker_reason": {
+            "type": "string",
+            "maxLength": 16384,
+            "minLength": 1,
+            "title": "Blocker Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "handoff",
+          "outcome",
+          "gated_on_job_id",
+          "blocker_reason"
+        ],
+        "title": "SubmitJobBlockedRequest"
+      },
+      "SubmitJobDodResult": {
+        "properties": {
+          "dod_id": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Dod Id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "passed",
+              "failed",
+              "blocked",
+              "not_applicable"
+            ],
+            "title": "Status"
+          },
+          "evidence": {
+            "items": {
+              "type": "string",
+              "maxLength": 4096,
+              "minLength": 1
+            },
+            "type": "array",
+            "title": "Evidence"
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 16384,
+            "minLength": 1,
+            "title": "Summary"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "dod_id",
+          "status",
+          "summary"
+        ],
+        "title": "SubmitJobDodResult"
+      },
+      "SubmitJobDoneRequest": {
+        "properties": {
+          "files_changed": {
+            "items": {
+              "type": "string",
+              "maxLength": 4096,
+              "minLength": 1
+            },
+            "type": "array",
+            "title": "Files Changed"
+          },
+          "risks_or_deviations": {
+            "items": {
+              "type": "string",
+              "maxLength": 16384,
+              "minLength": 1
+            },
+            "type": "array",
+            "title": "Risks Or Deviations"
+          },
+          "handoff": {
+            "type": "string",
+            "maxLength": 16384,
+            "minLength": 1,
+            "title": "Handoff"
+          },
+          "learnings": {
+            "items": {
+              "$ref": "#/components/schemas/SubmitLearningInline"
+            },
+            "type": "array",
+            "title": "Learnings"
+          },
+          "decisions_made": {
+            "items": {
+              "$ref": "#/components/schemas/SubmitDecisionInline"
+            },
+            "type": "array",
+            "title": "Decisions Made"
+          },
+          "dod_results": {
+            "items": {
+              "$ref": "#/components/schemas/SubmitJobDodResult"
+            },
+            "type": "array",
+            "title": "Dod Results"
+          },
+          "commands_run": {
+            "items": {
+              "type": "string",
+              "maxLength": 4096,
+              "minLength": 1
+            },
+            "type": "array",
+            "title": "Commands Run"
+          },
+          "verification_summary": {
+            "type": "string",
+            "maxLength": 16384,
+            "minLength": 1,
+            "title": "Verification Summary"
+          },
+          "outcome": {
+            "type": "string",
+            "const": "done",
+            "title": "Outcome"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "handoff",
+          "dod_results",
+          "verification_summary",
+          "outcome"
+        ],
+        "title": "SubmitJobDoneRequest"
+      },
+      "SubmitJobFailedRequest": {
+        "properties": {
+          "files_changed": {
+            "items": {
+              "type": "string",
+              "maxLength": 4096,
+              "minLength": 1
+            },
+            "type": "array",
+            "title": "Files Changed"
+          },
+          "risks_or_deviations": {
+            "items": {
+              "type": "string",
+              "maxLength": 16384,
+              "minLength": 1
+            },
+            "type": "array",
+            "title": "Risks Or Deviations"
+          },
+          "handoff": {
+            "type": "string",
+            "maxLength": 16384,
+            "minLength": 1,
+            "title": "Handoff"
+          },
+          "learnings": {
+            "items": {
+              "$ref": "#/components/schemas/SubmitLearningInline"
+            },
+            "type": "array",
+            "title": "Learnings"
+          },
+          "decisions_made": {
+            "items": {
+              "$ref": "#/components/schemas/SubmitDecisionInline"
+            },
+            "type": "array",
+            "title": "Decisions Made"
+          },
+          "dod_results": {
+            "items": {
+              "$ref": "#/components/schemas/SubmitJobDodResult"
+            },
+            "type": "array",
+            "title": "Dod Results"
+          },
+          "commands_run": {
+            "items": {
+              "type": "string",
+              "maxLength": 4096,
+              "minLength": 1
+            },
+            "type": "array",
+            "title": "Commands Run"
+          },
+          "verification_summary": {
+            "type": "string",
+            "maxLength": 16384,
+            "title": "Verification Summary",
+            "default": ""
+          },
+          "outcome": {
+            "type": "string",
+            "const": "failed",
+            "title": "Outcome"
+          },
+          "failure_reason": {
+            "type": "string",
+            "maxLength": 16384,
+            "minLength": 1,
+            "title": "Failure Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "handoff",
+          "outcome",
+          "failure_reason"
+        ],
+        "title": "SubmitJobFailedRequest"
+      },
+      "SubmitJobPendingReviewRequest": {
+        "properties": {
+          "files_changed": {
+            "items": {
+              "type": "string",
+              "maxLength": 4096,
+              "minLength": 1
+            },
+            "type": "array",
+            "title": "Files Changed"
+          },
+          "risks_or_deviations": {
+            "items": {
+              "type": "string",
+              "maxLength": 16384,
+              "minLength": 1
+            },
+            "type": "array",
+            "title": "Risks Or Deviations"
+          },
+          "handoff": {
+            "type": "string",
+            "maxLength": 16384,
+            "minLength": 1,
+            "title": "Handoff"
+          },
+          "learnings": {
+            "items": {
+              "$ref": "#/components/schemas/SubmitLearningInline"
+            },
+            "type": "array",
+            "title": "Learnings"
+          },
+          "decisions_made": {
+            "items": {
+              "$ref": "#/components/schemas/SubmitDecisionInline"
+            },
+            "type": "array",
+            "title": "Decisions Made"
+          },
+          "dod_results": {
+            "items": {
+              "$ref": "#/components/schemas/SubmitJobDodResult"
+            },
+            "type": "array",
+            "title": "Dod Results"
+          },
+          "commands_run": {
+            "items": {
+              "type": "string",
+              "maxLength": 4096,
+              "minLength": 1
+            },
+            "type": "array",
+            "title": "Commands Run"
+          },
+          "verification_summary": {
+            "type": "string",
+            "maxLength": 16384,
+            "minLength": 1,
+            "title": "Verification Summary"
+          },
+          "outcome": {
+            "type": "string",
+            "const": "pending_review",
+            "title": "Outcome"
+          },
+          "submitted_for_review": {
+            "type": "string",
+            "maxLength": 16384,
+            "minLength": 1,
+            "title": "Submitted For Review"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "handoff",
+          "dod_results",
+          "verification_summary",
+          "outcome",
+          "submitted_for_review"
+        ],
+        "title": "SubmitJobPendingReviewRequest"
+      },
+      "SubmitJobResponse": {
+        "properties": {
+          "job": {
+            "$ref": "#/components/schemas/Job"
+          },
+          "created_decisions": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Created Decisions"
+          },
+          "created_learnings": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Created Learnings"
+          },
+          "created_gated_on_edge": {
+            "type": "boolean",
+            "title": "Created Gated On Edge",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "job"
+        ],
+        "title": "SubmitJobResponse"
+      },
+      "SubmitLearningInline": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "statement": {
+            "type": "string",
+            "maxLength": 16384,
+            "minLength": 1,
+            "title": "Statement"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16384
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title",
+          "statement"
+        ],
+        "title": "SubmitLearningInline"
       },
       "UpdateJobResponse": {
         "properties": {

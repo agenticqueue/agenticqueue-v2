@@ -7,7 +7,7 @@ from uuid import UUID
 from fastmcp import FastMCP
 from fastmcp.tools.tool import ToolResult
 from mcp.types import TextContent
-from pydantic import Field
+from pydantic import Field, TypeAdapter
 
 from aq_api._health import current_health_status
 from aq_api._request_context import (
@@ -57,6 +57,7 @@ from aq_api.models import (
     ResetClaimRequest,
     ResetClaimResponse,
     RevokeApiKeyResponse,
+    SubmitJobRequest,
     UpdateJobResponse,
     UpdatePipelineRequest,
     UpdatePipelineResponse,
@@ -109,6 +110,7 @@ from aq_api.services.projects import list_projects as list_project_service
 from aq_api.services.projects import update_project as update_project_service
 from aq_api.services.release import release_job as release_job_service
 from aq_api.services.release import reset_claim as reset_claim_service
+from aq_api.services.submit import submit_job as submit_job_service
 
 MCP_NAME = "AgenticQueue 2.0 MCP"
 MCP_HTTP_PATH = "/mcp"
@@ -141,6 +143,9 @@ AgentIdentity = Annotated[
         ),
     ),
 ]
+SUBMIT_JOB_REQUEST_ADAPTER: TypeAdapter[SubmitJobRequest] = TypeAdapter(
+    SubmitJobRequest
+)
 
 
 def _authenticated_actor_id() -> UUID:
@@ -693,6 +698,51 @@ def create_mcp_server() -> FastMCP:
                 TextContent(type="text", text=next_step),
             ],
             structured_content=payload,
+        )
+
+    @server.tool(
+        description=(
+            "Submit a claimed Job with outcome='done'. AQ validates dod_results "
+            "against the Job's inline contract, clears claim fields, records "
+            "inline decisions_made/learnings, and writes one audit row."
+        ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": True,
+            "idempotentHint": False,
+        },
+        output_schema=None,
+    )
+    async def submit_job(
+        job_id: UUID,
+        payload: dict[str, object],
+        agent_identity: AgentIdentity = None,
+    ) -> ToolResult:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = SUBMIT_JOB_REQUEST_ADAPTER.validate_python(payload)
+            async with SessionLocal() as session:
+                response = await submit_job_service(
+                    session,
+                    job_id=job_id,
+                    request=request,
+                    actor_id=actor_id,
+                )
+
+        response_payload = response.model_dump(mode="json")
+        next_step = (
+            f"Job is now {response.job.state}. "
+            "created_decisions and created_learnings list any inline D&L rows "
+            "created with this submission."
+        )
+        return ToolResult(
+            content=[
+                _json_block({"job": response_payload["job"]}),
+                TextContent(type="text", text=next_step),
+            ],
+            structured_content=response_payload,
         )
 
     @server.tool(
