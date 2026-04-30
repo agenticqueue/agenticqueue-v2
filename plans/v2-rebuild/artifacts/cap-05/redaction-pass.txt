@@ -1,0 +1,1 @@
+redact_evidence.py completed for plans/v2-rebuild/artifacts/cap-05 on 2026-04-29T21:14:22.3793240-05:00. Token scan for aq2_* and argon2 patterns returned no matches.

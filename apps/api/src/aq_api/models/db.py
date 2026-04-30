@@ -352,3 +352,91 @@ class JobComment(Base):
         nullable=False,
         server_default=text("now()"),
     )
+
+
+class Decision(Base):
+    __tablename__ = "decisions"
+    __table_args__ = (
+        CheckConstraint(
+            "attached_to_kind IN ('job','pipeline','project')",
+            name="decisions_attached_to_kind_check",
+        ),
+        Index(
+            "idx_decisions_attached",
+            "attached_to_kind",
+            "attached_to_id",
+            "created_at",
+        ),
+        Index("idx_decisions_actor", "created_by_actor_id", "created_at"),
+    )
+
+    id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        primary_key=True,
+        server_default=text("gen_random_uuid()"),
+    )
+    attached_to_kind: Mapped[str] = mapped_column(Text, nullable=False)
+    attached_to_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        nullable=False,
+    )
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    statement: Mapped[str] = mapped_column(Text, nullable=False)
+    rationale: Mapped[str | None] = mapped_column(Text)
+    supersedes_decision_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("decisions.id", ondelete="RESTRICT"),
+    )
+    created_by_actor_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("actors.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=text("now()"),
+    )
+    deactivated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Learning(Base):
+    __tablename__ = "learnings"
+    __table_args__ = (
+        CheckConstraint(
+            "attached_to_kind IN ('job','pipeline','project')",
+            name="learnings_attached_to_kind_check",
+        ),
+        Index(
+            "idx_learnings_attached",
+            "attached_to_kind",
+            "attached_to_id",
+            "created_at",
+        ),
+        Index("idx_learnings_actor", "created_by_actor_id", "created_at"),
+    )
+
+    id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        primary_key=True,
+        server_default=text("gen_random_uuid()"),
+    )
+    attached_to_kind: Mapped[str] = mapped_column(Text, nullable=False)
+    attached_to_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        nullable=False,
+    )
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    statement: Mapped[str] = mapped_column(Text, nullable=False)
+    context: Mapped[str | None] = mapped_column(Text)
+    created_by_actor_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("actors.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=text("now()"),
+    )
+    deactivated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
