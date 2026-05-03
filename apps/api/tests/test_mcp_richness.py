@@ -115,6 +115,11 @@ async def test_mcp_initialize_instructions_and_tool_annotations() -> None:
     assert "call `heartbeat_job` every ~30 seconds while working" in (
         initialize.instructions
     )
+    assert "submit_job(job_id, payload)" in initialize.instructions
+    assert "review_complete(job_id, final_outcome)" in initialize.instructions
+    assert "decisions_made[]" in initialize.instructions
+    assert "learnings[]" in initialize.instructions
+    assert "submit_job ships in cap #5" not in initialize.instructions
 
     tool_by_name = {tool.name: tool for tool in tools}
     for tool_name in CAP4_MUTATION_TOOLS:
@@ -170,6 +175,6 @@ async def test_claim_next_job_mcp_returns_job_packet_and_next_step_text(
     assert json.loads(content[1]["text"]) == {"packet": structured["packet"]}
     assert content[2]["text"] == (
         f"You claimed Job {job_id} (mcp richness job). Read the inline contract "
-        "for the DoD; call heartbeat_job every ~30s; submit_job ships in "
-        "cap #5."
+        "for the DoD; call heartbeat_job every ~30s while working; call "
+        "submit_job with done, pending_review, failed, or blocked when ready."
     )

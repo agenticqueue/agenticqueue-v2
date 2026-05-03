@@ -384,7 +384,9 @@ async def test_claim_next_job_mcp_returns_multipart_and_structured_payload(
     assert first_block == {"job": structured["job"]}
     assert second_block == {"packet": structured["packet"]}
     assert "heartbeat_job" in content[2]["text"]
-    assert "submit_job ships in cap #5" in content[2]["text"]
+    assert "submit_job with done, pending_review, failed, or blocked" in (
+        content[2]["text"]
+    )
 
 
 @pytest.mark.asyncio

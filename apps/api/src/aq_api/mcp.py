@@ -127,9 +127,21 @@ Conventions:
 - After a successful `claim_next_job`: the response includes a Context Packet
   (cap #8 forward-compat — currently a stub with empty `previous_jobs[]` and
   `next_job_id: null`). Read the Job's inline `contract` field for the DoD,
-  call `heartbeat_job` every ~30 seconds while working, and call `submit_job`
-  (cap #5 — not yet shipped) when done. For now, use `release_job` to return
-  the Job to `ready` if you cannot complete it.
+  call `heartbeat_job` every ~30 seconds while working, and submit finished
+  work via `submit_job(job_id, payload)` with one of four outcomes:
+  done | pending_review | failed | blocked. The payload's shape per outcome
+  is described in the tool description. AQ validates the payload against the
+  Job's inline `contract` field; mismatches return error_code=`contract_violation`
+  with a `details` object naming the offending field.
+- Resolve a `pending_review` Job via `review_complete(job_id, final_outcome)`.
+  Any actor with a valid key can call this; the reviewing actor is recorded.
+  final_outcome must be done or failed.
+- `submit_job` accepts inline Decisions and Learnings via `decisions_made[]`
+  and `learnings[]` arrays. Non-empty entries become rows attached to the
+  submitting Job, returned as `created_decisions[]` and `created_learnings[]`
+  in the response.
+- Use `release_job` to return a claimed Job to `ready` only if you cannot
+  complete it and want another worker to take it.
 - Heartbeat cadence is recommended ~30 seconds. The server enforces only the
   AQ_CLAIM_LEASE_SECONDS lease (default 900s = 15 minutes); shorter cadence
   is friendlier to the auto-release sweep.
@@ -692,7 +704,8 @@ def create_mcp_server() -> FastMCP:
         next_step = (
             f"You claimed Job {response.job.id} ({response.job.title}). "
             "Read the inline contract for the DoD; call heartbeat_job every "
-            "~30s; submit_job ships in cap #5."
+            "~30s while working; call submit_job with done, pending_review, "
+            "failed, or blocked when ready."
         )
         return ToolResult(
             content=[
