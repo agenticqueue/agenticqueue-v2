@@ -25,6 +25,8 @@ from aq_api.models import (
     ReleaseJobResponse,
     ResetClaimRequest,
     ResetClaimResponse,
+    ReviewCompleteRequest,
+    ReviewCompleteResponse,
     SubmitJobRequest,
     SubmitJobResponse,
     UpdateJobResponse,
@@ -50,6 +52,7 @@ from aq_api.services.list_ready_jobs import InvalidReadyJobCursorError
 from aq_api.services.list_ready_jobs import list_ready_jobs as list_ready_jobs_service
 from aq_api.services.release import release_job as release_job_service
 from aq_api.services.release import reset_claim as reset_claim_service
+from aq_api.services.review import review_complete as review_complete_service
 from aq_api.services.submit import submit_job as submit_job_service
 
 router = APIRouter()
@@ -99,6 +102,24 @@ async def submit_job(
 ) -> SubmitJobResponse | JSONResponse:
     try:
         return await submit_job_service(
+            session,
+            job_id=job_id,
+            request=request,
+            actor_id=actor.id,
+        )
+    except BusinessRuleException as exc:
+        return business_rule_response(exc)
+
+
+@router.post("/jobs/{job_id}/review-complete", response_model=ReviewCompleteResponse)
+async def review_complete(
+    job_id: UUID,
+    request: ReviewCompleteRequest,
+    actor: AuthenticatedActor,
+    session: SessionDep,
+) -> ReviewCompleteResponse | JSONResponse:
+    try:
+        return await review_complete_service(
             session,
             job_id=job_id,
             request=request,

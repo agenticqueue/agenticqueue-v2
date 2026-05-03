@@ -772,6 +772,21 @@ def job_submit(
     typer.echo(_post_auth(f"/jobs/{job_id}/submit", body, timeout, config))
 
 
+@job_app.command("review-complete")
+def job_review_complete(
+    job_id: Annotated[str, typer.Argument(help="Job UUID.")],
+    final_outcome: Annotated[str, typer.Option("--final-outcome")],
+    notes: Annotated[str | None, typer.Option("--notes")] = None,
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Resolve a pending-review Job to done or failed."""
+    body: dict[str, object] = {"final_outcome": final_outcome}
+    if notes is not None:
+        body["notes"] = notes
+    typer.echo(_post_auth(f"/jobs/{job_id}/review-complete", body, timeout, config))
+
+
 app.add_typer(job_app, name="job")
 
 

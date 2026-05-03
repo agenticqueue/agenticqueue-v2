@@ -1,0 +1,1 @@
+redact_evidence.py plans/v2-rebuild/artifacts/cap-05 exit_code=0

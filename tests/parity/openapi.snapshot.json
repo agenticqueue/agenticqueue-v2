@@ -1698,6 +1698,72 @@
         }
       }
     },
+    "/jobs/{job_id}/review-complete": {
+      "post": {
+        "summary": "Review Complete",
+        "operationId": "review_complete_jobs__job_id__review_complete_post",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewCompleteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewCompleteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/jobs/{job_id}/comments": {
       "post": {
         "summary": "Comment On Job",
@@ -3772,6 +3838,49 @@
           "job"
         ],
         "title": "ResetClaimResponse"
+      },
+      "ReviewCompleteRequest": {
+        "properties": {
+          "final_outcome": {
+            "type": "string",
+            "enum": [
+              "done",
+              "failed"
+            ],
+            "title": "Final Outcome"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16384
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "final_outcome"
+        ],
+        "title": "ReviewCompleteRequest"
+      },
+      "ReviewCompleteResponse": {
+        "properties": {
+          "job": {
+            "$ref": "#/components/schemas/Job"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "job"
+        ],
+        "title": "ReviewCompleteResponse"
       },
       "RevokeApiKeyResponse": {
         "properties": {

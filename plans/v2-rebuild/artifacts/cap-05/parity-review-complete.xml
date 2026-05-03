@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="3.120" timestamp="2026-05-03T21:56:04.167969+00:00" hostname="d25e762add16"><testcase classname="tests.parity.test_four_surface_parity" name="test_review_complete_parity" time="3.051" /></testsuite></testsuites>

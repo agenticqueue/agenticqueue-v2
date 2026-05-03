@@ -1,7 +1,7 @@
 import json
 from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
 from fastmcp import FastMCP
@@ -56,6 +56,8 @@ from aq_api.models import (
     ReleaseJobResponse,
     ResetClaimRequest,
     ResetClaimResponse,
+    ReviewCompleteRequest,
+    ReviewCompleteResponse,
     RevokeApiKeyResponse,
     SubmitJobRequest,
     UpdateJobResponse,
@@ -110,6 +112,7 @@ from aq_api.services.projects import list_projects as list_project_service
 from aq_api.services.projects import update_project as update_project_service
 from aq_api.services.release import release_job as release_job_service
 from aq_api.services.release import reset_claim as reset_claim_service
+from aq_api.services.review import review_complete as review_complete_service
 from aq_api.services.submit import submit_job as submit_job_service
 
 MCP_NAME = "AgenticQueue 2.0 MCP"
@@ -749,6 +752,40 @@ def create_mcp_server() -> FastMCP:
             ],
             structured_content=response_payload,
         )
+
+    @server.tool(
+        description=(
+            "Resolve a pending_review Job to a terminal state. Any actor with a "
+            "valid key may call this; the reviewing actor is recorded in the "
+            "audit log. final_outcome must be done or failed."
+        ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": True,
+            "idempotentHint": False,
+        },
+    )
+    async def review_complete(
+        job_id: UUID,
+        final_outcome: Literal["done", "failed"],
+        notes: str | None = None,
+        agent_identity: AgentIdentity = None,
+    ) -> ReviewCompleteResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = ReviewCompleteRequest(
+                final_outcome=final_outcome,
+                notes=notes,
+            )
+            async with SessionLocal() as session:
+                return await review_complete_service(
+                    session,
+                    job_id=job_id,
+                    request=request,
+                    actor_id=actor_id,
+                )
 
     @server.tool(
         description=(
