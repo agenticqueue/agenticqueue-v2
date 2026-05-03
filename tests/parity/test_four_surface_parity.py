@@ -218,6 +218,78 @@ def _insert_pipeline_job(project_id: str, actor_id: str, title: str) -> str:
     return str(job_row[0])
 
 
+def _submit_done_payload(dod_id: str) -> dict[str, Any]:
+    return {
+        "outcome": "done",
+        "dod_results": [
+            {
+                "dod_id": dod_id,
+                "status": "passed",
+                "evidence": ["pytest -q tests/parity/test_four_surface_parity.py"],
+                "summary": "parity submit verified",
+            }
+        ],
+        "commands_run": ["pytest -q tests/parity/test_four_surface_parity.py"],
+        "verification_summary": "submit done parity passed",
+        "files_changed": ["tests/parity/test_four_surface_parity.py"],
+        "risks_or_deviations": [],
+        "handoff": "AQ2-77",
+        "decisions_made": [],
+        "learnings": [],
+    }
+
+
+def _submit_pending_review_payload(dod_id: str) -> dict[str, Any]:
+    return {
+        "outcome": "pending_review",
+        "submitted_for_review": "parity reviewer requested",
+        "dod_results": [
+            {
+                "dod_id": dod_id,
+                "status": "blocked",
+                "evidence": [],
+                "summary": "review still needed",
+            }
+        ],
+        "commands_run": ["pytest -q tests/parity/test_four_surface_parity.py"],
+        "verification_summary": "pending_review parity passed",
+        "files_changed": ["tests/parity/test_four_surface_parity.py"],
+        "risks_or_deviations": [],
+        "handoff": "AQ2-78",
+        "decisions_made": [],
+        "learnings": [],
+    }
+
+
+def _submit_failed_payload() -> dict[str, Any]:
+    return {
+        "outcome": "failed",
+        "failure_reason": "parity failure path exercised",
+        "files_changed": ["tests/parity/test_four_surface_parity.py"],
+        "risks_or_deviations": ["parity failure is synthetic"],
+        "handoff": "AQ2-78",
+        "decisions_made": [],
+        "learnings": [],
+    }
+
+
+def _submit_blocked_payload(gated_on_job_id: str) -> dict[str, Any]:
+    return {
+        "outcome": "blocked",
+        "gated_on_job_id": gated_on_job_id,
+        "blocker_reason": "waiting for parity gating Job",
+        "files_changed": ["tests/parity/test_four_surface_parity.py"],
+        "risks_or_deviations": [],
+        "handoff": "AQ2-78",
+        "decisions_made": [],
+        "learnings": [],
+    }
+
+
+def _review_complete_payload() -> dict[str, Any]:
+    return {"final_outcome": "done", "notes": "parity review accepted"}
+
+
 def _insert_pipeline_for_listing(
     project_id: str,
     actor_id: str,
@@ -2356,6 +2428,623 @@ def test_release_and_reset_claim_ops_match_rest_cli_mcp_and_audit(
         "audit": audit,
     }
     (artifact_dir / "release-reset-parity.txt").write_text(
+        redact_evidence(_json_text(artifact)),
+        encoding="utf-8",
+    )
+
+
+def test_submit_job_done_matches_rest_cli_mcp_and_audit(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    founder_actor_id: str,
+    artifact_dir: Path,
+    redact_evidence: Any,
+) -> None:
+    auth = {"Authorization": f"Bearer {founder_key}"}
+    dod_id = "submit-done-parity"
+    contract = {
+        "contract_type": "coding-task",
+        "dod_items": [{"id": dod_id}],
+    }
+    contract_json = json.dumps(contract, separators=(",", ":"))
+    fixture = _create_pipeline_triplet(
+        api_base_url,
+        mcp_base_url,
+        founder_key,
+        label="submit-done",
+        mcp_request_start=170,
+    )
+    pipeline_ids = fixture["pipeline_ids"]
+    project_ids = {
+        surface: payload["project"]["id"]
+        for surface, payload in fixture["projects"].items()
+    }
+
+    rest_job_response = httpx.post(
+        f"{api_base_url}/jobs",
+        headers=auth,
+        json={
+            "pipeline_id": pipeline_ids["rest"],
+            "title": "REST Submit Job",
+            "contract": contract,
+        },
+        timeout=10,
+    )
+    rest_job_response.raise_for_status()
+    cli_job = _run_cli(
+        [
+            "job",
+            "create",
+            "--pipeline",
+            pipeline_ids["cli"],
+            "--title",
+            "CLI Submit Job",
+            "--contract-json",
+            contract_json,
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_job = _call_mcp_tool(
+        mcp_base_url,
+        "create_job",
+        172,
+        api_key=founder_key,
+        arguments={
+            "pipeline_id": pipeline_ids["mcp"],
+            "title": "MCP Submit Job",
+            "contract": contract,
+            "agent_identity": "parity-submit-done",
+        },
+    )
+
+    rest_claim_response = httpx.post(
+        f"{api_base_url}/jobs/claim",
+        headers=auth,
+        json={"project_id": project_ids["rest"]},
+        timeout=10,
+    )
+    rest_claim_response.raise_for_status()
+    claims = {
+        "rest": rest_claim_response.json(),
+        "cli": _run_cli(
+            ["job", "claim", "--project", project_ids["cli"]],
+            api_base_url,
+            api_key=founder_key,
+        ),
+        "mcp": _call_mcp_tool(
+            mcp_base_url,
+            "claim_next_job",
+            173,
+            api_key=founder_key,
+            arguments={
+                "project_id": project_ids["mcp"],
+                "agent_identity": "parity-submit-done",
+            },
+        ),
+    }
+    job_ids = {
+        "rest": claims["rest"]["job"]["id"],
+        "cli": claims["cli"]["job"]["id"],
+        "mcp": claims["mcp"]["job"]["id"],
+    }
+    assert job_ids["rest"] == rest_job_response.json()["job"]["id"]
+    assert job_ids["cli"] == cli_job["job"]["id"]
+    assert job_ids["mcp"] == mcp_job["job"]["id"]
+
+    submit_payload = _submit_done_payload(dod_id)
+    rest_submit_response = httpx.post(
+        f"{api_base_url}/jobs/{job_ids['rest']}/submit",
+        headers=auth,
+        json=submit_payload,
+        timeout=10,
+    )
+    rest_submit_response.raise_for_status()
+    submits = {
+        "rest": rest_submit_response.json(),
+        "cli": _run_cli(
+            [
+                "job",
+                "submit",
+                job_ids["cli"],
+                "--outcome",
+                "done",
+                "--payload",
+                json.dumps(submit_payload, separators=(",", ":")),
+            ],
+            api_base_url,
+            api_key=founder_key,
+        ),
+        "mcp": _call_mcp_tool(
+            mcp_base_url,
+            "submit_job",
+            174,
+            api_key=founder_key,
+            arguments={
+                "job_id": job_ids["mcp"],
+                "payload": submit_payload,
+                "agent_identity": "parity-submit-done",
+            },
+        ),
+    }
+
+    for surface, payload in submits.items():
+        job = payload["job"]
+        assert job["id"] == job_ids[surface]
+        assert job["state"] == "done"
+        assert job["claimed_by_actor_id"] is None
+        assert job["claimed_at"] is None
+        assert job["claim_heartbeat_at"] is None
+        assert payload["created_decisions"] == []
+        assert payload["created_learnings"] == []
+        assert payload["created_gated_on_edge"] is False
+        assert "audit_row_id" not in payload
+
+    audit = _get_json(
+        f"{api_base_url}/audit",
+        api_key=founder_key,
+        params={"actor": founder_actor_id, "limit": 200},
+    )
+    submit_ops = [row for row in audit["entries"] if row["op"] == "submit_job"]
+    assert len(submit_ops) == 3
+    assert all(row["target_kind"] == "job" for row in submit_ops)
+    assert {row["target_id"] for row in submit_ops} == set(job_ids.values())
+    assert all(row["error_code"] is None for row in submit_ops)
+    assert all(row["request_payload"]["outcome"] == "done" for row in submit_ops)
+    assert all(row["response_payload"]["outcome"] == "done" for row in submit_ops)
+
+    artifact = {
+        "fixture": fixture,
+        "claims": claims,
+        "submits": submits,
+        "audit": audit,
+    }
+    (artifact_dir / "submit-done-parity.txt").write_text(
+        redact_evidence(_json_text(artifact)),
+        encoding="utf-8",
+    )
+
+
+def test_submit_pending_review_submit_failed_submit_blocked_parity(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    founder_actor_id: str,
+    artifact_dir: Path,
+    redact_evidence: Any,
+) -> None:
+    auth = {"Authorization": f"Bearer {founder_key}"}
+
+    outcomes: dict[str, dict[str, Any]] = {}
+    for index, outcome in enumerate(("pending_review", "failed", "blocked")):
+        label = outcome.replace("_", "-")
+        dod_id = f"submit-{outcome}-parity"
+        contract = {"contract_type": "coding-task", "dod_items": [{"id": dod_id}]}
+        contract_json = json.dumps(contract, separators=(",", ":"))
+        fixture = _create_pipeline_triplet(
+            api_base_url,
+            mcp_base_url,
+            founder_key,
+            label=f"submit-{label}",
+            mcp_request_start=180 + index * 10,
+        )
+        pipeline_ids = fixture["pipeline_ids"]
+        project_ids = {
+            surface: payload["project"]["id"]
+            for surface, payload in fixture["projects"].items()
+        }
+
+        rest_job_response = httpx.post(
+            f"{api_base_url}/jobs",
+            headers=auth,
+            json={
+                "pipeline_id": pipeline_ids["rest"],
+                "title": f"REST Submit {outcome} Job",
+                "contract": contract,
+            },
+            timeout=10,
+        )
+        rest_job_response.raise_for_status()
+        cli_job = _run_cli(
+            [
+                "job",
+                "create",
+                "--pipeline",
+                pipeline_ids["cli"],
+                "--title",
+                f"CLI Submit {outcome} Job",
+                "--contract-json",
+                contract_json,
+            ],
+            api_base_url,
+            api_key=founder_key,
+        )
+        mcp_job = _call_mcp_tool(
+            mcp_base_url,
+            "create_job",
+            182 + index * 10,
+            api_key=founder_key,
+            arguments={
+                "pipeline_id": pipeline_ids["mcp"],
+                "title": f"MCP Submit {outcome} Job",
+                "contract": contract,
+                "agent_identity": f"parity-submit-{outcome}",
+            },
+        )
+
+        gated_job_ids: dict[str, str] = {}
+        if outcome == "blocked":
+            for surface, pipeline_id in pipeline_ids.items():
+                if surface == "rest":
+                    response = httpx.post(
+                        f"{api_base_url}/jobs",
+                        headers=auth,
+                        json={
+                            "pipeline_id": pipeline_id,
+                            "title": "REST Gating Job",
+                            "contract": contract,
+                        },
+                        timeout=10,
+                    )
+                    response.raise_for_status()
+                    gated_job_ids[surface] = response.json()["job"]["id"]
+                elif surface == "cli":
+                    response = _run_cli(
+                        [
+                            "job",
+                            "create",
+                            "--pipeline",
+                            pipeline_id,
+                            "--title",
+                            "CLI Gating Job",
+                            "--contract-json",
+                            contract_json,
+                        ],
+                        api_base_url,
+                        api_key=founder_key,
+                    )
+                    gated_job_ids[surface] = response["job"]["id"]
+                else:
+                    response = _call_mcp_tool(
+                        mcp_base_url,
+                        "create_job",
+                        183 + index * 10,
+                        api_key=founder_key,
+                        arguments={
+                            "pipeline_id": pipeline_id,
+                            "title": "MCP Gating Job",
+                            "contract": contract,
+                            "agent_identity": f"parity-submit-{outcome}",
+                        },
+                    )
+                    gated_job_ids[surface] = response["job"]["id"]
+
+        rest_claim_response = httpx.post(
+            f"{api_base_url}/jobs/claim",
+            headers=auth,
+            json={"project_id": project_ids["rest"]},
+            timeout=10,
+        )
+        rest_claim_response.raise_for_status()
+        claims = {
+            "rest": rest_claim_response.json(),
+            "cli": _run_cli(
+                ["job", "claim", "--project", project_ids["cli"]],
+                api_base_url,
+                api_key=founder_key,
+            ),
+            "mcp": _call_mcp_tool(
+                mcp_base_url,
+                "claim_next_job",
+                184 + index * 10,
+                api_key=founder_key,
+                arguments={
+                    "project_id": project_ids["mcp"],
+                    "agent_identity": f"parity-submit-{outcome}",
+                },
+            ),
+        }
+        job_ids = {
+            "rest": claims["rest"]["job"]["id"],
+            "cli": claims["cli"]["job"]["id"],
+            "mcp": claims["mcp"]["job"]["id"],
+        }
+        assert job_ids["rest"] == rest_job_response.json()["job"]["id"]
+        assert job_ids["cli"] == cli_job["job"]["id"]
+        assert job_ids["mcp"] == mcp_job["job"]["id"]
+
+        if outcome == "pending_review":
+            submit_payloads = {
+                surface: _submit_pending_review_payload(dod_id)
+                for surface in ("rest", "cli", "mcp")
+            }
+        elif outcome == "failed":
+            submit_payloads = {
+                surface: _submit_failed_payload()
+                for surface in ("rest", "cli", "mcp")
+            }
+        else:
+            submit_payloads = {
+                surface: _submit_blocked_payload(gated_job_ids[surface])
+                for surface in ("rest", "cli", "mcp")
+            }
+
+        rest_submit_response = httpx.post(
+            f"{api_base_url}/jobs/{job_ids['rest']}/submit",
+            headers=auth,
+            json=submit_payloads["rest"],
+            timeout=10,
+        )
+        rest_submit_response.raise_for_status()
+        submits = {
+            "rest": rest_submit_response.json(),
+            "cli": _run_cli(
+                [
+                    "job",
+                    "submit",
+                    job_ids["cli"],
+                    "--outcome",
+                    outcome,
+                    "--payload",
+                    json.dumps(submit_payloads["cli"], separators=(",", ":")),
+                ],
+                api_base_url,
+                api_key=founder_key,
+            ),
+            "mcp": _call_mcp_tool(
+                mcp_base_url,
+                "submit_job",
+                185 + index * 10,
+                api_key=founder_key,
+                arguments={
+                    "job_id": job_ids["mcp"],
+                    "payload": submit_payloads["mcp"],
+                    "agent_identity": f"parity-submit-{outcome}",
+                },
+            ),
+        }
+
+        for surface, payload in submits.items():
+            job = payload["job"]
+            assert job["id"] == job_ids[surface]
+            assert job["state"] == outcome
+            assert job["claimed_by_actor_id"] is None
+            assert job["claimed_at"] is None
+            assert job["claim_heartbeat_at"] is None
+            assert payload["created_decisions"] == []
+            assert payload["created_learnings"] == []
+            assert payload["created_gated_on_edge"] is (outcome == "blocked")
+
+        outcomes[outcome] = {
+            "fixture": fixture,
+            "claims": claims,
+            "submits": submits,
+            "gated_job_ids": gated_job_ids,
+        }
+
+    audit = _get_json(
+        f"{api_base_url}/audit",
+        api_key=founder_key,
+        params={"actor": founder_actor_id, "limit": 300},
+    )
+    submit_ops = [row for row in audit["entries"] if row["op"] == "submit_job"]
+    for outcome in ("pending_review", "failed", "blocked"):
+        matching = [
+            row
+            for row in submit_ops
+            if row["response_payload"].get("outcome") == outcome
+        ]
+        assert len(matching) == 3
+        assert all(row["target_kind"] == "job" for row in matching)
+        assert all(row["error_code"] is None for row in matching)
+
+    artifact = {"outcomes": outcomes, "audit": audit}
+    (artifact_dir / "submit-other-outcomes-parity.txt").write_text(
+        redact_evidence(_json_text(artifact)),
+        encoding="utf-8",
+    )
+
+
+def test_review_complete_parity(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    founder_actor_id: str,
+    artifact_dir: Path,
+    redact_evidence: Any,
+) -> None:
+    auth = {"Authorization": f"Bearer {founder_key}"}
+    dod_id = "review-complete-parity"
+    contract = {"contract_type": "coding-task", "dod_items": [{"id": dod_id}]}
+    contract_json = json.dumps(contract, separators=(",", ":"))
+    fixture = _create_pipeline_triplet(
+        api_base_url,
+        mcp_base_url,
+        founder_key,
+        label="review-complete",
+        mcp_request_start=220,
+    )
+    pipeline_ids = fixture["pipeline_ids"]
+    project_ids = {
+        surface: payload["project"]["id"]
+        for surface, payload in fixture["projects"].items()
+    }
+
+    rest_job_response = httpx.post(
+        f"{api_base_url}/jobs",
+        headers=auth,
+        json={
+            "pipeline_id": pipeline_ids["rest"],
+            "title": "REST Review Complete Job",
+            "contract": contract,
+        },
+        timeout=10,
+    )
+    rest_job_response.raise_for_status()
+    cli_job = _run_cli(
+        [
+            "job",
+            "create",
+            "--pipeline",
+            pipeline_ids["cli"],
+            "--title",
+            "CLI Review Complete Job",
+            "--contract-json",
+            contract_json,
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_job = _call_mcp_tool(
+        mcp_base_url,
+        "create_job",
+        222,
+        api_key=founder_key,
+        arguments={
+            "pipeline_id": pipeline_ids["mcp"],
+            "title": "MCP Review Complete Job",
+            "contract": contract,
+            "agent_identity": "parity-review-complete",
+        },
+    )
+
+    rest_claim_response = httpx.post(
+        f"{api_base_url}/jobs/claim",
+        headers=auth,
+        json={"project_id": project_ids["rest"]},
+        timeout=10,
+    )
+    rest_claim_response.raise_for_status()
+    claims = {
+        "rest": rest_claim_response.json(),
+        "cli": _run_cli(
+            ["job", "claim", "--project", project_ids["cli"]],
+            api_base_url,
+            api_key=founder_key,
+        ),
+        "mcp": _call_mcp_tool(
+            mcp_base_url,
+            "claim_next_job",
+            224,
+            api_key=founder_key,
+            arguments={
+                "project_id": project_ids["mcp"],
+                "agent_identity": "parity-review-complete",
+            },
+        ),
+    }
+    job_ids = {
+        "rest": claims["rest"]["job"]["id"],
+        "cli": claims["cli"]["job"]["id"],
+        "mcp": claims["mcp"]["job"]["id"],
+    }
+    assert job_ids["rest"] == rest_job_response.json()["job"]["id"]
+    assert job_ids["cli"] == cli_job["job"]["id"]
+    assert job_ids["mcp"] == mcp_job["job"]["id"]
+
+    submit_payload = _submit_pending_review_payload(dod_id)
+    rest_submit_response = httpx.post(
+        f"{api_base_url}/jobs/{job_ids['rest']}/submit",
+        headers=auth,
+        json=submit_payload,
+        timeout=10,
+    )
+    rest_submit_response.raise_for_status()
+    submits = {
+        "rest": rest_submit_response.json(),
+        "cli": _run_cli(
+            [
+                "job",
+                "submit",
+                job_ids["cli"],
+                "--outcome",
+                "pending_review",
+                "--payload",
+                json.dumps(submit_payload, separators=(",", ":")),
+            ],
+            api_base_url,
+            api_key=founder_key,
+        ),
+        "mcp": _call_mcp_tool(
+            mcp_base_url,
+            "submit_job",
+            225,
+            api_key=founder_key,
+            arguments={
+                "job_id": job_ids["mcp"],
+                "payload": submit_payload,
+                "agent_identity": "parity-review-complete",
+            },
+        ),
+    }
+    assert all(
+        payload["job"]["state"] == "pending_review" for payload in submits.values()
+    )
+
+    review_payload = _review_complete_payload()
+    rest_review_response = httpx.post(
+        f"{api_base_url}/jobs/{job_ids['rest']}/review-complete",
+        headers=auth,
+        json=review_payload,
+        timeout=10,
+    )
+    rest_review_response.raise_for_status()
+    reviews = {
+        "rest": rest_review_response.json(),
+        "cli": _run_cli(
+            [
+                "job",
+                "review-complete",
+                job_ids["cli"],
+                "--final-outcome",
+                "done",
+                "--notes",
+                str(review_payload["notes"]),
+            ],
+            api_base_url,
+            api_key=founder_key,
+        ),
+        "mcp": _call_mcp_tool(
+            mcp_base_url,
+            "review_complete",
+            226,
+            api_key=founder_key,
+            arguments={
+                "job_id": job_ids["mcp"],
+                "final_outcome": "done",
+                "notes": review_payload["notes"],
+                "agent_identity": "parity-review-complete",
+            },
+        ),
+    }
+    for surface, payload in reviews.items():
+        assert payload["job"]["id"] == job_ids[surface]
+        assert payload["job"]["state"] == "done"
+
+    audit = _get_json(
+        f"{api_base_url}/audit",
+        api_key=founder_key,
+        params={"actor": founder_actor_id, "limit": 300},
+    )
+    review_ops = [row for row in audit["entries"] if row["op"] == "review_complete"]
+    assert len(review_ops) == 3
+    assert {row["target_id"] for row in review_ops} == set(job_ids.values())
+    assert all(row["target_kind"] == "job" for row in review_ops)
+    assert all(row["error_code"] is None for row in review_ops)
+    assert all(row["request_payload"]["final_outcome"] == "done" for row in review_ops)
+    assert all(
+        row["response_payload"]["final_outcome"] == "done" for row in review_ops
+    )
+
+    artifact = {
+        "fixture": fixture,
+        "claims": claims,
+        "submits": submits,
+        "reviews": reviews,
+        "audit": audit,
+    }
+    (artifact_dir / "review-complete-parity.txt").write_text(
         redact_evidence(_json_text(artifact)),
         encoding="utf-8",
     )

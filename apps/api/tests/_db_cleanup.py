@@ -50,6 +50,48 @@ def cleanup_cap03_state(
         )
         cursor.execute(
             """
+            DELETE FROM decisions
+            WHERE created_by_actor_id IN (
+                    SELECT id FROM actors WHERE name LIKE %s
+               )
+               OR (
+                    attached_to_kind = 'job'
+                    AND attached_to_id IN (
+                        SELECT jobs.id
+                        FROM jobs
+                        JOIN projects ON projects.id = jobs.project_id
+                        WHERE projects.slug LIKE %s
+                           OR projects.created_by_actor_id IN (
+                                SELECT id FROM actors WHERE name LIKE %s
+                           )
+                    )
+               )
+            """,
+            (actor_like, project_like, actor_like),
+        )
+        cursor.execute(
+            """
+            DELETE FROM learnings
+            WHERE created_by_actor_id IN (
+                    SELECT id FROM actors WHERE name LIKE %s
+               )
+               OR (
+                    attached_to_kind = 'job'
+                    AND attached_to_id IN (
+                        SELECT jobs.id
+                        FROM jobs
+                        JOIN projects ON projects.id = jobs.project_id
+                        WHERE projects.slug LIKE %s
+                           OR projects.created_by_actor_id IN (
+                                SELECT id FROM actors WHERE name LIKE %s
+                           )
+                    )
+               )
+            """,
+            (actor_like, project_like, actor_like),
+        )
+        cursor.execute(
+            """
             DELETE FROM job_comments
             WHERE author_actor_id IN (SELECT id FROM actors WHERE name LIKE %s)
                OR job_id IN (

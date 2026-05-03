@@ -16,6 +16,8 @@ _CAP04_TABLES = (
     "jobs",
     "job_edges",
     "job_comments",
+    "decisions",
+    "learnings",
 )
 
 

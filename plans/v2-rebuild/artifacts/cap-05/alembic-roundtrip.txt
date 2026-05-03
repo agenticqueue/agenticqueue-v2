@@ -1,0 +1,21 @@
+# alembic upgrade head
+Downloading mypy (14.1MiB)
+Downloading ruff (10.8MiB)
+ Downloading ruff
+ Downloading mypy
+Installed 9 packages in 158ms
+Bytecode compiled 4121 files in 451ms
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+
+# alembic downgrade -1
+Bytecode compiled 4121 files in 133ms
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running downgrade 0007_cap05 -> 0006_cap04, Add cap #5 decisions and learnings tables.
+
+# alembic upgrade head again
+Bytecode compiled 4121 files in 185ms
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade 0006_cap04 -> 0007_cap05, Add cap #5 decisions and learnings tables.

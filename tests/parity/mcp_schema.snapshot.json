@@ -3396,6 +3396,239 @@
         }
       },
       {
+        "name": "submit_job",
+        "description": "Submit a claimed Job with one of four outcomes: done, pending_review, failed, or blocked. done requires all contract DoDs to pass or be not_applicable; pending_review allows non-terminal DoD statuses with matching dod_ids; failed may omit dod_results but requires failure_reason; blocked requires gated_on_job_id and blocker_reason and writes a gated_on edge. All successful outcomes clear claim fields, record inline decisions_made/learnings, and write one audit row.",
+        "inputSchema": {
+          "properties": {
+            "job_id": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "payload": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "agent_identity": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+            }
+          },
+          "required": [
+            "job_id",
+            "payload"
+          ],
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "idempotentHint": false
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        }
+      },
+      {
+        "name": "review_complete",
+        "description": "Resolve a pending_review Job to a terminal state. Any actor with a valid key may call this; the reviewing actor is recorded in the audit log. final_outcome must be done or failed.",
+        "inputSchema": {
+          "properties": {
+            "job_id": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "final_outcome": {
+              "enum": [
+                "done",
+                "failed"
+              ],
+              "type": "string"
+            },
+            "notes": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "agent_identity": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+            }
+          },
+          "required": [
+            "job_id",
+            "final_outcome"
+          ],
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "job": {
+              "properties": {
+                "id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "pipeline_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "project_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "state": {
+                  "enum": [
+                    "draft",
+                    "ready",
+                    "in_progress",
+                    "done",
+                    "failed",
+                    "blocked",
+                    "pending_review",
+                    "cancelled"
+                  ],
+                  "type": "string"
+                },
+                "title": {
+                  "maxLength": 512,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "description": {
+                  "anyOf": [
+                    {
+                      "maxLength": 16384,
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "contract": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "labels": {
+                  "items": {
+                    "maxLength": 128,
+                    "minLength": 1,
+                    "pattern": "^[a-z0-9][a-z0-9:_-]{0,127}$",
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "claimed_by_actor_id": {
+                  "anyOf": [
+                    {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "claimed_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "claim_heartbeat_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "created_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "created_by_actor_id": {
+                  "anyOf": [
+                    {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "id",
+                "pipeline_id",
+                "project_id",
+                "state",
+                "title",
+                "contract",
+                "created_at"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "job"
+          ],
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "idempotentHint": false
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        }
+      },
+      {
         "name": "comment_on_job",
         "description": "Add a durable Job comment. Audit rows record body_length only; the body is stored in job_comments.",
         "inputSchema": {

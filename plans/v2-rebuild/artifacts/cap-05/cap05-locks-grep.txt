@@ -1,0 +1,92 @@
+# cap-5 lock evidence
+
+# audited_op + BusinessRuleException details
+
+apps\api\src\aq_api\_audit.py:11:class BusinessRuleException(Exception):
+apps\api\src\aq_api\_audit.py:16:        error_code: str,
+apps\api\src\aq_api\_audit.py:18:        details: Mapping[str, object] | None = None,
+apps\api\src\aq_api\_audit.py:22:        self.error_code = error_code
+apps\api\src\aq_api\_audit.py:23:        self.details = details
+apps\api\src\aq_api\_audit.py:31:    error_code: str | None = None
+apps\api\src\aq_api\_audit.py:35:async def audited_op(
+apps\api\src\aq_api\_audit.py:50:            response_payload = dict(audit.response_payload or {"error": exc.error_code})
+apps\api\src\aq_api\_audit.py:51:            if exc.details is not None and "details" not in response_payload:
+apps\api\src\aq_api\_audit.py:52:                response_payload["details"] = exc.details
+apps\api\src\aq_api\_audit.py:60:                error_code=exc.error_code,
+apps\api\src\aq_api\_audit.py:80:                    error_code=audit.error_code,
+
+
+# submit_job clears claim fields and inserts inline D&L
+
+apps\api\src\aq_api\services\submit.py:20:from aq_api.models.db import Decision as DbDecision
+apps\api\src\aq_api\services\submit.py:23:from aq_api.models.db import Learning as DbLearning
+apps\api\src\aq_api\services\submit.py:38:GATED_ON_EDGE_TYPE = "gated_on"
+apps\api\src\aq_api\services\submit.py:59:    created_decisions: list[UUID] = []
+apps\api\src\aq_api\services\submit.py:62:            insert(DbDecision)
+apps\api\src\aq_api\services\submit.py:72:            .returning(DbDecision.id)
+apps\api\src\aq_api\services\submit.py:74:        created_decisions.append(result.scalar_one())
+apps\api\src\aq_api\services\submit.py:76:    created_learnings: list[UUID] = []
+apps\api\src\aq_api\services\submit.py:79:            insert(DbLearning)
+apps\api\src\aq_api\services\submit.py:88:            .returning(DbLearning.id)
+apps\api\src\aq_api\services\submit.py:90:        created_learnings.append(result.scalar_one())
+apps\api\src\aq_api\services\submit.py:92:    return created_decisions, created_learnings
+apps\api\src\aq_api\services\submit.py:105:            edge_type=GATED_ON_EDGE_TYPE,
+apps\api\src\aq_api\services\submit.py:110:def _clear_claim(db_job: DbJob) -> None:
+apps\api\src\aq_api\services\submit.py:179:                error_code="job_not_in_progress",
+apps\api\src\aq_api\services\submit.py:186:                error_code="submit_forbidden",
+apps\api\src\aq_api\services\submit.py:212:        _clear_claim(db_job)
+apps\api\src\aq_api\services\submit.py:229:        created_decisions, created_learnings = await _insert_inline_dl(
+apps\api\src\aq_api\services\submit.py:240:            created_decisions=created_decisions,
+apps\api\src\aq_api\services\submit.py:241:            created_learnings=created_learnings,
+apps\api\src\aq_api\services\submit.py:246:            "created_decisions": [str(value) for value in created_decisions],
+apps\api\src\aq_api\services\submit.py:247:            "created_learnings": [str(value) for value in created_learnings],
+
+
+# review_complete any-actor pending_review path
+
+apps\api\src\aq_api\services\review.py:12:REVIEW_COMPLETE_OP = "review_complete"
+apps\api\src\aq_api\services\review.py:14:PENDING_REVIEW_STATE: JobState = "pending_review"
+apps\api\src\aq_api\services\review.py:22:async def review_complete(
+apps\api\src\aq_api\services\review.py:38:        op=REVIEW_COMPLETE_OP,
+apps\api\src\aq_api\services\review.py:52:        if state != PENDING_REVIEW_STATE:
+apps\api\src\aq_api\services\review.py:55:                error_code="job_not_pending_review",
+apps\api\src\aq_api\services\review.py:59:        db_job.state = request.final_outcome
+apps\api\src\aq_api\services\review.py:63:            "final_outcome": request.final_outcome,
+apps\api\src\aq_api\services\review.py:64:            "prior_state": PENDING_REVIEW_STATE,
+
+
+# MCP cap-5 guidance
+
+apps\api\src\aq_api\mcp.py:131:  work via `submit_job(job_id, payload)` with one of four outcomes:
+apps\api\src\aq_api\mcp.py:136:- Resolve a `pending_review` Job via `review_complete(job_id, final_outcome)`.
+apps\api\src\aq_api\mcp.py:139:- `submit_job` accepts inline Decisions and Learnings via `decisions_made[]`
+apps\api\src\aq_api\mcp.py:140:  and `learnings[]` arrays. Non-empty entries become rows attached to the
+apps\api\src\aq_api\mcp.py:141:  submitting Job, returned as `created_decisions[]` and `created_learnings[]`
+apps\api\src\aq_api\mcp.py:277:        annotations={"readOnlyHint": False, "destructiveHint": True},
+apps\api\src\aq_api\mcp.py:329:        annotations={"readOnlyHint": False, "destructiveHint": False},
+apps\api\src\aq_api\mcp.py:395:        annotations={"readOnlyHint": False, "destructiveHint": False},
+apps\api\src\aq_api\mcp.py:418:        annotations={"readOnlyHint": False, "destructiveHint": False},
+apps\api\src\aq_api\mcp.py:435:        annotations={"readOnlyHint": False, "destructiveHint": False},
+apps\api\src\aq_api\mcp.py:491:        annotations={"readOnlyHint": False, "destructiveHint": False},
+apps\api\src\aq_api\mcp.py:515:        annotations={"readOnlyHint": False, "destructiveHint": False},
+apps\api\src\aq_api\mcp.py:537:        annotations={"readOnlyHint": False, "destructiveHint": True},
+apps\api\src\aq_api\mcp.py:552:        annotations={"readOnlyHint": False, "destructiveHint": False},
+apps\api\src\aq_api\mcp.py:623:        annotations={"readOnlyHint": False, "destructiveHint": False},
+apps\api\src\aq_api\mcp.py:677:            "destructiveHint": True,
+apps\api\src\aq_api\mcp.py:732:            "destructiveHint": True,
+apps\api\src\aq_api\mcp.py:777:            "destructiveHint": True,
+apps\api\src\aq_api\mcp.py:808:        annotations={"readOnlyHint": False, "destructiveHint": False},
+apps\api\src\aq_api\mcp.py:858:        annotations={"readOnlyHint": False, "destructiveHint": True},
+apps\api\src\aq_api\mcp.py:878:            "destructiveHint": True,
+apps\api\src\aq_api\mcp.py:904:            "destructiveHint": True,
+apps\api\src\aq_api\mcp.py:933:            "destructiveHint": True,
+apps\api\src\aq_api\mcp.py:954:        annotations={"readOnlyHint": False, "destructiveHint": False},
+apps\api\src\aq_api\mcp.py:972:        annotations={"readOnlyHint": False, "destructiveHint": False},
+apps\api\src\aq_api\mcp.py:989:        annotations={"readOnlyHint": False, "destructiveHint": False},
+
+
+# no audit_row_id in SubmitJobResponse
+NO audit_row_id matches in models/jobs.py
+
+# no cap-9/cap-10 standalone ops in services
+NO standalone D&L or link_jobs service op matches

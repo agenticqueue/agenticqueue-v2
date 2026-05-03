@@ -13,6 +13,7 @@ from aq_api.models.auth import (
     SetupResponse,
     WhoamiResponse,
 )
+from aq_api.models.decisions import Decision, SubmitDecisionInline
 from aq_api.models.health import HealthStatus, VersionInfo
 from aq_api.models.inheritance import InheritanceReferenceLists
 from aq_api.models.job_comments import (
@@ -42,6 +43,15 @@ from aq_api.models.jobs import (
     ReleaseJobResponse,
     ResetClaimRequest,
     ResetClaimResponse,
+    ReviewCompleteRequest,
+    ReviewCompleteResponse,
+    SubmitJobBlockedRequest,
+    SubmitJobDodResult,
+    SubmitJobDoneRequest,
+    SubmitJobFailedRequest,
+    SubmitJobPendingReviewRequest,
+    SubmitJobRequest,
+    SubmitJobResponse,
     UpdateJobRequest,
     UpdateJobResponse,
 )
@@ -54,6 +64,7 @@ from aq_api.models.labels import (
     RegisterLabelRequest,
     RegisterLabelResponse,
 )
+from aq_api.models.learnings import Learning, SubmitLearningInline
 from aq_api.models.pipelines import (
     ArchivePipelineResponse,
     ClonePipelineRequest,
@@ -104,6 +115,7 @@ __all__ = [
     "CreatePipelineResponse",
     "CreateProjectRequest",
     "CreateProjectResponse",
+    "Decision",
     "DetachLabelRequest",
     "DetachLabelResponse",
     "GetJobResponse",
@@ -118,6 +130,7 @@ __all__ = [
     "JobEdgeType",
     "JobState",
     "Label",
+    "Learning",
     "ListActorsResponse",
     "ListJobCommentsRequest",
     "ListJobCommentsResponse",
@@ -130,6 +143,8 @@ __all__ = [
     "Pipeline",
     "Project",
     "ReleaseJobResponse",
+    "ReviewCompleteRequest",
+    "ReviewCompleteResponse",
     "RegisterLabelRequest",
     "RegisterLabelResponse",
     "RevokeApiKeyResponse",
@@ -137,6 +152,15 @@ __all__ = [
     "ResetClaimResponse",
     "SetupRequest",
     "SetupResponse",
+    "SubmitDecisionInline",
+    "SubmitJobBlockedRequest",
+    "SubmitJobDodResult",
+    "SubmitJobDoneRequest",
+    "SubmitJobFailedRequest",
+    "SubmitJobPendingReviewRequest",
+    "SubmitJobRequest",
+    "SubmitJobResponse",
+    "SubmitLearningInline",
     "UpdateJobRequest",
     "UpdateJobResponse",
     "UpdatePipelineRequest",

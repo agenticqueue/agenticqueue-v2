@@ -1,13 +1,13 @@
 import json
 from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
 from fastmcp import FastMCP
 from fastmcp.tools.tool import ToolResult
 from mcp.types import TextContent
-from pydantic import Field
+from pydantic import Field, TypeAdapter
 
 from aq_api._health import current_health_status
 from aq_api._request_context import (
@@ -56,7 +56,10 @@ from aq_api.models import (
     ReleaseJobResponse,
     ResetClaimRequest,
     ResetClaimResponse,
+    ReviewCompleteRequest,
+    ReviewCompleteResponse,
     RevokeApiKeyResponse,
+    SubmitJobRequest,
     UpdateJobResponse,
     UpdatePipelineRequest,
     UpdatePipelineResponse,
@@ -109,6 +112,8 @@ from aq_api.services.projects import list_projects as list_project_service
 from aq_api.services.projects import update_project as update_project_service
 from aq_api.services.release import release_job as release_job_service
 from aq_api.services.release import reset_claim as reset_claim_service
+from aq_api.services.review import review_complete as review_complete_service
+from aq_api.services.submit import submit_job as submit_job_service
 
 MCP_NAME = "AgenticQueue 2.0 MCP"
 MCP_HTTP_PATH = "/mcp"
@@ -122,9 +127,21 @@ Conventions:
 - After a successful `claim_next_job`: the response includes a Context Packet
   (cap #8 forward-compat — currently a stub with empty `previous_jobs[]` and
   `next_job_id: null`). Read the Job's inline `contract` field for the DoD,
-  call `heartbeat_job` every ~30 seconds while working, and call `submit_job`
-  (cap #5 — not yet shipped) when done. For now, use `release_job` to return
-  the Job to `ready` if you cannot complete it.
+  call `heartbeat_job` every ~30 seconds while working, and submit finished
+  work via `submit_job(job_id, payload)` with one of four outcomes:
+  done | pending_review | failed | blocked. The payload's shape per outcome
+  is described in the tool description. AQ validates the payload against the
+  Job's inline `contract` field; mismatches return error_code=`contract_violation`
+  with a `details` object naming the offending field.
+- Resolve a `pending_review` Job via `review_complete(job_id, final_outcome)`.
+  Any actor with a valid key can call this; the reviewing actor is recorded.
+  final_outcome must be done or failed.
+- `submit_job` accepts inline Decisions and Learnings via `decisions_made[]`
+  and `learnings[]` arrays. Non-empty entries become rows attached to the
+  submitting Job, returned as `created_decisions[]` and `created_learnings[]`
+  in the response.
+- Use `release_job` to return a claimed Job to `ready` only if you cannot
+  complete it and want another worker to take it.
 - Heartbeat cadence is recommended ~30 seconds. The server enforces only the
   AQ_CLAIM_LEASE_SECONDS lease (default 900s = 15 minutes); shorter cadence
   is friendlier to the auto-release sweep.
@@ -141,6 +158,9 @@ AgentIdentity = Annotated[
         ),
     ),
 ]
+SUBMIT_JOB_REQUEST_ADAPTER: TypeAdapter[SubmitJobRequest] = TypeAdapter(
+    SubmitJobRequest
+)
 
 
 def _authenticated_actor_id() -> UUID:
@@ -684,7 +704,8 @@ def create_mcp_server() -> FastMCP:
         next_step = (
             f"You claimed Job {response.job.id} ({response.job.title}). "
             "Read the inline contract for the DoD; call heartbeat_job every "
-            "~30s; submit_job ships in cap #5."
+            "~30s while working; call submit_job with done, pending_review, "
+            "failed, or blocked when ready."
         )
         return ToolResult(
             content=[
@@ -694,6 +715,90 @@ def create_mcp_server() -> FastMCP:
             ],
             structured_content=payload,
         )
+
+    @server.tool(
+        description=(
+            "Submit a claimed Job with one of four outcomes: done, "
+            "pending_review, failed, or blocked. done requires all contract DoDs "
+            "to pass or be not_applicable; pending_review allows non-terminal "
+            "DoD statuses with matching dod_ids; failed may omit dod_results but "
+            "requires failure_reason; blocked requires gated_on_job_id and "
+            "blocker_reason and writes a gated_on edge. All successful outcomes "
+            "clear claim fields, record inline decisions_made/learnings, and "
+            "write one audit row."
+        ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": True,
+            "idempotentHint": False,
+        },
+        output_schema=None,
+    )
+    async def submit_job(
+        job_id: UUID,
+        payload: dict[str, object],
+        agent_identity: AgentIdentity = None,
+    ) -> ToolResult:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = SUBMIT_JOB_REQUEST_ADAPTER.validate_python(payload)
+            async with SessionLocal() as session:
+                response = await submit_job_service(
+                    session,
+                    job_id=job_id,
+                    request=request,
+                    actor_id=actor_id,
+                )
+
+        response_payload = response.model_dump(mode="json")
+        next_step = (
+            f"Job is now {response.job.state}. "
+            "created_decisions and created_learnings list any inline D&L rows "
+            "created with this submission."
+        )
+        return ToolResult(
+            content=[
+                _json_block({"job": response_payload["job"]}),
+                TextContent(type="text", text=next_step),
+            ],
+            structured_content=response_payload,
+        )
+
+    @server.tool(
+        description=(
+            "Resolve a pending_review Job to a terminal state. Any actor with a "
+            "valid key may call this; the reviewing actor is recorded in the "
+            "audit log. final_outcome must be done or failed."
+        ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": True,
+            "idempotentHint": False,
+        },
+    )
+    async def review_complete(
+        job_id: UUID,
+        final_outcome: Literal["done", "failed"],
+        notes: str | None = None,
+        agent_identity: AgentIdentity = None,
+    ) -> ReviewCompleteResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = ReviewCompleteRequest(
+                final_outcome=final_outcome,
+                notes=notes,
+            )
+            async with SessionLocal() as session:
+                return await review_complete_service(
+                    session,
+                    job_id=job_id,
+                    request=request,
+                    actor_id=actor_id,
+                )
 
     @server.tool(
         description=(

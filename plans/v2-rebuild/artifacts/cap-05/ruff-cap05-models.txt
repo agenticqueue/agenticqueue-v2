@@ -1,0 +1,3 @@
+# ruff focused
+Bytecode compiled 4121 files in 139ms
+All checks passed!

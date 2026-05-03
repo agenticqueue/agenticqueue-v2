@@ -301,37 +301,38 @@ Cap #1 ships only `health_check` + `get_version`, which are trivially safe and s
 
 ### Capability #5: A Job can be submitted with one of four outcomes, validated against its Contract, and the state machine + audit log advance correctly
 
-**Statement:** A claimant calls `submit_job` with `outcome ∈ {done, pending_review, failed, blocked}` and a structured payload; AQ runs JSON Schema validation against the Job's Contract Profile (per ADR-AQ-030), checks state transition validity, commits the new state and audit row in one transaction, and emits a Run Ledger entry. Pending-review Jobs can be transitioned to `done` or `failed` by any key via `review_complete`. Contract Profile authoring (`register_contract_profile`, `version_contract_profile`) is governed and ships here so submit validation has profiles to validate against.
+**Statement:** A claimant calls `submit_job` with `outcome ∈ {done, pending_review, failed, blocked}` and a structured payload; AQ shape-validates the payload against the Job's inline `contract` JSONB per ADR-AQ-030 (no profile registry — dropped in cap-3.5 per `plan-update-2026-04-28.md` Decision 3), checks state transition validity, commits the new state and audit row in one transaction, and writes an audit row queryable as a "run" via cap #7's `list_runs`/`get_run` (no separate Run Ledger table per `plan-update-2026-04-28.md` Decision 1). Pending-review Jobs can be transitioned to `done` or `failed` by any key via `review_complete`. Per `plan-update-2026-04-28.md` Decision 4, `submit_job` accepts inline `decisions_made[]` and `learnings[]` arrays; non-empty entries create rows in the `decisions` and `learnings` tables attached to the submitting Job, in the same transaction. Cap #9 ships the standalone D&L ops + the inheritance lookups in `get_*` responses.
 
 **Why this is here:** The submission boundary is moat #5 — Contracts are schemas, not CI. Codex correction #4 (`update_job` is metadata only — transitions are explicit ops) is validated by this capability. Without this, a Job can be created and claimed but never finished — the loop doesn't close.
 
 **Depends on:** #4 (claim must exist before submit).
 
 **Scope guardrails (NOT in this capability):**
-- No DoD-runner that *executes* tests. Validation is shape-only: JSON Schema validation, required-evidence-fields-present, well-formed artifact pointers, declared-DoD-ids match `dod_results[]` ids, terminal status per DoD item.
+- No DoD-runner that *executes* tests. Validation is shape-only: outcome-specific required fields, declared DoD ids matching `dod_results[]`, terminal status per required DoD item for `outcome=done`, and evidence presence for passed DoDs.
 - No `gated_on` auto-resolution — `done` updates the state but does not trigger downstream Job promotion. That's #10.
-- No automatic Learning capture on submit — Learnings are manual and ship in #9.
-- No Run Ledger query (just emit) — query lands in #7.
-- Custom-field add/extend on profiles is deferred to v1.1; for v1, profiles are immutable once registered except for whole-version bumps.
+- No automatic Learning capture beyond explicit `learnings[]` entries submitted by the caller — standalone D&L ops ship in #9.
+- No Run Ledger query — audit rows are queryable through cap #7's `list_runs` / `get_run`.
+- No Contract Profile registry, profile authoring, or profile versioning. Jobs carry inline `contract` JSONB from cap #3.5.
 
 **Implements ops:**
-- `submit_job` — `POST /jobs/{id}/submit` with `outcome` and payload, `aq submit`, MCP `submit_job`. Claimant only. Outcome-specific required fields:
-  - `done` — full ADR-AQ-030 submission (`dod_results`, `commands_run`, `verification_summary`, `files_changed`, `risks_or_deviations`, `handoff`, `learnings`)
+- `submit_job` — `POST /jobs/{id}/submit` with `outcome` and payload, `aq job submit`, MCP `submit_job`. Claimant only. Outcome-specific required fields:
+  - `done` — closeout payload (`dod_results`, `commands_run`, `verification_summary`, `files_changed`, `risks_or_deviations`, `handoff`, `decisions_made[]`, `learnings[]`)
   - `pending_review` — `submitted_for_review` notes plus the same submission shape
   - `failed` — `failure_reason` plus partial submission
-  - `blocked` — `gated_on_job_id` (creates the `gated_on` edge in capability #10's machinery; here we just persist the field)
-- `review_complete` — `POST /jobs/{id}/review-complete` with `final_outcome ∈ {done, failed}`, `aq review-complete`, MCP `review_complete`. Any key. Only valid when Job is in `pending_review`.
+  - `blocked` — `gated_on_job_id` + `blocker_reason` (inserts one `job_edges(edge_type='gated_on')` row in the same transaction; cap #10 owns auto-resolution)
+- `review_complete` — `POST /jobs/{id}/review-complete` with `final_outcome ∈ {done, failed}`, `aq job review-complete`, MCP `review_complete`. Any key. Only valid when Job is in `pending_review`.
 
-**Note (2026-04-28):** Per [`plan-update-2026-04-28.md`](plan-update-2026-04-28.md) Decision 3, Contract Profiles are dropped entirely. `register_contract_profile` and `version_contract_profile` are removed from this capability. Every Job carries its inline `contract JSONB` (set at `create_job` time per cap #3.5); `submit_job` validates against that inline Contract per ADR-AQ-030 — no profile registry lookup. Per Decision 4, the Contract requires `decisions_made[]` and `learnings[]` arrays; non-empty arrays cause `submit_job` to create Decision and Learning nodes inline in its transaction, attached to the Job (cap #9 owns the D&L ops; this is a forward reference).
+**Note (2026-04-28):** Per `plan-update-2026-04-28.md` Decisions 1, 3, and 4: no Run Ledger table; no Contract Profile registry; inline D&L creation at submit time. Cap-5's locked shape is canonical.
 
 **MCP richness (extends the cap #4 pattern):**
 
 Continue the MCP-richness pattern established in cap #4. Specifically for this capability:
 
-1. **`submit_job` annotations** — `destructiveHint: true`, `idempotentHint: false` (terminal state transition). Description must spell out the four outcomes and the per-outcome required fields, and link to the inline Contract schema the payload validates against.
-2. **`submit_job` output bundling** — on success returns multi-part content: the updated Job dump + a reference to the new audit_log row that cap #7's `list_runs` queries (no separate Run Ledger table per [`plan-update-2026-04-28.md`](plan-update-2026-04-28.md) Decision 1) + a `text` block with the next-step hint ("Job is now `done`. If any downstream Jobs were `gated_on` this one, they may have been auto-promoted to `ready` (cap #10's resolver) — call `list_jobs?state=ready` to see what's claimable.").
+1. **`submit_job` annotations** — `destructiveHint: true`, `idempotentHint: false` (terminal or near-terminal state transition). Description must spell out the four outcomes and the per-outcome required fields, and point callers to the Job's inline `contract` field.
+2. **`submit_job` output bundling** — on success returns multi-part content: the updated Job dump + a `text` block with the next-step hint. There is no audit-row reference block; cap #7's `list_runs` / `get_run` queries audit rows by target and timestamp.
+3. **`review_complete` annotations** — `destructiveHint: true`, `idempotentHint: false`; description names the any-actor review rule and the `pending_review`-only state constraint.
 
-**Validation summary:** Create a Job with inline Contract JSONB, claim it, submit with `outcome=done` and a complete payload — Job transitions to `done`, Run Ledger has an entry, audit row written. Submit a different Job with an invalid payload (missing required field) — submit returns 422 with the schema error, Job stays in `in_progress`. Submit one with `outcome=pending_review` — Job lands in `pending_review`. From a different key, call `review_complete --final-outcome done` — Job is `done`. Submit one with `outcome=failed` — Job is `failed`. Submit one with `outcome=blocked` and `gated_on_job_id=<other_id>` — Job is `blocked` and the gated-on field is recorded (the auto-resolution wiring lands in #10). Try to submit a `done` Job again — rejected as terminal. Try to submit as a non-claimant — 403.
+**Validation summary:** Create a Job with inline Contract JSONB, claim it, submit with `outcome=done` and a complete payload — Job transitions to `done`, audit row written, and non-empty `decisions_made[]` / `learnings[]` entries are visible in the `decisions` / `learnings` tables. Submit a different Job with an invalid payload (missing required field) — submit returns 422 and Job stays `in_progress`. Submit one with `outcome=pending_review` — Job lands in `pending_review`. From a different key, call `aq job review-complete --final-outcome done` — Job is `done`. Submit one with `outcome=failed` — Job is `failed` with audit `error_code=NULL`. Submit one with `outcome=blocked` and `gated_on_job_id=<other_id>` — Job is `blocked` and a `gated_on` edge is inserted. Try to submit a `done` Job again — rejected as terminal. Try to submit as a non-claimant — 403. Run cap-5 race tests: 50 concurrent submit attempts produce exactly one winner, and sweep-vs-submit atomicity covers both interleavings with no partial D&L or audit state.
 
 **Status:** `[ ]`
 
@@ -614,7 +615,7 @@ Items that are out of scope for v1 (caps #1–#12) but are explicit deferrals �
 | **Docker image publishing** | Cap #12 | Cap #12 ships `pip install` / `uv pip install` only. No Docker image push to a registry (Docker Hub / GHCR). The `docker-compose.yml` from cap #1 builds locally; no published artifact. | v1.1 — GHCR push from `build.yml`, tag = git SHA + `latest`. |
 | **Multi-tenant deployment** | Cap #2 (auth disclaimer) | v1 is "trusted single-instance coordination tool." API keys identify Actors for audit, not authorization. Multi-tenant changes the threat model: per-tenant key scoping, row-level security in Postgres, isolation tests. | v1.1+ — capability of its own. Likely 2–3 capabilities (key scoping → RLS → isolation tests). |
 | **Automated upgrade migrations between versions** | Cap #12 | First-run Alembic migration only; no v0→v1 upgrade UX. Not a problem until there's a real install base. | v1.1 — `aq upgrade` CLI command + Alembic upgrade path. |
-| **Custom field add/extend on Contract Profiles** | Cap #5 | v1 profiles are immutable once registered except for whole-version bumps. No incremental field add. | v1.1 — `version_contract_profile` already exists; add a `patch_contract_profile` op for additive-only changes. |
+| **Custom field add/extend on Contract shapes** | Cap #5 | Cap #3.5 dropped the Contract Profile registry. v1 Jobs carry inline `contract` JSONB, and cap #5 validates only the locked submit payload shape. No governed profile-edit surface ships in v1. | v1.1+ — revisit if dogfood needs reusable governed Contract templates; design a new registry from current requirements instead of reviving the cancelled profile ops. |
 | **Multi-hop dependency analysis** | Cap #10 | v1 only does single-hop `gated_on` resolution at submit time. No "show me everything that depends on X transitively" tools. | v1.1 — graph traversal ops (`list_descendants`, `list_ancestors`, `find_cycles`). |
 | **Graph visualization UI view** | Cap #11 | The four read-only views (Pipelines, Workflows, ADRs, Learnings) ship; no graph viz of edges. | v1.1+ — usually a separate workstream; needs a layout engine decision (Cytoscape vs D3 vs hand-rolled SVG). |
 | **Audit-log browser UI** | Cap #11 | Audit log is queryable via CLI/MCP/REST only in v1. | v1.1 — read-only audit view. |

@@ -9,8 +9,10 @@ from aq_api.models.auth import (
     coerce_optional_utc_datetime,
     coerce_utc_datetime,
 )
+from aq_api.models.decisions import SubmitDecisionInline
 from aq_api.models.inheritance import InheritanceReferenceLists
 from aq_api.models.labels import LabelName
+from aq_api.models.learnings import SubmitLearningInline
 from aq_api.models.projects import Cursor, Description
 
 JobState = Literal[
@@ -26,6 +28,17 @@ JobState = Literal[
 JobEdgeType = Literal["gated_on", "parent_of", "sequence_next"]
 JobTitle = Annotated[str, Field(min_length=1, max_length=512)]
 PageLimit = Annotated[int, Field(default=50, ge=1, le=100)]
+DodResultStatus = Literal["passed", "failed", "blocked", "not_applicable"]
+EvidencePointer = Annotated[str, Field(min_length=1, max_length=4096)]
+CommandRun = Annotated[str, Field(min_length=1, max_length=4096)]
+VerificationSummary = Annotated[str, Field(min_length=1, max_length=16384)]
+ChangedFile = Annotated[str, Field(min_length=1, max_length=4096)]
+RiskOrDeviation = Annotated[str, Field(min_length=1, max_length=16384)]
+Handoff = Annotated[str, Field(min_length=1, max_length=16384)]
+FailureReason = Annotated[str, Field(min_length=1, max_length=16384)]
+BlockerReason = Annotated[str, Field(min_length=1, max_length=16384)]
+ReviewReason = Annotated[str, Field(min_length=1, max_length=16384)]
+ReviewNotes = Annotated[str | None, Field(default=None, max_length=16384)]
 
 
 class Job(AQModel):
@@ -158,4 +171,73 @@ class HeartbeatJobResponse(AQModel):
 
 
 class CancelJobResponse(AQModel):
+    job: Job
+
+
+class SubmitJobDodResult(AQModel):
+    dod_id: str = Field(min_length=1, max_length=512)
+    status: DodResultStatus
+    evidence: list[EvidencePointer] = Field(default_factory=list)
+    summary: str = Field(min_length=1, max_length=16384)
+
+
+class _SubmitJobBaseRequest(AQModel):
+    files_changed: list[ChangedFile] = Field(default_factory=list)
+    risks_or_deviations: list[RiskOrDeviation] = Field(default_factory=list)
+    handoff: Handoff
+    learnings: list[SubmitLearningInline] = Field(default_factory=list)
+    decisions_made: list[SubmitDecisionInline] = Field(default_factory=list)
+
+
+class _SubmitJobProofRequest(_SubmitJobBaseRequest):
+    dod_results: list[SubmitJobDodResult]
+    commands_run: list[CommandRun] = Field(default_factory=list)
+    verification_summary: VerificationSummary
+
+
+class SubmitJobDoneRequest(_SubmitJobProofRequest):
+    outcome: Literal["done"]
+
+
+class SubmitJobPendingReviewRequest(_SubmitJobProofRequest):
+    outcome: Literal["pending_review"]
+    submitted_for_review: ReviewReason
+
+
+class SubmitJobFailedRequest(_SubmitJobProofRequest):
+    outcome: Literal["failed"]
+    failure_reason: FailureReason
+    dod_results: list[SubmitJobDodResult] = Field(default_factory=list)
+    commands_run: list[CommandRun] = Field(default_factory=list)
+    verification_summary: str = Field(default="", max_length=16384)
+
+
+class SubmitJobBlockedRequest(_SubmitJobBaseRequest):
+    outcome: Literal["blocked"]
+    gated_on_job_id: UUID
+    blocker_reason: BlockerReason
+
+
+type SubmitJobRequest = Annotated[
+    SubmitJobDoneRequest
+    | SubmitJobPendingReviewRequest
+    | SubmitJobFailedRequest
+    | SubmitJobBlockedRequest,
+    Field(discriminator="outcome"),
+]
+
+
+class SubmitJobResponse(AQModel):
+    job: Job
+    created_decisions: list[UUID] = Field(default_factory=list)
+    created_learnings: list[UUID] = Field(default_factory=list)
+    created_gated_on_edge: bool = False
+
+
+class ReviewCompleteRequest(AQModel):
+    final_outcome: Literal["done", "failed"]
+    notes: ReviewNotes = None
+
+
+class ReviewCompleteResponse(AQModel):
     job: Job

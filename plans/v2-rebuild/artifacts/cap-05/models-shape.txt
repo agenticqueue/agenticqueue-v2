@@ -1,0 +1,19 @@
+# model config and response shape
+Bytecode compiled 4121 files in 164ms
+SubmitDecisionInline: extra=forbid frozen=True
+Decision: extra=forbid frozen=True
+SubmitLearningInline: extra=forbid frozen=True
+Learning: extra=forbid frozen=True
+SubmitJobDodResult: extra=forbid frozen=True
+SubmitJobDoneRequest: extra=forbid frozen=True
+SubmitJobPendingReviewRequest: extra=forbid frozen=True
+SubmitJobFailedRequest: extra=forbid frozen=True
+SubmitJobBlockedRequest: extra=forbid frozen=True
+SubmitJobResponse: extra=forbid frozen=True
+ReviewCompleteRequest: extra=forbid frozen=True
+ReviewCompleteResponse: extra=forbid frozen=True
+SubmitJobRequest=SubmitJobRequest
+SubmitJobResponse_fields=['created_decisions', 'created_gated_on_edge', 'created_learnings', 'job']
+audit_row_id_present=False
+
+# grep audit_row_id in models/jobs.py

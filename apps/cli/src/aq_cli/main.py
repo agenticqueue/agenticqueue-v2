@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Annotated, NoReturn
 
@@ -264,6 +265,18 @@ def _json_object(raw: str, *, option_name: str) -> dict[str, object]:
     if not isinstance(payload, dict):
         _fail("invalid_json", option_name, message="JSON value must be an object")
     return payload
+
+
+def _json_payload(raw: str, *, option_name: str) -> dict[str, object]:
+    if raw == "-":
+        return _json_object(sys.stdin.read(), option_name=option_name)
+    if raw.startswith("@"):
+        path = Path(raw[1:])
+        try:
+            return _json_object(path.read_text(encoding="utf-8"), option_name=raw)
+        except OSError as exc:
+            _fail("payload_read_failed", str(path), type=type(exc).__name__)
+    return _json_object(raw, option_name=option_name)
 
 
 @app.command()
@@ -735,6 +748,43 @@ def job_heartbeat(
 ) -> None:
     """Refresh the claim heartbeat for a Job claimed by the authenticated actor."""
     typer.echo(_post_auth(f"/jobs/{job_id}/heartbeat", {}, timeout, config))
+
+
+@job_app.command("submit")
+def job_submit(
+    job_id: Annotated[str, typer.Argument(help="Job UUID.")],
+    outcome: Annotated[str, typer.Option("--outcome")],
+    payload: Annotated[str, typer.Option("--payload")],
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Submit a claimed Job with a structured closeout payload."""
+    body = _json_payload(payload, option_name="--payload")
+    payload_outcome = body.get("outcome")
+    if payload_outcome is not None and payload_outcome != outcome:
+        _fail(
+            "outcome_mismatch",
+            "--payload",
+            payload_outcome=payload_outcome,
+            outcome=outcome,
+        )
+    body["outcome"] = outcome
+    typer.echo(_post_auth(f"/jobs/{job_id}/submit", body, timeout, config))
+
+
+@job_app.command("review-complete")
+def job_review_complete(
+    job_id: Annotated[str, typer.Argument(help="Job UUID.")],
+    final_outcome: Annotated[str, typer.Option("--final-outcome")],
+    notes: Annotated[str | None, typer.Option("--notes")] = None,
+    timeout: TimeoutOption = 10.0,
+    config: ConfigPathOption = None,
+) -> None:
+    """Resolve a pending-review Job to done or failed."""
+    body: dict[str, object] = {"final_outcome": final_outcome}
+    if notes is not None:
+        body["notes"] = notes
+    typer.echo(_post_auth(f"/jobs/{job_id}/review-complete", body, timeout, config))
 
 
 app.add_typer(job_app, name="job")

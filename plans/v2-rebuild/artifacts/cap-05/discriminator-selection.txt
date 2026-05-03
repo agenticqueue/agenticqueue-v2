@@ -1,0 +1,4 @@
+# pytest test_models_cap05
+Bytecode compiled 4121 files in 107ms
+.....                                                                    [100%]
+5 passed in 0.14s

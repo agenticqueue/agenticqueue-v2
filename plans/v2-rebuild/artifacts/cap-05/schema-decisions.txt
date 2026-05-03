@@ -1,0 +1,26 @@
+
+# schema decisions
+                                   Table "public.decisions"
+         Column         |           Type           | Collation | Nullable |      Default
+------------------------+--------------------------+-----------+----------+-------------------
+ id                     | uuid                     |           | not null | gen_random_uuid()
+ attached_to_kind       | text                     |           | not null |
+ attached_to_id         | uuid                     |           | not null |
+ title                  | text                     |           | not null |
+ statement              | text                     |           | not null |
+ rationale              | text                     |           |          |
+ supersedes_decision_id | uuid                     |           |          |
+ created_by_actor_id    | uuid                     |           | not null |
+ created_at             | timestamp with time zone |           | not null | now()
+ deactivated_at         | timestamp with time zone |           |          |
+Indexes:
+    "decisions_pkey" PRIMARY KEY, btree (id)
+    "idx_decisions_actor" btree (created_by_actor_id, created_at)
+    "idx_decisions_attached" btree (attached_to_kind, attached_to_id, created_at)
+Check constraints:
+    "decisions_attached_to_kind_check" CHECK (attached_to_kind = ANY (ARRAY['job'::text, 'pipeline'::text, 'project'::text]))
+Foreign-key constraints:
+    "decisions_created_by_actor_id_fkey" FOREIGN KEY (created_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    "decisions_supersedes_decision_id_fkey" FOREIGN KEY (supersedes_decision_id) REFERENCES decisions(id) ON DELETE RESTRICT
+Referenced by:
+    TABLE "decisions" CONSTRAINT "decisions_supersedes_decision_id_fkey" FOREIGN KEY (supersedes_decision_id) REFERENCES decisions(id) ON DELETE RESTRICT

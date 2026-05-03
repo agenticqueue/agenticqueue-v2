@@ -9,10 +9,18 @@ from aq_api.services.audit import record
 
 
 class BusinessRuleException(Exception):
-    def __init__(self, *, status_code: int, error_code: str, message: str) -> None:
+    def __init__(
+        self,
+        *,
+        status_code: int,
+        error_code: str,
+        message: str,
+        details: Mapping[str, object] | None = None,
+    ) -> None:
         super().__init__(message)
         self.status_code = status_code
         self.error_code = error_code
+        self.details = details
 
 
 @dataclass
@@ -39,7 +47,9 @@ async def audited_op(
     except BusinessRuleException as exc:
         await session.rollback()
         try:
-            response_payload = audit.response_payload or {"error": exc.error_code}
+            response_payload = dict(audit.response_payload or {"error": exc.error_code})
+            if exc.details is not None and "details" not in response_payload:
+                response_payload["details"] = exc.details
             await record(
                 session,
                 op=op,

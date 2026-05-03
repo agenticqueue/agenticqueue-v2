@@ -1,0 +1,15 @@
+
+# job_edges check
+              Table "public.job_edges"
+   Column    | Type | Collation | Nullable | Default
+-------------+------+-----------+----------+---------
+ from_job_id | uuid |           | not null |
+ to_job_id   | uuid |           | not null |
+ edge_type   | text |           | not null |
+Indexes:
+    "job_edges_pkey" PRIMARY KEY, btree (from_job_id, to_job_id, edge_type)
+Check constraints:
+    "job_edges_edge_type_check" CHECK (edge_type = ANY (ARRAY['gated_on'::text, 'parent_of'::text, 'sequence_next'::text]))
+Foreign-key constraints:
+    "job_edges_from_job_id_fkey" FOREIGN KEY (from_job_id) REFERENCES jobs(id) ON DELETE CASCADE
+    "job_edges_to_job_id_fkey" FOREIGN KEY (to_job_id) REFERENCES jobs(id) ON DELETE CASCADE
