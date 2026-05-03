@@ -702,9 +702,14 @@ def create_mcp_server() -> FastMCP:
 
     @server.tool(
         description=(
-            "Submit a claimed Job with outcome='done'. AQ validates dod_results "
-            "against the Job's inline contract, clears claim fields, records "
-            "inline decisions_made/learnings, and writes one audit row."
+            "Submit a claimed Job with one of four outcomes: done, "
+            "pending_review, failed, or blocked. done requires all contract DoDs "
+            "to pass or be not_applicable; pending_review allows non-terminal "
+            "DoD statuses with matching dod_ids; failed may omit dod_results but "
+            "requires failure_reason; blocked requires gated_on_job_id and "
+            "blocker_reason and writes a gated_on edge. All successful outcomes "
+            "clear claim fields, record inline decisions_made/learnings, and "
+            "write one audit row."
         ),
         annotations={
             "readOnlyHint": False,

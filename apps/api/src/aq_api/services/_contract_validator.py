@@ -1,5 +1,13 @@
 from aq_api._audit import BusinessRuleException
-from aq_api.models import SubmitJobDoneRequest
+from aq_api.models import (
+    SubmitJobDoneRequest,
+    SubmitJobFailedRequest,
+    SubmitJobPendingReviewRequest,
+)
+
+type _ProofSubmitRequest = (
+    SubmitJobDoneRequest | SubmitJobPendingReviewRequest | SubmitJobFailedRequest
+)
 
 
 def _contract_violation(rule: str, **details: object) -> BusinessRuleException:
@@ -27,10 +35,10 @@ def _contract_dod_ids(contract: dict[str, object]) -> set[str]:
     return dod_ids
 
 
-def validate_done_submission(
+def _validate_result_references(
     contract: dict[str, object],
-    request: SubmitJobDoneRequest,
-) -> None:
+    request: _ProofSubmitRequest,
+) -> set[str]:
     contract_dod_ids = _contract_dod_ids(contract)
     seen: set[str] = set()
 
@@ -50,6 +58,28 @@ def validate_done_submission(
                 dod_id=result.dod_id,
             )
 
+    return seen
+
+
+def _validate_passed_evidence(
+    request: SubmitJobDoneRequest | SubmitJobPendingReviewRequest,
+) -> None:
+    for index, result in enumerate(request.dod_results):
+        if result.status == "passed" and not result.evidence:
+            raise _contract_violation(
+                "no_evidence",
+                field=f"dod_results[{index}].evidence",
+                dod_id=result.dod_id,
+            )
+
+
+def validate_done_submission(
+    contract: dict[str, object],
+    request: SubmitJobDoneRequest,
+) -> None:
+    contract_dod_ids = _contract_dod_ids(contract)
+    seen = _validate_result_references(contract, request)
+
     missing = sorted(contract_dod_ids - seen)
     if missing:
         raise _contract_violation(
@@ -68,9 +98,19 @@ def validate_done_submission(
                 status=result.status,
             )
 
-        if result.status == "passed" and not result.evidence:
-            raise _contract_violation(
-                "no_evidence",
-                field=f"dod_results[{index}].evidence",
-                dod_id=result.dod_id,
-            )
+    _validate_passed_evidence(request)
+
+
+def validate_pending_review_submission(
+    contract: dict[str, object],
+    request: SubmitJobPendingReviewRequest,
+) -> None:
+    _validate_result_references(contract, request)
+    _validate_passed_evidence(request)
+
+
+def validate_failed_submission(
+    contract: dict[str, object],
+    request: SubmitJobFailedRequest,
+) -> None:
+    _validate_result_references(contract, request)
