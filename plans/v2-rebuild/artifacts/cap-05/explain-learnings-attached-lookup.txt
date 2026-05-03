@@ -1,0 +1,11 @@
+SET
+                                                            QUERY PLAN
+-----------------------------------------------------------------------------------------------------------------------------------
+ Index Scan using idx_learnings_attached on learnings  (cost=0.15..8.17 rows=1 width=88) (actual time=0.004..0.004 rows=0 loops=1)
+   Index Cond: ((attached_to_kind = 'job'::text) AND (attached_to_id = '[UUID_REDACTED]'::uuid))
+   Buffers: shared hit=2
+ Planning:
+   Buffers: shared hit=146
+ Planning Time: 0.424 ms
+ Execution Time: 0.026 ms
+(7 rows)
