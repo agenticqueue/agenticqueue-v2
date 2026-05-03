@@ -1,1 +1,15 @@
-redact_evidence.py completed for plans/v2-rebuild/artifacts/cap-05 on 2026-04-29T21:14:22.3793240-05:00. Token scan for aq2_* and argon2 patterns returned no matches.
+# redaction
+python scripts\\redact_evidence.py plans\\v2-rebuild\\artifacts\\cap-05
+redaction completed for plans/v2-rebuild/artifacts/cap-05
+
+# gitleaks docker scan
+docker run --rm -v %CD%:/repo zricethezav/gitleaks:v8.30.1 detect --no-git --source /repo/plans/v2-rebuild/artifacts/cap-05 --redact --verbose --no-color
+
+    ○
+    │╲
+    │ ○
+    ○ ░
+    ░    gitleaks
+
+11:22PM INF scanned ~58780 bytes (58.78 KB) in 166ms
+11:22PM INF no leaks found

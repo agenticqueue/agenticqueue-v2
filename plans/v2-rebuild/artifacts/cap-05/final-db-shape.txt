@@ -1,0 +1,105 @@
+# decisions
+                                   Table "public.decisions"
+         Column         |           Type           | Collation | Nullable |      Default
+------------------------+--------------------------+-----------+----------+-------------------
+ id                     | uuid                     |           | not null | gen_random_uuid()
+ attached_to_kind       | text                     |           | not null |
+ attached_to_id         | uuid                     |           | not null |
+ title                  | text                     |           | not null |
+ statement              | text                     |           | not null |
+ rationale              | text                     |           |          |
+ supersedes_decision_id | uuid                     |           |          |
+ created_by_actor_id    | uuid                     |           | not null |
+ created_at             | timestamp with time zone |           | not null | now()
+ deactivated_at         | timestamp with time zone |           |          |
+Indexes:
+    "decisions_pkey" PRIMARY KEY, btree (id)
+    "idx_decisions_actor" btree (created_by_actor_id, created_at)
+    "idx_decisions_attached" btree (attached_to_kind, attached_to_id, created_at)
+Check constraints:
+    "decisions_attached_to_kind_check" CHECK (attached_to_kind = ANY (ARRAY['job'::text, 'pipeline'::text, 'project'::text]))
+Foreign-key constraints:
+    "decisions_created_by_actor_id_fkey" FOREIGN KEY (created_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    "decisions_supersedes_decision_id_fkey" FOREIGN KEY (supersedes_decision_id) REFERENCES decisions(id) ON DELETE RESTRICT
+Referenced by:
+    TABLE "decisions" CONSTRAINT "decisions_supersedes_decision_id_fkey" FOREIGN KEY (supersedes_decision_id) REFERENCES decisions(id) ON DELETE RESTRICT
+
+
+# learnings
+                                 Table "public.learnings"
+       Column        |           Type           | Collation | Nullable |      Default
+---------------------+--------------------------+-----------+----------+-------------------
+ id                  | uuid                     |           | not null | gen_random_uuid()
+ attached_to_kind    | text                     |           | not null |
+ attached_to_id      | uuid                     |           | not null |
+ title               | text                     |           | not null |
+ statement           | text                     |           | not null |
+ context             | text                     |           |          |
+ created_by_actor_id | uuid                     |           | not null |
+ created_at          | timestamp with time zone |           | not null | now()
+ deactivated_at      | timestamp with time zone |           |          |
+Indexes:
+    "learnings_pkey" PRIMARY KEY, btree (id)
+    "idx_learnings_actor" btree (created_by_actor_id, created_at)
+    "idx_learnings_attached" btree (attached_to_kind, attached_to_id, created_at)
+Check constraints:
+    "learnings_attached_to_kind_check" CHECK (attached_to_kind = ANY (ARRAY['job'::text, 'pipeline'::text, 'project'::text]))
+Foreign-key constraints:
+    "learnings_created_by_actor_id_fkey" FOREIGN KEY (created_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+
+
+# jobs
+                                    Table "public.jobs"
+       Column        |           Type           | Collation | Nullable |      Default
+---------------------+--------------------------+-----------+----------+-------------------
+ id                  | uuid                     |           | not null | gen_random_uuid()
+ pipeline_id         | uuid                     |           | not null |
+ project_id          | uuid                     |           | not null |
+ state               | text                     |           | not null |
+ title               | text                     |           | not null |
+ description         | text                     |           |          |
+ labels              | text[]                   |           | not null | '{}'::text[]
+ claimed_by_actor_id | uuid                     |           |          |
+ claimed_at          | timestamp with time zone |           |          |
+ claim_heartbeat_at  | timestamp with time zone |           |          |
+ created_at          | timestamp with time zone |           | not null | now()
+ created_by_actor_id | uuid                     |           |          |
+ contract            | jsonb                    |           | not null | '{}'::jsonb
+Indexes:
+    "jobs_pkey" PRIMARY KEY, btree (id)
+    "idx_jobs_in_progress_heartbeat" btree (claim_heartbeat_at, id) WHERE state = 'in_progress'::text
+    "idx_jobs_labels_gin" gin (labels)
+    "idx_jobs_state_project_created" btree (state, project_id, created_at) WHERE state = 'ready'::text
+Check constraints:
+    "jobs_state_check" CHECK (state = ANY (ARRAY['draft'::text, 'ready'::text, 'in_progress'::text, 'done'::text, 'failed'::text, 'blocked'::text, 'pending_review'::text, 'cancelled'::text]))
+Foreign-key constraints:
+    "jobs_claimed_by_actor_id_fkey" FOREIGN KEY (claimed_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    "jobs_created_by_actor_id_fkey" FOREIGN KEY (created_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT
+    "jobs_project_id_fkey" FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE RESTRICT
+Referenced by:
+    TABLE "job_comments" CONSTRAINT "job_comments_job_id_fkey" FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+    TABLE "job_edges" CONSTRAINT "job_edges_from_job_id_fkey" FOREIGN KEY (from_job_id) REFERENCES jobs(id) ON DELETE CASCADE
+    TABLE "job_edges" CONSTRAINT "job_edges_to_job_id_fkey" FOREIGN KEY (to_job_id) REFERENCES jobs(id) ON DELETE CASCADE
+
+
+# job_edges
+              Table "public.job_edges"
+   Column    | Type | Collation | Nullable | Default
+-------------+------+-----------+----------+---------
+ from_job_id | uuid |           | not null |
+ to_job_id   | uuid |           | not null |
+ edge_type   | text |           | not null |
+Indexes:
+    "job_edges_pkey" PRIMARY KEY, btree (from_job_id, to_job_id, edge_type)
+Check constraints:
+    "job_edges_edge_type_check" CHECK (edge_type = ANY (ARRAY['gated_on'::text, 'parent_of'::text, 'sequence_next'::text]))
+Foreign-key constraints:
+    "job_edges_from_job_id_fkey" FOREIGN KEY (from_job_id) REFERENCES jobs(id) ON DELETE CASCADE
+    "job_edges_to_job_id_fkey" FOREIGN KEY (to_job_id) REFERENCES jobs(id) ON DELETE CASCADE
+
+
+# table counts
+ decisions_count | learnings_count | job_edges_count
+-----------------+-----------------+-----------------
+               0 |               0 |               0
+(1 row)

@@ -1,0 +1,9 @@
+AQ2-73 Pipeline closure discovery status
+========================================
+issue_id: AQ2-73
+state: backlog
+comment_id: [UUID_REDACTED]
+commented_at: 2026-05-03T18:20:44.585910-05:00
+
+Comment posted:
+Cap-5 explicitly keeps Pipeline closure out of scope. Cap-5 closes the Job loop (`submit_job` + `review_complete`) and acknowledges that Pipeline-level rollup/terminal-state semantics still need discovery here before cap #6 dogfood. AQ2-73 stays backlog and remains the tracking item for that decision.
