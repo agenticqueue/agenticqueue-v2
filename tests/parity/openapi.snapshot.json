@@ -3022,6 +3022,654 @@
           }
         }
       }
+    },
+    "/objectives": {
+      "post": {
+        "summary": "Create Objective",
+        "operationId": "create_objective_objectives_post",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateObjectiveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateObjectiveResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Objectives",
+        "operationId": "list_objectives_objectives_get",
+        "parameters": [
+          {
+            "name": "attached_to_kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Attached To Kind"
+            }
+          },
+          {
+            "name": "attached_to_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Attached To Id"
+            }
+          },
+          {
+            "name": "actor_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Actor Id"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "include_deactivated",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Deactivated"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListObjectivesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/objectives/{objective_id}": {
+      "get": {
+        "summary": "Get Objective",
+        "operationId": "get_objective_objectives__objective_id__get",
+        "parameters": [
+          {
+            "name": "objective_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Objective Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetObjectiveResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update Objective",
+        "operationId": "update_objective_objectives__objective_id__patch",
+        "parameters": [
+          {
+            "name": "objective_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Objective Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateObjectiveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateObjectiveResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/components": {
+      "post": {
+        "summary": "Create Component",
+        "operationId": "create_component_components_post",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateComponentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateComponentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Components",
+        "operationId": "list_components_components_get",
+        "parameters": [
+          {
+            "name": "attached_to_kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Attached To Kind"
+            }
+          },
+          {
+            "name": "attached_to_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Attached To Id"
+            }
+          },
+          {
+            "name": "actor_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Actor Id"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "include_deactivated",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Deactivated"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListComponentsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/components/{component_id}": {
+      "get": {
+        "summary": "Get Component",
+        "operationId": "get_component_components__component_id__get",
+        "parameters": [
+          {
+            "name": "component_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Component Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetComponentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update Component",
+        "operationId": "update_component_components__component_id__patch",
+        "parameters": [
+          {
+            "name": "component_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Component Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateComponentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateComponentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3467,6 +4115,86 @@
         ],
         "title": "CommentOnJobResponse"
       },
+      "Component": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "attached_to_kind": {
+            "type": "string",
+            "enum": [
+              "project",
+              "pipeline"
+            ],
+            "title": "Attached To Kind"
+          },
+          "attached_to_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Attached To Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "purpose": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16384
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purpose"
+          },
+          "access_path": {
+            "type": "string",
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Access Path"
+          },
+          "created_by_actor_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By Actor Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "deactivated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deactivated At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "attached_to_kind",
+          "attached_to_id",
+          "name",
+          "access_path",
+          "created_by_actor_id",
+          "created_at"
+        ],
+        "title": "Component"
+      },
       "ContextPacketStub": {
         "properties": {
           "project_id": {
@@ -3568,6 +4296,69 @@
           "key"
         ],
         "title": "CreateActorResponse"
+      },
+      "CreateComponentRequest": {
+        "properties": {
+          "attached_to_kind": {
+            "type": "string",
+            "enum": [
+              "project",
+              "pipeline"
+            ],
+            "title": "Attached To Kind"
+          },
+          "attached_to_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Attached To Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "purpose": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16384
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purpose"
+          },
+          "access_path": {
+            "type": "string",
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Access Path"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "attached_to_kind",
+          "attached_to_id",
+          "name",
+          "access_path"
+        ],
+        "title": "CreateComponentRequest"
+      },
+      "CreateComponentResponse": {
+        "properties": {
+          "component": {
+            "$ref": "#/components/schemas/Component"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "component"
+        ],
+        "title": "CreateComponentResponse"
       },
       "CreateDecisionRequest": {
         "properties": {
@@ -3685,6 +4476,86 @@
           "job"
         ],
         "title": "CreateJobResponse"
+      },
+      "CreateObjectiveRequest": {
+        "properties": {
+          "attached_to_kind": {
+            "type": "string",
+            "enum": [
+              "project",
+              "pipeline"
+            ],
+            "title": "Attached To Kind"
+          },
+          "attached_to_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Attached To Id"
+          },
+          "statement": {
+            "type": "string",
+            "maxLength": 16384,
+            "minLength": 1,
+            "title": "Statement"
+          },
+          "metric": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metric"
+          },
+          "target_value": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Value"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "attached_to_kind",
+          "attached_to_id",
+          "statement"
+        ],
+        "title": "CreateObjectiveRequest"
+      },
+      "CreateObjectiveResponse": {
+        "properties": {
+          "objective": {
+            "$ref": "#/components/schemas/Objective"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "objective"
+        ],
+        "title": "CreateObjectiveResponse"
       },
       "CreatePipelineRequest": {
         "properties": {
@@ -3945,6 +4816,19 @@
         ],
         "title": "EditLearningResponse"
       },
+      "GetComponentResponse": {
+        "properties": {
+          "component": {
+            "$ref": "#/components/schemas/Component"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "component"
+        ],
+        "title": "GetComponentResponse"
+      },
       "GetDecisionResponse": {
         "properties": {
           "decision": {
@@ -3975,6 +4859,12 @@
           },
           "learnings": {
             "$ref": "#/components/schemas/InheritanceReferenceLists"
+          },
+          "objectives": {
+            "$ref": "#/components/schemas/InheritanceReferenceLists"
+          },
+          "components": {
+            "$ref": "#/components/schemas/InheritanceReferenceLists"
           }
         },
         "additionalProperties": false,
@@ -4004,6 +4894,19 @@
         ],
         "title": "GetLearningResponse"
       },
+      "GetObjectiveResponse": {
+        "properties": {
+          "objective": {
+            "$ref": "#/components/schemas/Objective"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "objective"
+        ],
+        "title": "GetObjectiveResponse"
+      },
       "GetPipelineResponse": {
         "properties": {
           "pipeline": {
@@ -4013,6 +4916,12 @@
             "$ref": "#/components/schemas/InheritanceReferenceLists"
           },
           "learnings": {
+            "$ref": "#/components/schemas/InheritanceReferenceLists"
+          },
+          "objectives": {
+            "$ref": "#/components/schemas/InheritanceReferenceLists"
+          },
+          "components": {
             "$ref": "#/components/schemas/InheritanceReferenceLists"
           }
         },
@@ -4032,6 +4941,12 @@
             "$ref": "#/components/schemas/InheritanceReferenceLists"
           },
           "learnings": {
+            "$ref": "#/components/schemas/InheritanceReferenceLists"
+          },
+          "objectives": {
+            "$ref": "#/components/schemas/InheritanceReferenceLists"
+          },
+          "components": {
             "$ref": "#/components/schemas/InheritanceReferenceLists"
           }
         },
@@ -4452,6 +5367,34 @@
         ],
         "title": "ListActorsResponse"
       },
+      "ListComponentsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Component"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "ListComponentsResponse"
+      },
       "ListDecisionsResponse": {
         "properties": {
           "items": {
@@ -4568,6 +5511,34 @@
         ],
         "title": "ListLearningsResponse"
       },
+      "ListObjectivesResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Objective"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "ListObjectivesResponse"
+      },
       "ListPipelinesResponse": {
         "properties": {
           "pipelines": {
@@ -4654,6 +5625,103 @@
           "jobs"
         ],
         "title": "ListReadyJobsResponse"
+      },
+      "Objective": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "attached_to_kind": {
+            "type": "string",
+            "enum": [
+              "project",
+              "pipeline"
+            ],
+            "title": "Attached To Kind"
+          },
+          "attached_to_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Attached To Id"
+          },
+          "statement": {
+            "type": "string",
+            "maxLength": 16384,
+            "minLength": 1,
+            "title": "Statement"
+          },
+          "metric": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metric"
+          },
+          "target_value": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Value"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          },
+          "created_by_actor_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By Actor Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "deactivated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deactivated At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "attached_to_kind",
+          "attached_to_id",
+          "statement",
+          "created_by_actor_id",
+          "created_at"
+        ],
+        "title": "Objective"
       },
       "Pipeline": {
         "properties": {
@@ -5548,6 +6616,64 @@
         ],
         "title": "SupersedeDecisionResponse"
       },
+      "UpdateComponentRequest": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 256,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "purpose": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16384
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purpose"
+          },
+          "access_path": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1024,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Access Path"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "UpdateComponentRequest"
+      },
+      "UpdateComponentResponse": {
+        "properties": {
+          "component": {
+            "$ref": "#/components/schemas/Component"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "component"
+        ],
+        "title": "UpdateComponentResponse"
+      },
       "UpdateJobResponse": {
         "properties": {
           "job": {
@@ -5560,6 +6686,75 @@
           "job"
         ],
         "title": "UpdateJobResponse"
+      },
+      "UpdateObjectiveRequest": {
+        "properties": {
+          "statement": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16384,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Statement"
+          },
+          "metric": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metric"
+          },
+          "target_value": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Value"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "UpdateObjectiveRequest"
+      },
+      "UpdateObjectiveResponse": {
+        "properties": {
+          "objective": {
+            "$ref": "#/components/schemas/Objective"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "objective"
+        ],
+        "title": "UpdateObjectiveResponse"
       },
       "UpdatePipelinePayload": {
         "properties": {

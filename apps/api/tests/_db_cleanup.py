@@ -92,6 +92,70 @@ def cleanup_cap03_state(
         )
         cursor.execute(
             """
+            DELETE FROM objectives
+            WHERE created_by_actor_id IN (
+                    SELECT id FROM actors WHERE name LIKE %s
+               )
+               OR (
+                    attached_to_kind = 'project'
+                    AND attached_to_id IN (
+                        SELECT id
+                        FROM projects
+                        WHERE slug LIKE %s
+                           OR created_by_actor_id IN (
+                                SELECT id FROM actors WHERE name LIKE %s
+                           )
+                    )
+               )
+               OR (
+                    attached_to_kind = 'pipeline'
+                    AND attached_to_id IN (
+                        SELECT pipelines.id
+                        FROM pipelines
+                        JOIN projects ON projects.id = pipelines.project_id
+                        WHERE projects.slug LIKE %s
+                           OR projects.created_by_actor_id IN (
+                                SELECT id FROM actors WHERE name LIKE %s
+                           )
+                    )
+               )
+            """,
+            (actor_like, project_like, actor_like, project_like, actor_like),
+        )
+        cursor.execute(
+            """
+            DELETE FROM components
+            WHERE created_by_actor_id IN (
+                    SELECT id FROM actors WHERE name LIKE %s
+               )
+               OR (
+                    attached_to_kind = 'project'
+                    AND attached_to_id IN (
+                        SELECT id
+                        FROM projects
+                        WHERE slug LIKE %s
+                           OR created_by_actor_id IN (
+                                SELECT id FROM actors WHERE name LIKE %s
+                           )
+                    )
+               )
+               OR (
+                    attached_to_kind = 'pipeline'
+                    AND attached_to_id IN (
+                        SELECT pipelines.id
+                        FROM pipelines
+                        JOIN projects ON projects.id = pipelines.project_id
+                        WHERE projects.slug LIKE %s
+                           OR projects.created_by_actor_id IN (
+                                SELECT id FROM actors WHERE name LIKE %s
+                           )
+                    )
+               )
+            """,
+            (actor_like, project_like, actor_like, project_like, actor_like),
+        )
+        cursor.execute(
+            """
             DELETE FROM job_comments
             WHERE author_actor_id IN (SELECT id FROM actors WHERE name LIKE %s)
                OR job_id IN (

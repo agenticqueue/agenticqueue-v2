@@ -50,3 +50,20 @@ class UpdateComponentRequest(AQModel):
     name: ComponentName | None = None
     purpose: ComponentPurpose = None
     access_path: ComponentAccessPath | None = None
+
+
+class CreateComponentResponse(AQModel):
+    component: Component
+
+
+class ListComponentsResponse(AQModel):
+    items: list[Component]
+    next_cursor: str | None = None
+
+
+class GetComponentResponse(AQModel):
+    component: Component
+
+
+class UpdateComponentResponse(AQModel):
+    component: Component

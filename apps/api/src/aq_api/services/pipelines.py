@@ -31,6 +31,7 @@ from aq_api.services._inheritance import (
     _resolve_attached_chain,
     decision_learning_inheritance_lists,
     decision_learning_scopes_for_entity,
+    objective_component_inheritance_lists,
 )
 
 DEFAULT_LIST_LIMIT = 50
@@ -171,10 +172,17 @@ async def get_pipeline(
         direct_scopes=direct_scopes,
         inherited_scopes=inherited_scopes,
     )
+    objectives, components = await objective_component_inheritance_lists(
+        session,
+        direct_scopes=direct_scopes,
+        inherited_scopes=inherited_scopes,
+    )
     return GetPipelineResponse(
         pipeline=pipeline_from_db(pipeline),
         decisions=decisions,
         learnings=learnings,
+        objectives=objectives,
+        components=components,
     )
 
 

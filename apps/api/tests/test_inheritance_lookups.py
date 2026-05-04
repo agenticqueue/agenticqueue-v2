@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import httpx
 import pytest
+from _artifact_test_support import insert_component, insert_objective
 from _dl_test_support import insert_decision, insert_learning
 from _jobs_test_support import auth_headers, insert_job
 from _submit_job_test_support import DB_SKIP, fixture_project
@@ -210,3 +211,146 @@ async def test_resolve_attached_chain_helper_is_importable_and_resolves_job(
     assert chain.project_id == project_id
     assert chain.pipeline_id == pipeline_id
     assert chain.job_id == job_id
+
+
+@pytest.mark.asyncio
+async def test_get_project_populates_direct_objectives_and_components(
+    conn: Connection[tuple[object, ...]],
+    async_client: httpx.AsyncClient,
+) -> None:
+    actor_id, key, project_id, _pipeline_id = fixture_project(conn)
+    objective_id = insert_objective(
+        conn,
+        attached_to_kind="project",
+        attached_to_id=project_id,
+        created_by_actor_id=actor_id,
+        statement="project objective",
+    )
+    component_id = insert_component(
+        conn,
+        attached_to_kind="project",
+        attached_to_id=project_id,
+        created_by_actor_id=actor_id,
+        name="project component",
+    )
+
+    response = await async_client.get(
+        f"/projects/{project_id}",
+        headers=auth_headers(key),
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert _ids(payload["objectives"]["direct"]) == [str(objective_id)]
+    assert payload["objectives"]["inherited"] == []
+    assert _ids(payload["components"]["direct"]) == [str(component_id)]
+    assert payload["components"]["inherited"] == []
+
+
+@pytest.mark.asyncio
+async def test_get_pipeline_inherits_project_objectives_and_components(
+    conn: Connection[tuple[object, ...]],
+    async_client: httpx.AsyncClient,
+) -> None:
+    actor_id, key, project_id, pipeline_id = fixture_project(conn)
+    project_objective_id = insert_objective(
+        conn,
+        attached_to_kind="project",
+        attached_to_id=project_id,
+        created_by_actor_id=actor_id,
+        statement="project objective",
+    )
+    pipeline_objective_id = insert_objective(
+        conn,
+        attached_to_kind="pipeline",
+        attached_to_id=pipeline_id,
+        created_by_actor_id=actor_id,
+        statement="pipeline objective",
+    )
+    project_component_id = insert_component(
+        conn,
+        attached_to_kind="project",
+        attached_to_id=project_id,
+        created_by_actor_id=actor_id,
+        name="project component",
+    )
+    pipeline_component_id = insert_component(
+        conn,
+        attached_to_kind="pipeline",
+        attached_to_id=pipeline_id,
+        created_by_actor_id=actor_id,
+        name="pipeline component",
+    )
+
+    response = await async_client.get(
+        f"/pipelines/{pipeline_id}",
+        headers=auth_headers(key),
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert _ids(payload["objectives"]["direct"]) == [str(pipeline_objective_id)]
+    assert _ids(payload["objectives"]["inherited"]) == [str(project_objective_id)]
+    assert _ids(payload["components"]["direct"]) == [str(pipeline_component_id)]
+    assert _ids(payload["components"]["inherited"]) == [str(project_component_id)]
+
+
+@pytest.mark.asyncio
+async def test_get_job_inherits_objectives_and_components_without_job_directs(
+    conn: Connection[tuple[object, ...]],
+    async_client: httpx.AsyncClient,
+) -> None:
+    actor_id, key, project_id, pipeline_id = fixture_project(conn)
+    job_id = insert_job(
+        conn,
+        pipeline_id=pipeline_id,
+        project_id=project_id,
+        created_by_actor_id=actor_id,
+        title="objective component inheritance target",
+    )
+    project_objective_id = insert_objective(
+        conn,
+        attached_to_kind="project",
+        attached_to_id=project_id,
+        created_by_actor_id=actor_id,
+        statement="project objective",
+    )
+    pipeline_objective_id = insert_objective(
+        conn,
+        attached_to_kind="pipeline",
+        attached_to_id=pipeline_id,
+        created_by_actor_id=actor_id,
+        statement="pipeline objective",
+    )
+    project_component_id = insert_component(
+        conn,
+        attached_to_kind="project",
+        attached_to_id=project_id,
+        created_by_actor_id=actor_id,
+        name="project component",
+    )
+    pipeline_component_id = insert_component(
+        conn,
+        attached_to_kind="pipeline",
+        attached_to_id=pipeline_id,
+        created_by_actor_id=actor_id,
+        name="pipeline component",
+    )
+
+    response = await async_client.get(
+        f"/jobs/{job_id}",
+        headers=auth_headers(key),
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["objectives"]["direct"] == []
+    assert _ids(payload["objectives"]["inherited"]) == [
+        str(pipeline_objective_id),
+        str(project_objective_id),
+    ]
+    assert payload["components"]["direct"] == []
+    assert _ids(payload["components"]["inherited"]) == [
+        str(pipeline_component_id),
+        str(project_component_id),
+    ]

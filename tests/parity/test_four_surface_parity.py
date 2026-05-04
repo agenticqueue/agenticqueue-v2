@@ -1337,6 +1337,394 @@ def test_learning_ops_match_rest_cli_mcp_and_audit(
     )
 
 
+def test_objective_component_ops_match_rest_cli_mcp_and_audit(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    founder_actor_id: str,
+    artifact_dir: Path,
+    redact_evidence: Any,
+) -> None:
+    auth = {"Authorization": f"Bearer {founder_key}"}
+    triplet = _create_pipeline_triplet(
+        api_base_url,
+        mcp_base_url,
+        founder_key,
+        label="objective-component",
+        mcp_request_start=150,
+    )
+    project_ids = {
+        surface: payload["project"]["id"]
+        for surface, payload in triplet["projects"].items()
+    }
+
+    rest_objective_response = httpx.post(
+        f"{api_base_url}/objectives",
+        headers=auth,
+        json={
+            "attached_to_kind": "project",
+            "attached_to_id": project_ids["rest"],
+            "statement": "REST objective statement",
+            "metric": "coverage",
+            "target_value": "100%",
+        },
+        timeout=10,
+    )
+    rest_objective_response.raise_for_status()
+    rest_objective = rest_objective_response.json()
+    cli_objective = _run_cli(
+        [
+            "objective",
+            "create",
+            "--attached-to-kind",
+            "project",
+            "--attached-to-id",
+            project_ids["cli"],
+            "--statement",
+            "CLI objective statement",
+            "--metric",
+            "coverage",
+            "--target-value",
+            "100%",
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_objective = _call_mcp_tool(
+        mcp_base_url,
+        "create_objective",
+        152,
+        api_key=founder_key,
+        arguments={
+            "attached_to_kind": "project",
+            "attached_to_id": project_ids["mcp"],
+            "statement": "MCP objective statement",
+            "metric": "coverage",
+            "target_value": "100%",
+            "agent_identity": "parity-objective-component",
+        },
+    )
+
+    objective_ids = {
+        "rest": rest_objective["objective"]["id"],
+        "cli": cli_objective["objective"]["id"],
+        "mcp": mcp_objective["objective"]["id"],
+    }
+    for payload, expected_statement in (
+        (rest_objective, "REST objective statement"),
+        (cli_objective, "CLI objective statement"),
+        (mcp_objective, "MCP objective statement"),
+    ):
+        assert payload["objective"]["attached_to_kind"] == "project"
+        assert payload["objective"]["statement"] == expected_statement
+        assert payload["objective"]["metric"] == "coverage"
+
+    rest_objective_list = _get_json(
+        f"{api_base_url}/objectives",
+        api_key=founder_key,
+        params={"attached_to_kind": "project", "attached_to_id": project_ids["rest"]},
+    )
+    cli_objective_list = _run_cli(
+        [
+            "objective",
+            "list",
+            "--attached-to-kind",
+            "project",
+            "--attached-to-id",
+            project_ids["cli"],
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_objective_list = _call_mcp_tool(
+        mcp_base_url,
+        "list_objectives",
+        153,
+        api_key=founder_key,
+        arguments={
+            "attached_to_kind": "project",
+            "attached_to_id": project_ids["mcp"],
+            "agent_identity": "parity-objective-component",
+        },
+    )
+    assert [item["id"] for item in rest_objective_list["items"]] == [
+        objective_ids["rest"]
+    ]
+    assert [item["id"] for item in cli_objective_list["items"]] == [
+        objective_ids["cli"]
+    ]
+    assert [item["id"] for item in mcp_objective_list["items"]] == [
+        objective_ids["mcp"]
+    ]
+
+    rest_objective_get = _get_json(
+        f"{api_base_url}/objectives/{objective_ids['rest']}",
+        api_key=founder_key,
+    )
+    cli_objective_get = _run_cli(
+        ["objective", "get", objective_ids["cli"]],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_objective_get = _call_mcp_tool(
+        mcp_base_url,
+        "get_objective",
+        154,
+        api_key=founder_key,
+        arguments={
+            "objective_id": objective_ids["mcp"],
+            "agent_identity": "parity-objective-component",
+        },
+    )
+
+    rest_objective_update_response = httpx.patch(
+        f"{api_base_url}/objectives/{objective_ids['rest']}",
+        headers=auth,
+        json={"statement": "REST objective updated", "metric": None},
+        timeout=10,
+    )
+    rest_objective_update_response.raise_for_status()
+    rest_objective_update = rest_objective_update_response.json()
+    cli_objective_update = _run_cli(
+        [
+            "objective",
+            "update",
+            objective_ids["cli"],
+            "--statement",
+            "CLI objective updated",
+            "--metric",
+            "",
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_objective_update = _call_mcp_tool(
+        mcp_base_url,
+        "update_objective",
+        155,
+        api_key=founder_key,
+        arguments={
+            "objective_id": objective_ids["mcp"],
+            "statement": "MCP objective updated",
+            "metric": None,
+            "agent_identity": "parity-objective-component",
+        },
+    )
+    assert rest_objective_update["objective"]["statement"] == "REST objective updated"
+    assert cli_objective_update["objective"]["statement"] == "CLI objective updated"
+    assert mcp_objective_update["objective"]["statement"] == "MCP objective updated"
+
+    rest_component_response = httpx.post(
+        f"{api_base_url}/components",
+        headers=auth,
+        json={
+            "attached_to_kind": "project",
+            "attached_to_id": project_ids["rest"],
+            "name": "REST Component",
+            "purpose": "REST purpose",
+            "access_path": "https://rest.example/component",
+        },
+        timeout=10,
+    )
+    rest_component_response.raise_for_status()
+    rest_component = rest_component_response.json()
+    cli_component = _run_cli(
+        [
+            "component",
+            "create",
+            "--attached-to-kind",
+            "project",
+            "--attached-to-id",
+            project_ids["cli"],
+            "--name",
+            "CLI Component",
+            "--purpose",
+            "CLI purpose",
+            "--access-path",
+            "mcp__cli__component",
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_component = _call_mcp_tool(
+        mcp_base_url,
+        "create_component",
+        156,
+        api_key=founder_key,
+        arguments={
+            "attached_to_kind": "project",
+            "attached_to_id": project_ids["mcp"],
+            "name": "MCP Component",
+            "purpose": "MCP purpose",
+            "access_path": "mcp__mcp__component",
+            "agent_identity": "parity-objective-component",
+        },
+    )
+    component_ids = {
+        "rest": rest_component["component"]["id"],
+        "cli": cli_component["component"]["id"],
+        "mcp": mcp_component["component"]["id"],
+    }
+
+    rest_component_list = _get_json(
+        f"{api_base_url}/components",
+        api_key=founder_key,
+        params={"attached_to_kind": "project", "attached_to_id": project_ids["rest"]},
+    )
+    cli_component_list = _run_cli(
+        [
+            "component",
+            "list",
+            "--attached-to-kind",
+            "project",
+            "--attached-to-id",
+            project_ids["cli"],
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_component_list = _call_mcp_tool(
+        mcp_base_url,
+        "list_components",
+        157,
+        api_key=founder_key,
+        arguments={
+            "attached_to_kind": "project",
+            "attached_to_id": project_ids["mcp"],
+            "agent_identity": "parity-objective-component",
+        },
+    )
+    assert [item["id"] for item in rest_component_list["items"]] == [
+        component_ids["rest"]
+    ]
+    assert [item["id"] for item in cli_component_list["items"]] == [
+        component_ids["cli"]
+    ]
+    assert [item["id"] for item in mcp_component_list["items"]] == [
+        component_ids["mcp"]
+    ]
+
+    rest_component_get = _get_json(
+        f"{api_base_url}/components/{component_ids['rest']}",
+        api_key=founder_key,
+    )
+    cli_component_get = _run_cli(
+        ["component", "get", component_ids["cli"]],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_component_get = _call_mcp_tool(
+        mcp_base_url,
+        "get_component",
+        158,
+        api_key=founder_key,
+        arguments={
+            "component_id": component_ids["mcp"],
+            "agent_identity": "parity-objective-component",
+        },
+    )
+
+    rest_component_update_response = httpx.patch(
+        f"{api_base_url}/components/{component_ids['rest']}",
+        headers=auth,
+        json={"name": "REST Component Updated", "purpose": None},
+        timeout=10,
+    )
+    rest_component_update_response.raise_for_status()
+    rest_component_update = rest_component_update_response.json()
+    cli_component_update = _run_cli(
+        [
+            "component",
+            "update",
+            component_ids["cli"],
+            "--name",
+            "CLI Component Updated",
+            "--purpose",
+            "",
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_component_update = _call_mcp_tool(
+        mcp_base_url,
+        "update_component",
+        159,
+        api_key=founder_key,
+        arguments={
+            "component_id": component_ids["mcp"],
+            "name": "MCP Component Updated",
+            "purpose": None,
+            "agent_identity": "parity-objective-component",
+        },
+    )
+    assert rest_component_update["component"]["name"] == "REST Component Updated"
+    assert cli_component_update["component"]["name"] == "CLI Component Updated"
+    assert mcp_component_update["component"]["name"] == "MCP Component Updated"
+
+    audit = _get_json(
+        f"{api_base_url}/audit",
+        api_key=founder_key,
+        params={"actor": founder_actor_id, "limit": 100},
+    )
+    ops = [row["op"] for row in audit["entries"]]
+    assert ops.count("create_objective") == 3
+    assert ops.count("update_objective") == 3
+    assert ops.count("create_component") == 3
+    assert ops.count("update_component") == 3
+
+    artifact = {
+        "objectives": {
+            "creates": {
+                "rest": rest_objective,
+                "cli": cli_objective,
+                "mcp": mcp_objective,
+            },
+            "lists": {
+                "rest": rest_objective_list,
+                "cli": cli_objective_list,
+                "mcp": mcp_objective_list,
+            },
+            "gets": {
+                "rest": rest_objective_get,
+                "cli": cli_objective_get,
+                "mcp": mcp_objective_get,
+            },
+            "updates": {
+                "rest": rest_objective_update,
+                "cli": cli_objective_update,
+                "mcp": mcp_objective_update,
+            },
+        },
+        "components": {
+            "creates": {
+                "rest": rest_component,
+                "cli": cli_component,
+                "mcp": mcp_component,
+            },
+            "lists": {
+                "rest": rest_component_list,
+                "cli": cli_component_list,
+                "mcp": mcp_component_list,
+            },
+            "gets": {
+                "rest": rest_component_get,
+                "cli": cli_component_get,
+                "mcp": mcp_component_get,
+            },
+            "updates": {
+                "rest": rest_component_update,
+                "cli": cli_component_update,
+                "mcp": mcp_component_update,
+            },
+        },
+        "audit": audit,
+    }
+    (artifact_dir / "objective-component-parity.txt").write_text(
+        redact_evidence(_json_text(artifact)),
+        encoding="utf-8",
+    )
+
+
 def test_pipeline_ops_match_rest_cli_mcp_and_audit(
     api_base_url: str,
     mcp_base_url: str,

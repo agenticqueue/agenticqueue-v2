@@ -7,13 +7,23 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from aq_api.models import Decision, InheritanceReferenceLists, Learning
+from aq_api.models import (
+    Component,
+    Decision,
+    InheritanceReferenceLists,
+    Learning,
+    Objective,
+)
+from aq_api.models.components import ComponentAttachedToKind
+from aq_api.models.db import Component as DbComponent
 from aq_api.models.db import Decision as DbDecision
 from aq_api.models.db import Job as DbJob
 from aq_api.models.db import Learning as DbLearning
+from aq_api.models.db import Objective as DbObjective
 from aq_api.models.db import Pipeline as DbPipeline
 from aq_api.models.db import Project as DbProject
 from aq_api.models.decisions import AttachedToKind
+from aq_api.models.objectives import ObjectiveAttachedToKind
 
 AttachedEntityKind = Literal["project", "pipeline", "job"]
 AttachmentScope = tuple[AttachedToKind, UUID]
@@ -111,6 +121,41 @@ def _learning_payload(learning: DbLearning) -> dict[str, object]:
     )
 
 
+def _objective_payload(objective: DbObjective) -> dict[str, object]:
+    return cast(
+        dict[str, object],
+        Objective(
+            id=objective.id,
+            attached_to_kind=cast(ObjectiveAttachedToKind, objective.attached_to_kind),
+            attached_to_id=objective.attached_to_id,
+            statement=objective.statement,
+            metric=objective.metric,
+            target_value=objective.target_value,
+            due_at=objective.due_at,
+            created_by_actor_id=objective.created_by_actor_id,
+            created_at=objective.created_at,
+            deactivated_at=objective.deactivated_at,
+        ).model_dump(mode="json"),
+    )
+
+
+def _component_payload(component: DbComponent) -> dict[str, object]:
+    return cast(
+        dict[str, object],
+        Component(
+            id=component.id,
+            attached_to_kind=cast(ComponentAttachedToKind, component.attached_to_kind),
+            attached_to_id=component.attached_to_id,
+            name=component.name,
+            purpose=component.purpose,
+            access_path=component.access_path,
+            created_by_actor_id=component.created_by_actor_id,
+            created_at=component.created_at,
+            deactivated_at=component.deactivated_at,
+        ).model_dump(mode="json"),
+    )
+
+
 async def _decision_payloads_for_scopes(
     session: AsyncSession,
     scopes: list[AttachmentScope],
@@ -155,6 +200,54 @@ async def _learning_payloads_for_scopes(
     return payloads
 
 
+async def _objective_payloads_for_scopes(
+    session: AsyncSession,
+    scopes: list[AttachmentScope],
+) -> list[dict[str, object]]:
+    payloads: list[dict[str, object]] = []
+    for attached_to_kind, attached_to_id in scopes:
+        if attached_to_kind == "job":
+            continue
+        statement = (
+            select(DbObjective)
+            .where(
+                DbObjective.attached_to_kind == attached_to_kind,
+                DbObjective.attached_to_id == attached_to_id,
+                DbObjective.deactivated_at.is_(None),
+            )
+            .order_by(DbObjective.created_at.asc(), DbObjective.id.asc())
+        )
+        payloads.extend(
+            _objective_payload(objective)
+            for objective in (await session.scalars(statement)).all()
+        )
+    return payloads
+
+
+async def _component_payloads_for_scopes(
+    session: AsyncSession,
+    scopes: list[AttachmentScope],
+) -> list[dict[str, object]]:
+    payloads: list[dict[str, object]] = []
+    for attached_to_kind, attached_to_id in scopes:
+        if attached_to_kind == "job":
+            continue
+        statement = (
+            select(DbComponent)
+            .where(
+                DbComponent.attached_to_kind == attached_to_kind,
+                DbComponent.attached_to_id == attached_to_id,
+                DbComponent.deactivated_at.is_(None),
+            )
+            .order_by(DbComponent.created_at.asc(), DbComponent.id.asc())
+        )
+        payloads.extend(
+            _component_payload(component)
+            for component in (await session.scalars(statement)).all()
+        )
+    return payloads
+
+
 async def decision_learning_inheritance_lists(
     session: AsyncSession,
     *,
@@ -172,6 +265,23 @@ async def decision_learning_inheritance_lists(
     return decisions, learnings
 
 
+async def objective_component_inheritance_lists(
+    session: AsyncSession,
+    *,
+    direct_scopes: list[AttachmentScope],
+    inherited_scopes: list[AttachmentScope],
+) -> tuple[InheritanceReferenceLists, InheritanceReferenceLists]:
+    objectives = InheritanceReferenceLists(
+        direct=await _objective_payloads_for_scopes(session, direct_scopes),
+        inherited=await _objective_payloads_for_scopes(session, inherited_scopes),
+    )
+    components = InheritanceReferenceLists(
+        direct=await _component_payloads_for_scopes(session, direct_scopes),
+        inherited=await _component_payloads_for_scopes(session, inherited_scopes),
+    )
+    return objectives, components
+
+
 __all__ = [
     "AttachedChain",
     "AttachedEntityKind",
@@ -179,4 +289,5 @@ __all__ = [
     "_resolve_attached_chain",
     "decision_learning_inheritance_lists",
     "decision_learning_scopes_for_entity",
+    "objective_component_inheritance_lists",
 ]

@@ -33,10 +33,14 @@ from aq_api.models import (
     CommentOnJobResponse,
     CreateActorRequest,
     CreateActorResponse,
+    CreateComponentRequest,
+    CreateComponentResponse,
     CreateDecisionRequest,
     CreateDecisionResponse,
     CreateJobRequest,
     CreateJobResponse,
+    CreateObjectiveRequest,
+    CreateObjectiveResponse,
     CreatePipelineRequest,
     CreatePipelineResponse,
     CreateProjectRequest,
@@ -45,18 +49,22 @@ from aq_api.models import (
     DetachLabelResponse,
     EditLearningRequest,
     EditLearningResponse,
+    GetComponentResponse,
     GetDecisionResponse,
     GetJobResponse,
     GetLearningResponse,
+    GetObjectiveResponse,
     GetPipelineResponse,
     GetProjectResponse,
     HealthStatus,
     HeartbeatJobResponse,
     ListActorsResponse,
+    ListComponentsResponse,
     ListDecisionsResponse,
     ListJobCommentsResponse,
     ListJobsResponse,
     ListLearningsResponse,
+    ListObjectivesResponse,
     ListPipelinesResponse,
     ListProjectsResponse,
     ListReadyJobsResponse,
@@ -73,13 +81,23 @@ from aq_api.models import (
     SubmitLearningResponse,
     SupersedeDecisionRequest,
     SupersedeDecisionResponse,
+    UpdateComponentRequest,
+    UpdateComponentResponse,
     UpdateJobResponse,
+    UpdateObjectiveRequest,
+    UpdateObjectiveResponse,
     UpdatePipelineRequest,
     UpdatePipelineResponse,
     UpdateProjectRequest,
     UpdateProjectResponse,
     VersionInfo,
     WhoamiResponse,
+)
+from aq_api.models.components import (
+    ComponentAccessPath,
+    ComponentAttachedToKind,
+    ComponentName,
+    ComponentPurpose,
 )
 from aq_api.models.decisions import (
     AttachedToKind,
@@ -91,6 +109,12 @@ from aq_api.models.job_comments import CommentBody
 from aq_api.models.jobs import JobState, JobTitle
 from aq_api.models.labels import LabelColor, LabelName
 from aq_api.models.learnings import LearningContext, LearningStatement, LearningTitle
+from aq_api.models.objectives import (
+    ObjectiveAttachedToKind,
+    ObjectiveMetric,
+    ObjectiveStatement,
+    ObjectiveTargetValue,
+)
 from aq_api.models.pipelines import PipelineName
 from aq_api.models.projects import (
     Description as ProjectDescription,
@@ -107,6 +131,10 @@ from aq_api.services.actors import list_actors as list_actor_service
 from aq_api.services.api_keys import revoke_api_key as revoke_api_key_service
 from aq_api.services.audit import query_audit_log as query_audit_log_service
 from aq_api.services.claim import claim_next_job as claim_next_job_service
+from aq_api.services.components import create_component as create_component_service
+from aq_api.services.components import get_component as get_component_service
+from aq_api.services.components import list_components as list_component_service
+from aq_api.services.components import update_component as update_component_service
 from aq_api.services.decisions import create_decision as create_decision_service
 from aq_api.services.decisions import get_decision as get_decision_service
 from aq_api.services.decisions import list_decisions as list_decision_service
@@ -129,6 +157,10 @@ from aq_api.services.learnings import get_learning as get_learning_service
 from aq_api.services.learnings import list_learnings as list_learning_service
 from aq_api.services.learnings import submit_learning as submit_learning_service
 from aq_api.services.list_ready_jobs import list_ready_jobs as list_ready_jobs_service
+from aq_api.services.objectives import create_objective as create_objective_service
+from aq_api.services.objectives import get_objective as get_objective_service
+from aq_api.services.objectives import list_objectives as list_objective_service
+from aq_api.services.objectives import update_objective as update_objective_service
 from aq_api.services.pipelines import archive_pipeline as archive_pipeline_service
 from aq_api.services.pipelines import clone_pipeline as clone_pipeline_service
 from aq_api.services.pipelines import create_pipeline as create_pipeline_service
@@ -1057,6 +1089,242 @@ def create_mcp_server() -> FastMCP:
                 return await edit_learning_service(
                     session,
                     learning_id,
+                    request,
+                    actor_id=actor_id,
+                )
+
+    @server.tool(
+        description=(
+            "Create an Objective attached to a Project or Pipeline. Validates "
+            "the attachment target and writes an audit row."
+        ),
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def create_objective(
+        attached_to_kind: ObjectiveAttachedToKind,
+        attached_to_id: UUID,
+        statement: ObjectiveStatement,
+        metric: ObjectiveMetric = None,
+        target_value: ObjectiveTargetValue = None,
+        due_at: datetime | None = None,
+        agent_identity: AgentIdentity = None,
+    ) -> CreateObjectiveResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = CreateObjectiveRequest(
+                attached_to_kind=attached_to_kind,
+                attached_to_id=attached_to_id,
+                statement=statement,
+                metric=metric,
+                target_value=target_value,
+                due_at=due_at,
+            )
+            async with SessionLocal() as session:
+                return await create_objective_service(
+                    session,
+                    request,
+                    actor_id=actor_id,
+                )
+
+    @server.tool(
+        description=(
+            "List Objectives with optional attachment, actor, since, cursor, "
+            "limit, and include_deactivated filters. Read-only."
+        ),
+        annotations={"readOnlyHint": True},
+    )
+    async def list_objectives(
+        attached_to_kind: ObjectiveAttachedToKind | None = None,
+        attached_to_id: UUID | None = None,
+        actor_id: UUID | None = None,
+        since: datetime | None = None,
+        cursor: str | None = None,
+        limit: int = 50,
+        include_deactivated: bool = False,
+        agent_identity: AgentIdentity = None,
+    ) -> ListObjectivesResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await list_objective_service(
+                    session,
+                    attached_to_kind=attached_to_kind,
+                    attached_to_id=attached_to_id,
+                    actor_id=actor_id,
+                    since=since,
+                    cursor=cursor,
+                    limit=limit,
+                    include_deactivated=include_deactivated,
+                )
+
+    @server.tool(
+        description="Get one Objective by id. Read-only.",
+        annotations={"readOnlyHint": True},
+    )
+    async def get_objective(
+        objective_id: UUID,
+        agent_identity: AgentIdentity = None,
+    ) -> GetObjectiveResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await get_objective_service(session, objective_id)
+
+    @server.tool(
+        description=(
+            "Update an Objective's statement, metric, target_value, or due_at. "
+            "Creator-only; cross-actor updates return objective_update_forbidden."
+        ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": False,
+        },
+    )
+    async def update_objective(
+        objective_id: UUID,
+        statement: ObjectiveStatement | None = None,
+        metric: ObjectiveMetric = None,
+        target_value: ObjectiveTargetValue = None,
+        due_at: datetime | None = None,
+        agent_identity: AgentIdentity = None,
+    ) -> UpdateObjectiveResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = UpdateObjectiveRequest(
+                statement=statement,
+                metric=metric,
+                target_value=target_value,
+                due_at=due_at,
+            )
+            async with SessionLocal() as session:
+                return await update_objective_service(
+                    session,
+                    objective_id,
+                    request,
+                    actor_id=actor_id,
+                )
+
+    @server.tool(
+        description=(
+            "Create a Component attached to a Project or Pipeline. Validates "
+            "the attachment target and writes an audit row."
+        ),
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def create_component(
+        attached_to_kind: ComponentAttachedToKind,
+        attached_to_id: UUID,
+        name: ComponentName,
+        access_path: ComponentAccessPath,
+        purpose: ComponentPurpose = None,
+        agent_identity: AgentIdentity = None,
+    ) -> CreateComponentResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = CreateComponentRequest(
+                attached_to_kind=attached_to_kind,
+                attached_to_id=attached_to_id,
+                name=name,
+                purpose=purpose,
+                access_path=access_path,
+            )
+            async with SessionLocal() as session:
+                return await create_component_service(
+                    session,
+                    request,
+                    actor_id=actor_id,
+                )
+
+    @server.tool(
+        description=(
+            "List Components with optional attachment, actor, since, cursor, "
+            "limit, and include_deactivated filters. Read-only."
+        ),
+        annotations={"readOnlyHint": True},
+    )
+    async def list_components(
+        attached_to_kind: ComponentAttachedToKind | None = None,
+        attached_to_id: UUID | None = None,
+        actor_id: UUID | None = None,
+        since: datetime | None = None,
+        cursor: str | None = None,
+        limit: int = 50,
+        include_deactivated: bool = False,
+        agent_identity: AgentIdentity = None,
+    ) -> ListComponentsResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await list_component_service(
+                    session,
+                    attached_to_kind=attached_to_kind,
+                    attached_to_id=attached_to_id,
+                    actor_id=actor_id,
+                    since=since,
+                    cursor=cursor,
+                    limit=limit,
+                    include_deactivated=include_deactivated,
+                )
+
+    @server.tool(
+        description="Get one Component by id. Read-only.",
+        annotations={"readOnlyHint": True},
+    )
+    async def get_component(
+        component_id: UUID,
+        agent_identity: AgentIdentity = None,
+    ) -> GetComponentResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await get_component_service(session, component_id)
+
+    @server.tool(
+        description=(
+            "Update a Component's name, purpose, or access_path. Creator-only; "
+            "cross-actor updates return component_update_forbidden."
+        ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": False,
+        },
+    )
+    async def update_component(
+        component_id: UUID,
+        name: ComponentName | None = None,
+        purpose: ComponentPurpose = None,
+        access_path: ComponentAccessPath | None = None,
+        agent_identity: AgentIdentity = None,
+    ) -> UpdateComponentResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = UpdateComponentRequest(
+                name=name,
+                purpose=purpose,
+                access_path=access_path,
+            )
+            async with SessionLocal() as session:
+                return await update_component_service(
+                    session,
+                    component_id,
                     request,
                     actor_id=actor_id,
                 )

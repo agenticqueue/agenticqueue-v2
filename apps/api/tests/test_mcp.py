@@ -51,6 +51,14 @@ async def test_mcp_tools_return_shared_contract_payloads() -> None:
             "list_learnings",
             "get_learning",
             "edit_learning",
+            "create_objective",
+            "list_objectives",
+            "get_objective",
+            "update_objective",
+            "create_component",
+            "list_components",
+            "get_component",
+            "update_component",
             "comment_on_job",
             "list_job_comments",
             "cancel_job",
@@ -151,6 +159,28 @@ async def test_mcp_tools_return_shared_contract_payloads() -> None:
         assert tool_by_name["edit_learning"].annotations.readOnlyHint is False
         assert tool_by_name["edit_learning"].annotations.destructiveHint is False
         assert tool_by_name["edit_learning"].annotations.idempotentHint is False
+        assert tool_by_name["create_objective"].annotations is not None
+        assert tool_by_name["create_objective"].annotations.readOnlyHint is False
+        assert tool_by_name["create_objective"].annotations.destructiveHint is False
+        assert tool_by_name["list_objectives"].annotations is not None
+        assert tool_by_name["list_objectives"].annotations.readOnlyHint is True
+        assert tool_by_name["get_objective"].annotations is not None
+        assert tool_by_name["get_objective"].annotations.readOnlyHint is True
+        assert tool_by_name["update_objective"].annotations is not None
+        assert tool_by_name["update_objective"].annotations.readOnlyHint is False
+        assert tool_by_name["update_objective"].annotations.destructiveHint is False
+        assert tool_by_name["update_objective"].annotations.idempotentHint is False
+        assert tool_by_name["create_component"].annotations is not None
+        assert tool_by_name["create_component"].annotations.readOnlyHint is False
+        assert tool_by_name["create_component"].annotations.destructiveHint is False
+        assert tool_by_name["list_components"].annotations is not None
+        assert tool_by_name["list_components"].annotations.readOnlyHint is True
+        assert tool_by_name["get_component"].annotations is not None
+        assert tool_by_name["get_component"].annotations.readOnlyHint is True
+        assert tool_by_name["update_component"].annotations is not None
+        assert tool_by_name["update_component"].annotations.readOnlyHint is False
+        assert tool_by_name["update_component"].annotations.destructiveHint is False
+        assert tool_by_name["update_component"].annotations.idempotentHint is False
         assert tool_by_name["comment_on_job"].annotations is not None
         assert tool_by_name["comment_on_job"].annotations.readOnlyHint is False
         assert tool_by_name["comment_on_job"].annotations.destructiveHint is False

@@ -48,12 +48,20 @@ READ_ONLY_TOOLS = {
     "get_decision",
     "list_learnings",
     "get_learning",
+    "list_objectives",
+    "get_objective",
+    "list_components",
+    "get_component",
 }
 
 CAP83_2_NON_DESTRUCTIVE_MUTATION_TOOLS = {
     "create_decision",
     "submit_learning",
     "edit_learning",
+    "create_objective",
+    "update_objective",
+    "create_component",
+    "update_component",
 }
 
 CAP83_2_DESTRUCTIVE_MUTATION_TOOLS = {
@@ -136,7 +144,7 @@ async def test_mcp_initialize_instructions_and_tool_annotations() -> None:
     assert "submit_job ships in cap #5" not in initialize.instructions
 
     tool_by_name = {tool.name: tool for tool in tools}
-    assert len(tool_by_name) == 43
+    assert len(tool_by_name) == 51
 
     for tool_name in CAP4_MUTATION_TOOLS:
         annotations = tool_by_name[tool_name].annotations

@@ -1,0 +1,6 @@
+Command:
+Live HTTP MCP tools/list against http://127.0.0.1:8000/mcp from the rebuilt api container, using a temporary API key inserted for the check and deleted immediately after.
+
+Result:
+51
+

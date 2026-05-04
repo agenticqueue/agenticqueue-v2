@@ -1,0 +1,6 @@
+Command:
+docker compose --env-file D:/mmmmm/mmmmm-aq2.0/.env -p mmmmm-aq20 exec -T api uv run pytest -q apps/api/tests apps/cli/tests tests/parity
+
+Result:
+318 passed, 7 skipped, 1 warning in 153.58s
+
