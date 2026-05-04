@@ -1,0 +1,8 @@
+Command:
+docker compose --env-file D:/mmmmm/mmmmm-aq2.0/.env -p mmmmm-aq20 exec -T api uv run pytest -q apps/api/tests/test_submit_inline_dl_happy.py apps/api/tests/test_inheritance_lookups.py apps/api/tests/test_submit_inline_dl_atomicity.py apps/api/tests/test_models_cap05.py
+
+Result:
+18 passed, 1 warning
+
+Warning:
+Known FastMCP authlib.jose deprecation warning.

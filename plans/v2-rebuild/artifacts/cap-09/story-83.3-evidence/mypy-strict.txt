@@ -1,0 +1,5 @@
+Command:
+docker compose --env-file D:/mmmmm/mmmmm-aq2.0/.env -p mmmmm-aq20 exec -T api uv run mypy --strict apps/api/src/aq_api/ apps/cli/src/aq_cli/
+
+Result:
+Success: no issues found in 66 source files

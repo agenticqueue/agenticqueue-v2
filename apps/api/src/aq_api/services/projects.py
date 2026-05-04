@@ -20,6 +20,11 @@ from aq_api.models import (
     UpdateProjectResponse,
 )
 from aq_api.models.db import Project as DbProject
+from aq_api.services._inheritance import (
+    _resolve_attached_chain,
+    decision_learning_inheritance_lists,
+    decision_learning_scopes_for_entity,
+)
 
 DEFAULT_LIST_LIMIT = 50
 MAX_LIST_LIMIT = 200
@@ -116,7 +121,26 @@ async def get_project(
     project = await session.get(DbProject, project_id)
     if project is None:
         raise ProjectNotFoundError("project not found")
-    return GetProjectResponse(project=project_from_db(project))
+    chain = await _resolve_attached_chain(
+        session,
+        entity_kind="project",
+        entity_id=project_id,
+    )
+    assert chain is not None
+    direct_scopes, inherited_scopes = decision_learning_scopes_for_entity(
+        entity_kind="project",
+        chain=chain,
+    )
+    decisions, learnings = await decision_learning_inheritance_lists(
+        session,
+        direct_scopes=direct_scopes,
+        inherited_scopes=inherited_scopes,
+    )
+    return GetProjectResponse(
+        project=project_from_db(project),
+        decisions=decisions,
+        learnings=learnings,
+    )
 
 
 async def _project_id_by_slug(session: AsyncSession, slug: str) -> UUID | None:

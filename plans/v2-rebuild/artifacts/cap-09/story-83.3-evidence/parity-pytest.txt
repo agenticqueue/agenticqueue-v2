@@ -1,0 +1,8 @@
+Command:
+docker compose --env-file D:/mmmmm/mmmmm-aq2.0/.env -p mmmmm-aq20 exec -T api uv run pytest -q tests/parity/test_four_surface_parity.py
+
+Result:
+23 passed, 1 skipped
+
+Note:
+The parity suite must be run sequentially against the live DB. A parallel run with snapshot update caused fixture interference and unauthenticated responses; the sequential rerun passed cleanly.

@@ -1,0 +1,5 @@
+Command:
+docker compose --env-file D:/mmmmm/mmmmm-aq2.0/.env -p mmmmm-aq20 exec -T api uv run ruff check apps/api/src apps/api/tests apps/cli/src apps/cli/tests tests/parity
+
+Result:
+All checks passed!
