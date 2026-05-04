@@ -47,6 +47,8 @@ pipeline_app = typer.Typer(add_completion=False, help="Pipeline commands.")
 job_app = typer.Typer(add_completion=False, help="Job commands.")
 decision_app = typer.Typer(add_completion=False, help="Decision commands.")
 learning_app = typer.Typer(add_completion=False, help="Learning commands.")
+objective_app = typer.Typer(add_completion=False, help="Objective commands.")
+component_app = typer.Typer(add_completion=False, help="Component commands.")
 SLUG_CHARS_RE = re.compile(r"[^a-z0-9]+")
 
 
@@ -950,6 +952,171 @@ def learning_edit(
 
 
 app.add_typer(learning_app, name="learning")
+
+
+@objective_app.command("create")
+def objective_create(
+    attached_to_kind: Annotated[str, typer.Option("--attached-to-kind")],
+    attached_to_id: Annotated[str, typer.Option("--attached-to-id")],
+    statement: Annotated[str, typer.Option("--statement")],
+    metric: Annotated[str | None, typer.Option("--metric")] = None,
+    target_value: Annotated[str | None, typer.Option("--target-value")] = None,
+    due_at: Annotated[str | None, typer.Option("--due-at")] = None,
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    body: dict[str, object] = {
+        "attached_to_kind": attached_to_kind,
+        "attached_to_id": attached_to_id,
+        "statement": statement,
+    }
+    if metric is not None:
+        body["metric"] = metric
+    if target_value is not None:
+        body["target_value"] = target_value
+    if due_at is not None:
+        body["due_at"] = due_at
+    typer.echo(_post_auth("/objectives", body, timeout, config))
+
+
+@objective_app.command("list")
+def objective_list(
+    attached_to_kind: Annotated[str | None, typer.Option("--attached-to-kind")] = None,
+    attached_to_id: Annotated[str | None, typer.Option("--attached-to-id")] = None,
+    actor_id: Annotated[str | None, typer.Option("--actor-id")] = None,
+    since: Annotated[str | None, typer.Option("--since")] = None,
+    limit: Annotated[int, typer.Option("--limit", min=1)] = 50,
+    cursor: Annotated[str | None, typer.Option("--cursor")] = None,
+    include_deactivated: Annotated[
+        bool, typer.Option("--include-deactivated")
+    ] = False,
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    raw_params: QueryParams = {
+        "attached_to_kind": attached_to_kind,
+        "attached_to_id": attached_to_id,
+        "actor_id": actor_id,
+        "since": since,
+        "limit": limit,
+        "cursor": cursor,
+        "include_deactivated": include_deactivated,
+    }
+    params = {key: value for key, value in raw_params.items() if value is not None}
+    typer.echo(_get_auth("/objectives", timeout, config, params=params))
+
+
+@objective_app.command("get")
+def objective_get(
+    objective_id: Annotated[str, typer.Argument(help="Objective UUID.")],
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    typer.echo(_get_auth(f"/objectives/{objective_id}", timeout, config))
+
+
+@objective_app.command("update")
+def objective_update(
+    objective_id: Annotated[str, typer.Argument(help="Objective UUID.")],
+    statement: Annotated[str | None, typer.Option("--statement")] = None,
+    metric: Annotated[str | None, typer.Option("--metric")] = None,
+    target_value: Annotated[str | None, typer.Option("--target-value")] = None,
+    due_at: Annotated[str | None, typer.Option("--due-at")] = None,
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    body: dict[str, object] = {}
+    if statement is not None:
+        body["statement"] = statement
+    if metric is not None:
+        body["metric"] = metric or None
+    if target_value is not None:
+        body["target_value"] = target_value or None
+    if due_at is not None:
+        body["due_at"] = due_at or None
+    typer.echo(_patch_auth(f"/objectives/{objective_id}", body, timeout, config))
+
+
+app.add_typer(objective_app, name="objective")
+
+
+@component_app.command("create")
+def component_create(
+    attached_to_kind: Annotated[str, typer.Option("--attached-to-kind")],
+    attached_to_id: Annotated[str, typer.Option("--attached-to-id")],
+    name: Annotated[str, typer.Option("--name")],
+    access_path: Annotated[str, typer.Option("--access-path")],
+    purpose: Annotated[str | None, typer.Option("--purpose")] = None,
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    body: dict[str, object] = {
+        "attached_to_kind": attached_to_kind,
+        "attached_to_id": attached_to_id,
+        "name": name,
+        "access_path": access_path,
+    }
+    if purpose is not None:
+        body["purpose"] = purpose
+    typer.echo(_post_auth("/components", body, timeout, config))
+
+
+@component_app.command("list")
+def component_list(
+    attached_to_kind: Annotated[str | None, typer.Option("--attached-to-kind")] = None,
+    attached_to_id: Annotated[str | None, typer.Option("--attached-to-id")] = None,
+    actor_id: Annotated[str | None, typer.Option("--actor-id")] = None,
+    since: Annotated[str | None, typer.Option("--since")] = None,
+    limit: Annotated[int, typer.Option("--limit", min=1)] = 50,
+    cursor: Annotated[str | None, typer.Option("--cursor")] = None,
+    include_deactivated: Annotated[
+        bool, typer.Option("--include-deactivated")
+    ] = False,
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    raw_params: QueryParams = {
+        "attached_to_kind": attached_to_kind,
+        "attached_to_id": attached_to_id,
+        "actor_id": actor_id,
+        "since": since,
+        "limit": limit,
+        "cursor": cursor,
+        "include_deactivated": include_deactivated,
+    }
+    params = {key: value for key, value in raw_params.items() if value is not None}
+    typer.echo(_get_auth("/components", timeout, config, params=params))
+
+
+@component_app.command("get")
+def component_get(
+    component_id: Annotated[str, typer.Argument(help="Component UUID.")],
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    typer.echo(_get_auth(f"/components/{component_id}", timeout, config))
+
+
+@component_app.command("update")
+def component_update(
+    component_id: Annotated[str, typer.Argument(help="Component UUID.")],
+    name: Annotated[str | None, typer.Option("--name")] = None,
+    purpose: Annotated[str | None, typer.Option("--purpose")] = None,
+    access_path: Annotated[str | None, typer.Option("--access-path")] = None,
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    body: dict[str, object] = {}
+    if name is not None:
+        body["name"] = name
+    if purpose is not None:
+        body["purpose"] = purpose or None
+    if access_path is not None:
+        body["access_path"] = access_path
+    typer.echo(_patch_auth(f"/components/{component_id}", body, timeout, config))
+
+
+app.add_typer(component_app, name="component")
 
 
 @label_app.command("register")

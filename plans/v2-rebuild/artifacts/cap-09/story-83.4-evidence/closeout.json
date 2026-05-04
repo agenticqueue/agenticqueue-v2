@@ -1,0 +1,158 @@
+{
+  "ticket": "AQ2-87",
+  "story": "Story 83.4 - Objective + Component ops + inheritance",
+  "base": "origin/main 17649cab17466573a5bcf061c45f3b5fd1da4e35",
+  "branch": "aq2-87",
+  "outcome": "done",
+  "dod_results": [
+    {
+      "dod_id": "DOD-83.4-01",
+      "status": "passed",
+      "evidence": [
+        "tests/parity/test_four_surface_parity.py",
+        "apps/api/src/aq_api/mcp.py",
+        "plans/v2-rebuild/artifacts/cap-09/story-83.4-evidence/mcp-tool-count.txt"
+      ],
+      "summary": "All 4 Objective ops and 4 Component ops exist across REST, CLI, and MCP; live MCP tools/list returns 51."
+    },
+    {
+      "dod_id": "DOD-83.4-02",
+      "status": "passed",
+      "evidence": [
+        "apps/api/tests/test_objectives_ops.py",
+        "apps/api/tests/test_components_ops.py"
+      ],
+      "summary": "Missing Objective.statement and missing Component.name/access_path return field-level 422 validation errors."
+    },
+    {
+      "dod_id": "DOD-83.4-03",
+      "status": "passed",
+      "evidence": [
+        "apps/api/tests/test_objectives_ops.py",
+        "apps/api/tests/test_components_ops.py"
+      ],
+      "summary": "Unknown attached_to_kind is rejected by Pydantic Literal validation."
+    },
+    {
+      "dod_id": "DOD-83.4-04",
+      "status": "passed",
+      "evidence": [
+        "apps/api/tests/test_objectives_ops.py",
+        "apps/api/tests/test_components_ops.py"
+      ],
+      "summary": "Raw invalid attached_to_kind inserts raise IntegrityError, preserving DB CHECK defense in depth."
+    },
+    {
+      "dod_id": "DOD-83.4-05",
+      "status": "passed",
+      "evidence": [
+        "apps/api/tests/test_creator_only_auth.py",
+        "apps/api/src/aq_api/services/objectives.py",
+        "apps/api/src/aq_api/services/components.py"
+      ],
+      "summary": "Cross-actor updates return 403 objective_update_forbidden / component_update_forbidden with details."
+    },
+    {
+      "dod_id": "DOD-83.4-06",
+      "status": "passed",
+      "evidence": [
+        "apps/api/tests/test_objectives_ops.py",
+        "apps/api/tests/test_components_ops.py",
+        "apps/api/src/aq_api/models/objectives.py",
+        "apps/api/src/aq_api/models/components.py"
+      ],
+      "summary": "Update models and tests enforce the allowed update fields; attached_to_* and created_by_actor_id are not accepted."
+    },
+    {
+      "dod_id": "DOD-83.4-07",
+      "status": "passed",
+      "evidence": [
+        "apps/api/tests/test_list_op_pagination.py",
+        "apps/api/src/aq_api/services/objectives.py",
+        "apps/api/src/aq_api/services/components.py"
+      ],
+      "summary": "Objective and Component list ops support cursor pagination, DESC order, bounded limit, and include_deactivated behavior."
+    },
+    {
+      "dod_id": "DOD-83.4-08",
+      "status": "passed",
+      "evidence": [
+        "apps/api/tests/test_inheritance_lookups.py",
+        "apps/api/src/aq_api/services/_inheritance.py",
+        "apps/api/src/aq_api/services/projects.py",
+        "apps/api/src/aq_api/services/pipelines.py",
+        "apps/api/src/aq_api/services/jobs.py"
+      ],
+      "summary": "get_project/get_pipeline/get_job populate objectives and components direct/inherited arrays; job direct arrays stay empty while inherited pipeline/project rows populate."
+    },
+    {
+      "dod_id": "DOD-83.4-09",
+      "status": "passed",
+      "evidence": [
+        "tests/parity/test_four_surface_parity.py",
+        "plans/v2-rebuild/artifacts/cap-09/story-83.4-evidence/parity-pytest.txt"
+      ],
+      "summary": "REST, CLI, and MCP objective/component payloads are covered by the parity harness."
+    },
+    {
+      "dod_id": "DOD-83.4-10",
+      "status": "passed",
+      "evidence": [
+        "tests/parity/test_four_surface_parity.py",
+        "apps/api/tests/test_objectives_ops.py",
+        "apps/api/tests/test_components_ops.py"
+      ],
+      "summary": "Successful mutations write audit rows and denial paths preserve BusinessRuleException error codes/details."
+    },
+    {
+      "dod_id": "DOD-83.4-11",
+      "status": "passed",
+      "evidence": [
+        "plans/v2-rebuild/artifacts/cap-09/story-83.4-evidence/snapshot-update.txt",
+        "tests/parity/openapi.snapshot.json",
+        "tests/parity/mcp_schema.snapshot.json"
+      ],
+      "summary": "OpenAPI and MCP snapshots were regenerated and copied back from the rebuilt API container."
+    },
+    {
+      "dod_id": "DOD-83.4-12",
+      "status": "passed",
+      "evidence": [
+        "plans/v2-rebuild/artifacts/cap-09/story-83.4-evidence/mcp-tool-count.txt"
+      ],
+      "summary": "Live MCP tools/list count is 51."
+    },
+    {
+      "dod_id": "DOD-83.4-13",
+      "status": "passed",
+      "evidence": [
+        "plans/v2-rebuild/artifacts/cap-09/story-83.4-evidence/full-pytest.txt"
+      ],
+      "summary": "Corrected full regression scope passed: apps/api/tests + apps/cli/tests + tests/parity."
+    },
+    {
+      "dod_id": "DOD-83.4-14",
+      "status": "passed",
+      "evidence": [
+        "plans/v2-rebuild/artifacts/cap-09/story-83.4-evidence/mypy-strict.txt",
+        "plans/v2-rebuild/artifacts/cap-09/story-83.4-evidence/ruff-check.txt"
+      ],
+      "summary": "mypy strict is clean across API+CLI; ruff is clean across API, CLI, tests, and parity."
+    }
+  ],
+  "verification": {
+    "red": "initial AQ2-87 focused suite failed with 15 expected route/response gaps; later full regression caught 2 stale MCP inventory expectations",
+    "focused": "22 passed, 1 warning",
+    "parity_focused": "1 passed",
+    "snapshot_update": "30 passed, 1 skipped, 1 warning",
+    "full_pytest": "318 passed, 7 skipped, 1 warning",
+    "mypy": "clean across 70 source files using corrected CI scope: apps/api/src/aq_api/ apps/cli/src/aq_cli/",
+    "ruff": "all checks passed on apps/api/src apps/api/tests apps/cli/src apps/cli/tests tests/parity",
+    "mcp_tool_count": "51"
+  },
+  "risks_or_deviations": [
+    "The Docker image copies source rather than bind-mounting it, so generated snapshots were copied back from the rebuilt API container after pytest --update-snapshots.",
+    "The live HTTP MCP tool-count check used a temporary API key inserted for the check and deleted immediately after; the key was not persisted in evidence."
+  ],
+  "handoff": "AQ2-88 may proceed in parallel after AQ2-86; AQ2-89 waits for AQ2-87 and AQ2-88 to merge."
+}

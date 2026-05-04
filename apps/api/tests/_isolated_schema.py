@@ -18,6 +18,9 @@ _CAP04_TABLES = (
     "job_comments",
     "decisions",
     "learnings",
+    "objectives",
+    "visuals",
+    "components",
 )
 
 

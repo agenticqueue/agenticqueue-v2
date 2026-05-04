@@ -4,6 +4,7 @@ from uuid import UUID
 
 import httpx
 import pytest
+from _artifact_test_support import insert_component, insert_objective
 from _dl_test_support import insert_decision, insert_learning
 from _jobs_test_support import auth_headers
 from _submit_job_test_support import DB_SKIP, fixture_project
@@ -183,6 +184,144 @@ async def test_list_learnings_cursor_order_clamp_and_deactivated_filter(
 
     with_inactive = await async_client.get(
         "/learnings",
+        headers=auth_headers(key),
+        params={"include_deactivated": True, "limit": 10},
+    )
+    assert with_inactive.status_code == 200
+    assert [item["id"] for item in with_inactive.json()["items"]] == [
+        str(inactive),
+        str(newer),
+        str(middle),
+        str(older),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_list_objectives_cursor_order_clamp_and_deactivated_filter(
+    conn: Connection[tuple[object, ...]],
+    async_client: httpx.AsyncClient,
+) -> None:
+    actor_id, key, project_id, _pipeline_id = fixture_project(conn)
+    older = insert_objective(
+        conn,
+        attached_to_kind="project",
+        attached_to_id=project_id,
+        created_by_actor_id=actor_id,
+        statement="older",
+        created_at_offset_seconds=-30,
+    )
+    middle = insert_objective(
+        conn,
+        attached_to_kind="project",
+        attached_to_id=project_id,
+        created_by_actor_id=actor_id,
+        statement="middle",
+        created_at_offset_seconds=-20,
+    )
+    newer = insert_objective(
+        conn,
+        attached_to_kind="project",
+        attached_to_id=project_id,
+        created_by_actor_id=actor_id,
+        statement="newer",
+        created_at_offset_seconds=-10,
+    )
+    inactive = insert_objective(
+        conn,
+        attached_to_kind="project",
+        attached_to_id=project_id,
+        created_by_actor_id=actor_id,
+        statement="inactive",
+        created_at_offset_seconds=-5,
+        deactivated=True,
+    )
+
+    await _assert_cursor_pagination(
+        async_client,
+        path="/objectives",
+        key=key,
+        expected_ids_desc=[newer, middle, older],
+    )
+
+    clamped = await async_client.get(
+        "/objectives",
+        headers=auth_headers(key),
+        params={"limit": 500},
+    )
+    assert clamped.status_code == 200
+    assert len(clamped.json()["items"]) == 3
+
+    with_inactive = await async_client.get(
+        "/objectives",
+        headers=auth_headers(key),
+        params={"include_deactivated": True, "limit": 10},
+    )
+    assert with_inactive.status_code == 200
+    assert [item["id"] for item in with_inactive.json()["items"]] == [
+        str(inactive),
+        str(newer),
+        str(middle),
+        str(older),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_list_components_cursor_order_clamp_and_deactivated_filter(
+    conn: Connection[tuple[object, ...]],
+    async_client: httpx.AsyncClient,
+) -> None:
+    actor_id, key, project_id, _pipeline_id = fixture_project(conn)
+    older = insert_component(
+        conn,
+        attached_to_kind="project",
+        attached_to_id=project_id,
+        created_by_actor_id=actor_id,
+        name="older",
+        created_at_offset_seconds=-30,
+    )
+    middle = insert_component(
+        conn,
+        attached_to_kind="project",
+        attached_to_id=project_id,
+        created_by_actor_id=actor_id,
+        name="middle",
+        created_at_offset_seconds=-20,
+    )
+    newer = insert_component(
+        conn,
+        attached_to_kind="project",
+        attached_to_id=project_id,
+        created_by_actor_id=actor_id,
+        name="newer",
+        created_at_offset_seconds=-10,
+    )
+    inactive = insert_component(
+        conn,
+        attached_to_kind="project",
+        attached_to_id=project_id,
+        created_by_actor_id=actor_id,
+        name="inactive",
+        created_at_offset_seconds=-5,
+        deactivated=True,
+    )
+
+    await _assert_cursor_pagination(
+        async_client,
+        path="/components",
+        key=key,
+        expected_ids_desc=[newer, middle, older],
+    )
+
+    clamped = await async_client.get(
+        "/components",
+        headers=auth_headers(key),
+        params={"limit": 500},
+    )
+    assert clamped.status_code == 200
+    assert len(clamped.json()["items"]) == 3
+
+    with_inactive = await async_client.get(
+        "/components",
         headers=auth_headers(key),
         params={"include_deactivated": True, "limit": 10},
     )

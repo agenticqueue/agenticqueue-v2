@@ -63,3 +63,20 @@ class UpdateObjectiveRequest(AQModel):
     @classmethod
     def due_at_must_be_utc(cls, value: object) -> datetime | None:
         return coerce_optional_utc_datetime(value)
+
+
+class CreateObjectiveResponse(AQModel):
+    objective: Objective
+
+
+class ListObjectivesResponse(AQModel):
+    items: list[Objective]
+    next_cursor: str | None = None
+
+
+class GetObjectiveResponse(AQModel):
+    objective: Objective
+
+
+class UpdateObjectiveResponse(AQModel):
+    objective: Objective

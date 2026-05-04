@@ -1,0 +1,6 @@
+Command:
+docker compose --env-file D:/mmmmm/mmmmm-aq2.0/.env -p mmmmm-aq20 run --build --rm -T api uv run pytest -q apps/api/tests/test_objectives_ops.py apps/api/tests/test_components_ops.py apps/api/tests/test_creator_only_auth.py apps/api/tests/test_list_op_pagination.py apps/api/tests/test_inheritance_lookups.py
+
+Result:
+22 passed, 1 warning in 10.94s
+

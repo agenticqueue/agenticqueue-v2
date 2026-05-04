@@ -1,0 +1,10 @@
+Initial focused test run after adding AQ2-87 tests failed with 15 expected failures:
+- missing /objectives and /components REST routes
+- missing objectives/components response fields in get_project/get_pipeline/get_job
+
+After implementation, the focused AQ2-87 suite passed:
+22 passed, 1 warning
+
+Full regression then found 2 stale MCP inventory assertions still expecting 43 tools. Those assertions were updated to the AQ2-87 51-tool inventory and rerun:
+apps/api/tests/test_mcp.py + test_mcp_richness.py targeted rerun: 3 passed, 1 warning
+

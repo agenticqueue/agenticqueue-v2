@@ -60,6 +60,12 @@ class GetProjectResponse(AQModel):
     learnings: InheritanceReferenceLists = Field(
         default_factory=InheritanceReferenceLists
     )
+    objectives: InheritanceReferenceLists = Field(
+        default_factory=InheritanceReferenceLists
+    )
+    components: InheritanceReferenceLists = Field(
+        default_factory=InheritanceReferenceLists
+    )
 
 
 class UpdateProjectRequest(AQModel):
