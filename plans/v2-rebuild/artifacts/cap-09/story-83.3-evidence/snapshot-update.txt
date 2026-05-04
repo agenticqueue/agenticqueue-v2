@@ -1,0 +1,12 @@
+Command:
+docker compose --env-file D:/mmmmm/mmmmm-aq2.0/.env -p mmmmm-aq20 exec -T api uv run pytest --update-snapshots tests/parity/
+
+Result:
+29 passed, 1 skipped, 1 warning
+
+Snapshot diff:
+No changes to tests/parity/openapi.snapshot.json.
+No changes to tests/parity/mcp_schema.snapshot.json.
+
+Reason:
+AQ2-86 populates existing decisions/learnings response fields and adds no REST route, CLI command, or MCP tool. The OpenAPI and MCP schemas were already shaped by AQ2-84/AQ2-85.

@@ -1,0 +1,102 @@
+{
+  "ticket": "AQ2-86",
+  "story": "Story 83.3 - submit_job inline-D&L extension + D&L inheritance lookups",
+  "base": "origin/main 2f0f8bb0719453af6f02aa31974799f4daee9963",
+  "branch": "aq2-86",
+  "outcome": "done",
+  "dod_results": [
+    {
+      "dod_id": "DOD-83.3-01",
+      "status": "passed",
+      "evidence": [
+        "apps/api/tests/test_submit_inline_dl_happy.py",
+        "plans/v2-rebuild/artifacts/cap-09/story-83.3-evidence/red-green.txt",
+        "plans/v2-rebuild/artifacts/cap-09/story-83.3-evidence/focused-pytest.txt"
+      ],
+      "summary": "Inline Decisions/Learnings accept attached_to_kind job/pipeline/project; server derives attached_to_id from the submitting Job."
+    },
+    {
+      "dod_id": "DOD-83.3-02",
+      "status": "passed",
+      "evidence": [
+        "apps/api/tests/test_models_cap05.py",
+        "apps/api/src/aq_api/services/submit.py"
+      ],
+      "summary": "Client-supplied attached_to_id remains rejected by the frozen extra=forbid inline models; submit service derives IDs and never reads a client ID."
+    },
+    {
+      "dod_id": "DOD-83.3-03",
+      "status": "passed",
+      "evidence": [
+        "apps/api/tests/test_inheritance_lookups.py"
+      ],
+      "summary": "get_project returns project-attached Decisions/Learnings in direct and root inherited arrays stay empty."
+    },
+    {
+      "dod_id": "DOD-83.3-04",
+      "status": "passed",
+      "evidence": [
+        "apps/api/tests/test_inheritance_lookups.py"
+      ],
+      "summary": "get_pipeline returns pipeline-attached rows in direct and parent project rows in inherited."
+    },
+    {
+      "dod_id": "DOD-83.3-05",
+      "status": "passed",
+      "evidence": [
+        "apps/api/tests/test_inheritance_lookups.py"
+      ],
+      "summary": "get_job returns job-attached rows in direct and inherited rows in pipeline-then-project order."
+    },
+    {
+      "dod_id": "DOD-83.3-06",
+      "status": "passed",
+      "evidence": [
+        "apps/api/src/aq_api/services/_inheritance.py",
+        "apps/api/tests/test_inheritance_lookups.py"
+      ],
+      "summary": "_resolve_attached_chain exists, is exported, is importable, and resolves a job to its job/pipeline/project chain."
+    },
+    {
+      "dod_id": "DOD-83.3-07",
+      "status": "passed",
+      "evidence": [
+        "plans/v2-rebuild/artifacts/cap-09/story-83.3-evidence/snapshot-update.txt",
+        "tests/parity/openapi.snapshot.json",
+        "tests/parity/mcp_schema.snapshot.json"
+      ],
+      "summary": "Snapshot update command passed; no snapshot diff was produced because AQ2-86 changes behavior behind existing response fields and adds no tools/routes."
+    },
+    {
+      "dod_id": "DOD-83.3-08",
+      "status": "passed",
+      "evidence": [
+        "plans/v2-rebuild/artifacts/cap-09/story-83.3-evidence/mypy-strict.txt",
+        "plans/v2-rebuild/artifacts/cap-09/story-83.3-evidence/ruff-check.txt"
+      ],
+      "summary": "mypy --strict uses the corrected API+CLI CI scope and ruff includes CLI source/tests plus parity tests."
+    },
+    {
+      "dod_id": "DOD-83.3-09",
+      "status": "passed",
+      "evidence": [
+        "plans/v2-rebuild/artifacts/cap-09/story-83.3-evidence/full-pytest.txt"
+      ],
+      "summary": "Full API + parity regression passed: 280 passed, 7 skipped, 1 known FastMCP deprecation warning."
+    }
+  ],
+  "verification": {
+    "red": "5 failed, 2 passed, 1 warning",
+    "focused": "18 passed, 1 warning",
+    "parity": "23 passed, 1 skipped",
+    "snapshot_update": "29 passed, 1 skipped, 1 warning; no snapshot diff",
+    "full_pytest": "280 passed, 7 skipped, 1 warning",
+    "mypy": "clean across 66 source files using CI scope: apps/api/src/aq_api/ apps/cli/src/aq_cli/",
+    "ruff": "all checks passed"
+  },
+  "risks_or_deviations": [
+    "AQ2-86 produced no OpenAPI or MCP snapshot diff because AQ2-84/AQ2-85 had already introduced the schema-visible fields and tools; this story only populates existing decisions/learnings fields.",
+    "Parity tests must not be launched in parallel against the same live DB; a parallel local attempt caused fixture interference. Sequential parity and snapshot-update runs passed."
+  ],
+  "handoff": "AQ2-87 and AQ2-88 may start after AQ2-86 merges; both reuse services/_inheritance.py."
+}

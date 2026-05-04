@@ -115,6 +115,36 @@ def _learning_rows(
     return [dict(row) for row in rows]
 
 
+def _decision_rows_by_kind(
+    conn: Connection[tuple[object, ...]],
+) -> list[dict[str, object]]:
+    with conn.cursor(row_factory=psycopg.rows.dict_row) as cursor:
+        cursor.execute(
+            """
+            SELECT id, attached_to_kind, attached_to_id, title, created_by_actor_id
+            FROM decisions
+            ORDER BY title
+            """
+        )
+        rows = cursor.fetchall()
+    return [dict(row) for row in rows]
+
+
+def _learning_rows_by_kind(
+    conn: Connection[tuple[object, ...]],
+) -> list[dict[str, object]]:
+    with conn.cursor(row_factory=psycopg.rows.dict_row) as cursor:
+        cursor.execute(
+            """
+            SELECT id, attached_to_kind, attached_to_id, title, created_by_actor_id
+            FROM learnings
+            ORDER BY title
+            """
+        )
+        rows = cursor.fetchall()
+    return [dict(row) for row in rows]
+
+
 @pytest.mark.asyncio
 async def test_submit_inline_dl_large_batch_preserves_content_and_metadata(
     conn: Connection[tuple[object, ...]],
@@ -194,3 +224,75 @@ async def test_submit_inline_dl_empty_arrays_create_no_rows(
     assert submit_response.created_learnings == []
     assert _decision_rows(conn, job_id) == []
     assert _learning_rows(conn, job_id) == []
+
+
+@pytest.mark.asyncio
+async def test_submit_inline_dl_can_attach_to_job_pipeline_and_project(
+    conn: Connection[tuple[object, ...]],
+    async_client: httpx.AsyncClient,
+) -> None:
+    actor_id, key, project_id, pipeline_id, job_id = claimed_job(conn)
+    decisions = [
+        {
+            "title": "Job decision",
+            "statement": "Job-local decision stays attached to the submitting job.",
+        },
+        {
+            "title": "Pipeline decision",
+            "statement": "Pipeline decision attaches to the submitting job pipeline.",
+            "attached_to_kind": "pipeline",
+        },
+        {
+            "title": "Project decision",
+            "statement": "Project decision attaches to the submitting job project.",
+            "attached_to_kind": "project",
+        },
+    ]
+    learnings = [
+        {
+            "title": "Job learning",
+            "statement": "Job-local learning stays attached to the submitting job.",
+        },
+        {
+            "title": "Pipeline learning",
+            "statement": "Pipeline learning attaches to the submitting job pipeline.",
+            "attached_to_kind": "pipeline",
+        },
+        {
+            "title": "Project learning",
+            "statement": "Project learning attaches to the submitting job project.",
+            "attached_to_kind": "project",
+        },
+    ]
+
+    response = await async_client.post(
+        f"/jobs/{job_id}/submit",
+        headers=auth_headers(key),
+        json=_done_payload(decisions_made=decisions, learnings=learnings),
+    )
+
+    assert response.status_code == 200
+    submit_response = SubmitJobResponse.model_validate(response.json())
+    assert len(submit_response.created_decisions) == 3
+    assert len(submit_response.created_learnings) == 3
+
+    decision_targets = {
+        str(row["title"]): (row["attached_to_kind"], row["attached_to_id"])
+        for row in _decision_rows_by_kind(conn)
+    }
+    learning_targets = {
+        str(row["title"]): (row["attached_to_kind"], row["attached_to_id"])
+        for row in _learning_rows_by_kind(conn)
+    }
+    assert decision_targets == {
+        "Job decision": ("job", job_id),
+        "Pipeline decision": ("pipeline", pipeline_id),
+        "Project decision": ("project", project_id),
+    }
+    assert learning_targets == {
+        "Job learning": ("job", job_id),
+        "Pipeline learning": ("pipeline", pipeline_id),
+        "Project learning": ("project", project_id),
+    }
+    for row in _decision_rows_by_kind(conn) + _learning_rows_by_kind(conn):
+        assert row["created_by_actor_id"] == actor_id

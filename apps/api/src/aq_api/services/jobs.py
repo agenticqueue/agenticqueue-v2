@@ -23,6 +23,11 @@ from aq_api.models import (
 )
 from aq_api.models.db import Job as DbJob
 from aq_api.models.db import Pipeline as DbPipeline
+from aq_api.services._inheritance import (
+    _resolve_attached_chain,
+    decision_learning_inheritance_lists,
+    decision_learning_scopes_for_entity,
+)
 
 DEFAULT_LIST_LIMIT = 50
 MAX_LIST_LIMIT = 100
@@ -180,7 +185,26 @@ async def get_job(session: AsyncSession, job_id: UUID) -> GetJobResponse:
     db_job = await session.get(DbJob, job_id)
     if db_job is None:
         raise JobNotFoundError("job not found")
-    return GetJobResponse(job=job_from_db(db_job))
+    chain = await _resolve_attached_chain(
+        session,
+        entity_kind="job",
+        entity_id=job_id,
+    )
+    assert chain is not None
+    direct_scopes, inherited_scopes = decision_learning_scopes_for_entity(
+        entity_kind="job",
+        chain=chain,
+    )
+    decisions, learnings = await decision_learning_inheritance_lists(
+        session,
+        direct_scopes=direct_scopes,
+        inherited_scopes=inherited_scopes,
+    )
+    return GetJobResponse(
+        job=job_from_db(db_job),
+        decisions=decisions,
+        learnings=learnings,
+    )
 
 
 async def update_job(

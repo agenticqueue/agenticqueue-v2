@@ -27,6 +27,11 @@ from aq_api.models.db import Job as DbJob
 from aq_api.models.db import Pipeline as DbPipeline
 from aq_api.models.db import Project as DbProject
 from aq_api.models.jobs import JobState
+from aq_api.services._inheritance import (
+    _resolve_attached_chain,
+    decision_learning_inheritance_lists,
+    decision_learning_scopes_for_entity,
+)
 
 DEFAULT_LIST_LIMIT = 50
 MAX_LIST_LIMIT = 200
@@ -151,7 +156,26 @@ async def get_pipeline(
     pipeline = await session.get(DbPipeline, pipeline_id)
     if pipeline is None:
         raise PipelineNotFoundError("pipeline not found")
-    return GetPipelineResponse(pipeline=pipeline_from_db(pipeline))
+    chain = await _resolve_attached_chain(
+        session,
+        entity_kind="pipeline",
+        entity_id=pipeline_id,
+    )
+    assert chain is not None
+    direct_scopes, inherited_scopes = decision_learning_scopes_for_entity(
+        entity_kind="pipeline",
+        chain=chain,
+    )
+    decisions, learnings = await decision_learning_inheritance_lists(
+        session,
+        direct_scopes=direct_scopes,
+        inherited_scopes=inherited_scopes,
+    )
+    return GetPipelineResponse(
+        pipeline=pipeline_from_db(pipeline),
+        decisions=decisions,
+        learnings=learnings,
+    )
 
 
 async def create_pipeline(

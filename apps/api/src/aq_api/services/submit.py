@@ -56,13 +56,17 @@ async def _insert_inline_dl(
     decisions_made: list[SubmitDecisionInline],
     learnings: list[SubmitLearningInline],
 ) -> tuple[list[UUID], list[UUID]]:
+    job = await _job_by_id(session, job_id)
+    assert job is not None
+
     created_decisions: list[UUID] = []
     for decision in decisions_made:
+        attached_to_id = _inline_attached_to_id(job, decision.attached_to_kind)
         result = await session.execute(
             insert(DbDecision)
             .values(
-                attached_to_kind="job",
-                attached_to_id=job_id,
+                attached_to_kind=decision.attached_to_kind,
+                attached_to_id=attached_to_id,
                 title=decision.title,
                 statement=decision.statement,
                 rationale=decision.rationale,
@@ -75,11 +79,12 @@ async def _insert_inline_dl(
 
     created_learnings: list[UUID] = []
     for learning in learnings:
+        attached_to_id = _inline_attached_to_id(job, learning.attached_to_kind)
         result = await session.execute(
             insert(DbLearning)
             .values(
-                attached_to_kind="job",
-                attached_to_id=job_id,
+                attached_to_kind=learning.attached_to_kind,
+                attached_to_id=attached_to_id,
                 title=learning.title,
                 statement=learning.statement,
                 context=learning.context,
@@ -90,6 +95,20 @@ async def _insert_inline_dl(
         created_learnings.append(result.scalar_one())
 
     return created_decisions, created_learnings
+
+
+def _inline_attached_to_id(job: DbJob, attached_to_kind: str) -> UUID:
+    match attached_to_kind:
+        case "job":
+            return job.id
+        case "pipeline":
+            return job.pipeline_id
+        case "project":
+            return job.project_id
+        case _:
+            raise AssertionError(
+                f"unknown inline attached_to_kind: {attached_to_kind!r}"
+            )
 
 
 async def _insert_gated_on_edge(
