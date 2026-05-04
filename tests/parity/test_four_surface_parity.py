@@ -910,6 +910,433 @@ def test_project_ops_match_rest_cli_mcp_and_audit(
     )
 
 
+def test_decision_ops_match_rest_cli_mcp_and_audit(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    founder_actor_id: str,
+    artifact_dir: Path,
+    redact_evidence: Any,
+) -> None:
+    auth = {"Authorization": f"Bearer {founder_key}"}
+    triplet = _create_pipeline_triplet(
+        api_base_url,
+        mcp_base_url,
+        founder_key,
+        label="decision",
+        mcp_request_start=130,
+    )
+    project_ids = {
+        surface: payload["project"]["id"]
+        for surface, payload in triplet["projects"].items()
+    }
+
+    rest_create_response = httpx.post(
+        f"{api_base_url}/decisions",
+        headers=auth,
+        json={
+            "attached_to_kind": "project",
+            "attached_to_id": project_ids["rest"],
+            "title": "REST Decision",
+            "statement": "REST decision statement",
+            "rationale": "REST rationale",
+        },
+        timeout=10,
+    )
+    rest_create_response.raise_for_status()
+    rest_create = rest_create_response.json()
+    cli_create = _run_cli(
+        [
+            "decision",
+            "create",
+            "--attached-to-kind",
+            "project",
+            "--attached-to-id",
+            project_ids["cli"],
+            "--title",
+            "CLI Decision",
+            "--statement",
+            "CLI decision statement",
+            "--rationale",
+            "CLI rationale",
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_create = _call_mcp_tool(
+        mcp_base_url,
+        "create_decision",
+        132,
+        api_key=founder_key,
+        arguments={
+            "attached_to_kind": "project",
+            "attached_to_id": project_ids["mcp"],
+            "title": "MCP Decision",
+            "statement": "MCP decision statement",
+            "rationale": "MCP rationale",
+            "agent_identity": "parity-decision",
+        },
+    )
+
+    rest_decision_id = rest_create["decision"]["id"]
+    cli_decision_id = cli_create["decision"]["id"]
+    mcp_decision_id = mcp_create["decision"]["id"]
+
+    for payload, expected_title in (
+        (rest_create, "REST Decision"),
+        (cli_create, "CLI Decision"),
+        (mcp_create, "MCP Decision"),
+    ):
+        assert payload["decision"]["attached_to_kind"] == "project"
+        assert payload["decision"]["title"] == expected_title
+
+    rest_list = _get_json(
+        f"{api_base_url}/decisions",
+        api_key=founder_key,
+        params={
+            "attached_to_kind": "project",
+            "attached_to_id": project_ids["rest"],
+        },
+    )
+    cli_list = _run_cli(
+        [
+            "decision",
+            "list",
+            "--attached-to-kind",
+            "project",
+            "--attached-to-id",
+            project_ids["cli"],
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_list = _call_mcp_tool(
+        mcp_base_url,
+        "list_decisions",
+        133,
+        api_key=founder_key,
+        arguments={
+            "attached_to_kind": "project",
+            "attached_to_id": project_ids["mcp"],
+            "agent_identity": "parity-decision",
+        },
+    )
+    assert [item["id"] for item in rest_list["items"]] == [rest_decision_id]
+    assert [item["id"] for item in cli_list["items"]] == [cli_decision_id]
+    assert [item["id"] for item in mcp_list["items"]] == [mcp_decision_id]
+
+    rest_get = _get_json(
+        f"{api_base_url}/decisions/{rest_decision_id}",
+        api_key=founder_key,
+    )
+    cli_get = _run_cli(
+        ["decision", "get", cli_decision_id],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_get = _call_mcp_tool(
+        mcp_base_url,
+        "get_decision",
+        134,
+        api_key=founder_key,
+        arguments={
+            "decision_id": mcp_decision_id,
+            "agent_identity": "parity-decision",
+        },
+    )
+    assert rest_get["visuals"] == cli_get["visuals"] == mcp_get["visuals"] == []
+
+    rest_replacement_response = httpx.post(
+        f"{api_base_url}/decisions",
+        headers=auth,
+        json={
+            "attached_to_kind": "project",
+            "attached_to_id": project_ids["rest"],
+            "title": "REST Replacement",
+            "statement": "REST replacement statement",
+        },
+        timeout=10,
+    )
+    rest_replacement_response.raise_for_status()
+    rest_replacement_id = rest_replacement_response.json()["decision"]["id"]
+    cli_replacement = _run_cli(
+        [
+            "decision",
+            "create",
+            "--attached-to-kind",
+            "project",
+            "--attached-to-id",
+            project_ids["cli"],
+            "--title",
+            "CLI Replacement",
+            "--statement",
+            "CLI replacement statement",
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_replacement = _call_mcp_tool(
+        mcp_base_url,
+        "create_decision",
+        135,
+        api_key=founder_key,
+        arguments={
+            "attached_to_kind": "project",
+            "attached_to_id": project_ids["mcp"],
+            "title": "MCP Replacement",
+            "statement": "MCP replacement statement",
+            "agent_identity": "parity-decision",
+        },
+    )
+    rest_supersede_response = httpx.post(
+        f"{api_base_url}/decisions/{rest_decision_id}/supersede",
+        headers=auth,
+        json={"replacement_id": rest_replacement_id},
+        timeout=10,
+    )
+    rest_supersede_response.raise_for_status()
+    rest_supersede = rest_supersede_response.json()
+    cli_supersede = _run_cli(
+        [
+            "decision",
+            "supersede",
+            cli_decision_id,
+            "--replacement-id",
+            cli_replacement["decision"]["id"],
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_supersede = _call_mcp_tool(
+        mcp_base_url,
+        "supersede_decision",
+        136,
+        api_key=founder_key,
+        arguments={
+            "decision_id": mcp_decision_id,
+            "replacement_id": mcp_replacement["decision"]["id"],
+            "agent_identity": "parity-decision",
+        },
+    )
+    assert rest_supersede["replacement_decision"]["supersedes_decision_id"] == (
+        rest_decision_id
+    )
+    assert cli_supersede["replacement_decision"]["supersedes_decision_id"] == (
+        cli_decision_id
+    )
+    assert mcp_supersede["replacement_decision"]["supersedes_decision_id"] == (
+        mcp_decision_id
+    )
+
+    audit = _get_json(
+        f"{api_base_url}/audit",
+        api_key=founder_key,
+        params={"actor": founder_actor_id, "limit": 50},
+    )
+    ops = [row["op"] for row in audit["entries"]]
+    assert ops.count("create_decision") == 6
+    assert ops.count("supersede_decision") == 3
+
+    artifact = {
+        "creates": {"rest": rest_create, "cli": cli_create, "mcp": mcp_create},
+        "lists": {"rest": rest_list, "cli": cli_list, "mcp": mcp_list},
+        "gets": {"rest": rest_get, "cli": cli_get, "mcp": mcp_get},
+        "supersedes": {
+            "rest": rest_supersede,
+            "cli": cli_supersede,
+            "mcp": mcp_supersede,
+        },
+        "audit": audit,
+    }
+    (artifact_dir / "decisions-parity.txt").write_text(
+        redact_evidence(_json_text(artifact)),
+        encoding="utf-8",
+    )
+
+
+def test_learning_ops_match_rest_cli_mcp_and_audit(
+    api_base_url: str,
+    mcp_base_url: str,
+    founder_key: str,
+    founder_actor_id: str,
+    artifact_dir: Path,
+    redact_evidence: Any,
+) -> None:
+    auth = {"Authorization": f"Bearer {founder_key}"}
+    triplet = _create_pipeline_triplet(
+        api_base_url,
+        mcp_base_url,
+        founder_key,
+        label="learning",
+        mcp_request_start=140,
+    )
+    project_ids = {
+        surface: payload["project"]["id"]
+        for surface, payload in triplet["projects"].items()
+    }
+
+    rest_submit_response = httpx.post(
+        f"{api_base_url}/learnings",
+        headers=auth,
+        json={
+            "attached_to_kind": "project",
+            "attached_to_id": project_ids["rest"],
+            "title": "REST Learning",
+            "statement": "REST learning statement",
+            "context": "REST context",
+        },
+        timeout=10,
+    )
+    rest_submit_response.raise_for_status()
+    rest_submit = rest_submit_response.json()
+    cli_submit = _run_cli(
+        [
+            "learning",
+            "submit",
+            "--attached-to-kind",
+            "project",
+            "--attached-to-id",
+            project_ids["cli"],
+            "--title",
+            "CLI Learning",
+            "--statement",
+            "CLI learning statement",
+            "--context",
+            "CLI context",
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_submit = _call_mcp_tool(
+        mcp_base_url,
+        "submit_learning",
+        142,
+        api_key=founder_key,
+        arguments={
+            "attached_to_kind": "project",
+            "attached_to_id": project_ids["mcp"],
+            "title": "MCP Learning",
+            "statement": "MCP learning statement",
+            "context": "MCP context",
+            "agent_identity": "parity-learning",
+        },
+    )
+    rest_learning_id = rest_submit["learning"]["id"]
+    cli_learning_id = cli_submit["learning"]["id"]
+    mcp_learning_id = mcp_submit["learning"]["id"]
+
+    rest_list = _get_json(
+        f"{api_base_url}/learnings",
+        api_key=founder_key,
+        params={
+            "attached_to_kind": "project",
+            "attached_to_id": project_ids["rest"],
+        },
+    )
+    cli_list = _run_cli(
+        [
+            "learning",
+            "list",
+            "--attached-to-kind",
+            "project",
+            "--attached-to-id",
+            project_ids["cli"],
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_list = _call_mcp_tool(
+        mcp_base_url,
+        "list_learnings",
+        143,
+        api_key=founder_key,
+        arguments={
+            "attached_to_kind": "project",
+            "attached_to_id": project_ids["mcp"],
+            "agent_identity": "parity-learning",
+        },
+    )
+    assert [item["id"] for item in rest_list["items"]] == [rest_learning_id]
+    assert [item["id"] for item in cli_list["items"]] == [cli_learning_id]
+    assert [item["id"] for item in mcp_list["items"]] == [mcp_learning_id]
+
+    rest_get = _get_json(
+        f"{api_base_url}/learnings/{rest_learning_id}",
+        api_key=founder_key,
+    )
+    cli_get = _run_cli(
+        ["learning", "get", cli_learning_id],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_get = _call_mcp_tool(
+        mcp_base_url,
+        "get_learning",
+        144,
+        api_key=founder_key,
+        arguments={
+            "learning_id": mcp_learning_id,
+            "agent_identity": "parity-learning",
+        },
+    )
+    assert rest_get["visuals"] == cli_get["visuals"] == mcp_get["visuals"] == []
+
+    rest_edit_response = httpx.patch(
+        f"{api_base_url}/learnings/{rest_learning_id}",
+        headers=auth,
+        json={"title": "REST Learning Edited", "context": None},
+        timeout=10,
+    )
+    rest_edit_response.raise_for_status()
+    rest_edit = rest_edit_response.json()
+    cli_edit = _run_cli(
+        [
+            "learning",
+            "edit",
+            cli_learning_id,
+            "--title",
+            "CLI Learning Edited",
+        ],
+        api_base_url,
+        api_key=founder_key,
+    )
+    mcp_edit = _call_mcp_tool(
+        mcp_base_url,
+        "edit_learning",
+        145,
+        api_key=founder_key,
+        arguments={
+            "learning_id": mcp_learning_id,
+            "title": "MCP Learning Edited",
+            "agent_identity": "parity-learning",
+        },
+    )
+    assert rest_edit["learning"]["title"] == "REST Learning Edited"
+    assert cli_edit["learning"]["title"] == "CLI Learning Edited"
+    assert mcp_edit["learning"]["title"] == "MCP Learning Edited"
+
+    audit = _get_json(
+        f"{api_base_url}/audit",
+        api_key=founder_key,
+        params={"actor": founder_actor_id, "limit": 50},
+    )
+    ops = [row["op"] for row in audit["entries"]]
+    assert ops.count("submit_learning") == 3
+    assert ops.count("edit_learning") == 3
+
+    artifact = {
+        "submits": {"rest": rest_submit, "cli": cli_submit, "mcp": mcp_submit},
+        "lists": {"rest": rest_list, "cli": cli_list, "mcp": mcp_list},
+        "gets": {"rest": rest_get, "cli": cli_get, "mcp": mcp_get},
+        "edits": {"rest": rest_edit, "cli": cli_edit, "mcp": mcp_edit},
+        "audit": audit,
+    }
+    (artifact_dir / "learnings-parity.txt").write_text(
+        redact_evidence(_json_text(artifact)),
+        encoding="utf-8",
+    )
+
+
 def test_pipeline_ops_match_rest_cli_mcp_and_audit(
     api_base_url: str,
     mcp_base_url: str,

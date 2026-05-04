@@ -43,6 +43,14 @@ async def test_mcp_tools_return_shared_contract_payloads() -> None:
             "claim_next_job",
             "submit_job",
             "review_complete",
+            "create_decision",
+            "list_decisions",
+            "get_decision",
+            "supersede_decision",
+            "submit_learning",
+            "list_learnings",
+            "get_learning",
+            "edit_learning",
             "comment_on_job",
             "list_job_comments",
             "cancel_job",
@@ -121,6 +129,28 @@ async def test_mcp_tools_return_shared_contract_payloads() -> None:
         assert tool_by_name["review_complete"].annotations.readOnlyHint is False
         assert tool_by_name["review_complete"].annotations.destructiveHint is True
         assert tool_by_name["review_complete"].annotations.idempotentHint is False
+        assert tool_by_name["create_decision"].annotations is not None
+        assert tool_by_name["create_decision"].annotations.readOnlyHint is False
+        assert tool_by_name["create_decision"].annotations.destructiveHint is False
+        assert tool_by_name["list_decisions"].annotations is not None
+        assert tool_by_name["list_decisions"].annotations.readOnlyHint is True
+        assert tool_by_name["get_decision"].annotations is not None
+        assert tool_by_name["get_decision"].annotations.readOnlyHint is True
+        assert tool_by_name["supersede_decision"].annotations is not None
+        assert tool_by_name["supersede_decision"].annotations.readOnlyHint is False
+        assert tool_by_name["supersede_decision"].annotations.destructiveHint is True
+        assert tool_by_name["supersede_decision"].annotations.idempotentHint is False
+        assert tool_by_name["submit_learning"].annotations is not None
+        assert tool_by_name["submit_learning"].annotations.readOnlyHint is False
+        assert tool_by_name["submit_learning"].annotations.destructiveHint is False
+        assert tool_by_name["list_learnings"].annotations is not None
+        assert tool_by_name["list_learnings"].annotations.readOnlyHint is True
+        assert tool_by_name["get_learning"].annotations is not None
+        assert tool_by_name["get_learning"].annotations.readOnlyHint is True
+        assert tool_by_name["edit_learning"].annotations is not None
+        assert tool_by_name["edit_learning"].annotations.readOnlyHint is False
+        assert tool_by_name["edit_learning"].annotations.destructiveHint is False
+        assert tool_by_name["edit_learning"].annotations.idempotentHint is False
         assert tool_by_name["comment_on_job"].annotations is not None
         assert tool_by_name["comment_on_job"].annotations.readOnlyHint is False
         assert tool_by_name["comment_on_job"].annotations.destructiveHint is False

@@ -18,7 +18,16 @@ from aq_api.models.components import (
     CreateComponentRequest,
     UpdateComponentRequest,
 )
-from aq_api.models.decisions import Decision, SubmitDecisionInline
+from aq_api.models.decisions import (
+    CreateDecisionRequest,
+    CreateDecisionResponse,
+    Decision,
+    GetDecisionResponse,
+    ListDecisionsResponse,
+    SubmitDecisionInline,
+    SupersedeDecisionRequest,
+    SupersedeDecisionResponse,
+)
 from aq_api.models.health import HealthStatus, VersionInfo
 from aq_api.models.inheritance import InheritanceReferenceLists
 from aq_api.models.job_comments import (
@@ -69,7 +78,16 @@ from aq_api.models.labels import (
     RegisterLabelRequest,
     RegisterLabelResponse,
 )
-from aq_api.models.learnings import Learning, SubmitLearningInline
+from aq_api.models.learnings import (
+    EditLearningRequest,
+    EditLearningResponse,
+    GetLearningResponse,
+    Learning,
+    ListLearningsResponse,
+    SubmitLearningInline,
+    SubmitLearningRequest,
+    SubmitLearningResponse,
+)
 from aq_api.models.objectives import (
     CreateObjectiveRequest,
     Objective,
@@ -121,6 +139,8 @@ __all__ = [
     "CreateActorRequest",
     "CreateActorResponse",
     "Component",
+    "CreateDecisionRequest",
+    "CreateDecisionResponse",
     "CreateJobRequest",
     "CreateJobResponse",
     "CreateComponentRequest",
@@ -133,7 +153,11 @@ __all__ = [
     "Decision",
     "DetachLabelRequest",
     "DetachLabelResponse",
+    "EditLearningRequest",
+    "EditLearningResponse",
     "GetJobResponse",
+    "GetDecisionResponse",
+    "GetLearningResponse",
     "GetPipelineResponse",
     "GetProjectResponse",
     "HeartbeatJobResponse",
@@ -147,6 +171,8 @@ __all__ = [
     "Label",
     "Learning",
     "ListActorsResponse",
+    "ListDecisionsResponse",
+    "ListLearningsResponse",
     "ListJobCommentsRequest",
     "ListJobCommentsResponse",
     "ListJobsRequest",
@@ -177,6 +203,10 @@ __all__ = [
     "SubmitJobRequest",
     "SubmitJobResponse",
     "SubmitLearningInline",
+    "SubmitLearningRequest",
+    "SubmitLearningResponse",
+    "SupersedeDecisionRequest",
+    "SupersedeDecisionResponse",
     "UpdateComponentRequest",
     "UpdateJobRequest",
     "UpdateJobResponse",

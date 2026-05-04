@@ -1,6 +1,7 @@
 import json
 from collections.abc import Iterator
 from contextlib import contextmanager
+from datetime import datetime
 from typing import Annotated, Literal
 from uuid import UUID
 
@@ -32,6 +33,8 @@ from aq_api.models import (
     CommentOnJobResponse,
     CreateActorRequest,
     CreateActorResponse,
+    CreateDecisionRequest,
+    CreateDecisionResponse,
     CreateJobRequest,
     CreateJobResponse,
     CreatePipelineRequest,
@@ -40,14 +43,20 @@ from aq_api.models import (
     CreateProjectResponse,
     DetachLabelRequest,
     DetachLabelResponse,
+    EditLearningRequest,
+    EditLearningResponse,
+    GetDecisionResponse,
     GetJobResponse,
+    GetLearningResponse,
     GetPipelineResponse,
     GetProjectResponse,
     HealthStatus,
     HeartbeatJobResponse,
     ListActorsResponse,
+    ListDecisionsResponse,
     ListJobCommentsResponse,
     ListJobsResponse,
+    ListLearningsResponse,
     ListPipelinesResponse,
     ListProjectsResponse,
     ListReadyJobsResponse,
@@ -60,6 +69,10 @@ from aq_api.models import (
     ReviewCompleteResponse,
     RevokeApiKeyResponse,
     SubmitJobRequest,
+    SubmitLearningRequest,
+    SubmitLearningResponse,
+    SupersedeDecisionRequest,
+    SupersedeDecisionResponse,
     UpdateJobResponse,
     UpdatePipelineRequest,
     UpdatePipelineResponse,
@@ -68,9 +81,16 @@ from aq_api.models import (
     VersionInfo,
     WhoamiResponse,
 )
+from aq_api.models.decisions import (
+    AttachedToKind,
+    DecisionRationale,
+    DecisionStatement,
+    DecisionTitle,
+)
 from aq_api.models.job_comments import CommentBody
 from aq_api.models.jobs import JobState, JobTitle
 from aq_api.models.labels import LabelColor, LabelName
+from aq_api.models.learnings import LearningContext, LearningStatement, LearningTitle
 from aq_api.models.pipelines import PipelineName
 from aq_api.models.projects import (
     Description as ProjectDescription,
@@ -87,6 +107,12 @@ from aq_api.services.actors import list_actors as list_actor_service
 from aq_api.services.api_keys import revoke_api_key as revoke_api_key_service
 from aq_api.services.audit import query_audit_log as query_audit_log_service
 from aq_api.services.claim import claim_next_job as claim_next_job_service
+from aq_api.services.decisions import create_decision as create_decision_service
+from aq_api.services.decisions import get_decision as get_decision_service
+from aq_api.services.decisions import list_decisions as list_decision_service
+from aq_api.services.decisions import (
+    supersede_decision as supersede_decision_service,
+)
 from aq_api.services.heartbeat import heartbeat_job as heartbeat_job_service
 from aq_api.services.job_comments import comment_on_job as comment_on_job_service
 from aq_api.services.job_comments import list_job_comments as list_comments_service
@@ -98,6 +124,10 @@ from aq_api.services.jobs import update_job as update_job_service
 from aq_api.services.labels import attach_label as attach_label_service
 from aq_api.services.labels import detach_label as detach_label_service
 from aq_api.services.labels import register_label as register_label_service
+from aq_api.services.learnings import edit_learning as edit_learning_service
+from aq_api.services.learnings import get_learning as get_learning_service
+from aq_api.services.learnings import list_learnings as list_learning_service
+from aq_api.services.learnings import submit_learning as submit_learning_service
 from aq_api.services.list_ready_jobs import list_ready_jobs as list_ready_jobs_service
 from aq_api.services.pipelines import archive_pipeline as archive_pipeline_service
 from aq_api.services.pipelines import clone_pipeline as clone_pipeline_service
@@ -797,6 +827,237 @@ def create_mcp_server() -> FastMCP:
                     session,
                     job_id=job_id,
                     request=request,
+                    actor_id=actor_id,
+                )
+
+    @server.tool(
+        description=(
+            "Create a standalone Decision attached to a Job, Pipeline, or "
+            "Project. Validates the attachment target and writes an audit row."
+        ),
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def create_decision(
+        attached_to_kind: AttachedToKind,
+        attached_to_id: UUID,
+        title: DecisionTitle,
+        statement: DecisionStatement,
+        rationale: DecisionRationale = None,
+        agent_identity: AgentIdentity = None,
+    ) -> CreateDecisionResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = CreateDecisionRequest(
+                attached_to_kind=attached_to_kind,
+                attached_to_id=attached_to_id,
+                title=title,
+                statement=statement,
+                rationale=rationale,
+            )
+            async with SessionLocal() as session:
+                return await create_decision_service(
+                    session,
+                    request,
+                    actor_id=actor_id,
+                )
+
+    @server.tool(
+        description=(
+            "List Decisions with optional attachment, actor, since, cursor, "
+            "limit, and include_deactivated filters. Read-only."
+        ),
+        annotations={"readOnlyHint": True},
+    )
+    async def list_decisions(
+        attached_to_kind: AttachedToKind | None = None,
+        attached_to_id: UUID | None = None,
+        actor_id: UUID | None = None,
+        since: datetime | None = None,
+        cursor: str | None = None,
+        limit: int = 50,
+        include_deactivated: bool = False,
+        agent_identity: AgentIdentity = None,
+    ) -> ListDecisionsResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await list_decision_service(
+                    session,
+                    attached_to_kind=attached_to_kind,
+                    attached_to_id=attached_to_id,
+                    actor_id=actor_id,
+                    since=since,
+                    cursor=cursor,
+                    limit=limit,
+                    include_deactivated=include_deactivated,
+                )
+
+    @server.tool(
+        description=(
+            "Get one Decision by id. Read-only. The visuals array is present "
+            "but remains empty until Visual lookup wiring ships."
+        ),
+        annotations={"readOnlyHint": True},
+    )
+    async def get_decision(
+        decision_id: UUID,
+        agent_identity: AgentIdentity = None,
+    ) -> GetDecisionResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await get_decision_service(session, decision_id)
+
+    @server.tool(
+        description=(
+            "Supersede an active Decision with an active replacement Decision "
+            "in the same attachment scope. Any valid Actor may call this."
+        ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": True,
+            "idempotentHint": False,
+        },
+    )
+    async def supersede_decision(
+        decision_id: UUID,
+        replacement_id: UUID,
+        agent_identity: AgentIdentity = None,
+    ) -> SupersedeDecisionResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            request = SupersedeDecisionRequest(replacement_id=replacement_id)
+            async with SessionLocal() as session:
+                return await supersede_decision_service(
+                    session,
+                    decision_id,
+                    request,
+                )
+
+    @server.tool(
+        description=(
+            "Submit a standalone Learning attached to a Job, Pipeline, or "
+            "Project. Validates the attachment target and writes an audit row."
+        ),
+        annotations={"readOnlyHint": False, "destructiveHint": False},
+    )
+    async def submit_learning(
+        attached_to_kind: AttachedToKind,
+        attached_to_id: UUID,
+        title: LearningTitle,
+        statement: LearningStatement,
+        context: LearningContext = None,
+        agent_identity: AgentIdentity = None,
+    ) -> SubmitLearningResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = SubmitLearningRequest(
+                attached_to_kind=attached_to_kind,
+                attached_to_id=attached_to_id,
+                title=title,
+                statement=statement,
+                context=context,
+            )
+            async with SessionLocal() as session:
+                return await submit_learning_service(
+                    session,
+                    request,
+                    actor_id=actor_id,
+                )
+
+    @server.tool(
+        description=(
+            "List Learnings with optional attachment, actor, since, cursor, "
+            "limit, and include_deactivated filters. Read-only."
+        ),
+        annotations={"readOnlyHint": True},
+    )
+    async def list_learnings(
+        attached_to_kind: AttachedToKind | None = None,
+        attached_to_id: UUID | None = None,
+        actor_id: UUID | None = None,
+        since: datetime | None = None,
+        cursor: str | None = None,
+        limit: int = 50,
+        include_deactivated: bool = False,
+        agent_identity: AgentIdentity = None,
+    ) -> ListLearningsResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await list_learning_service(
+                    session,
+                    attached_to_kind=attached_to_kind,
+                    attached_to_id=attached_to_id,
+                    actor_id=actor_id,
+                    since=since,
+                    cursor=cursor,
+                    limit=limit,
+                    include_deactivated=include_deactivated,
+                )
+
+    @server.tool(
+        description=(
+            "Get one Learning by id. Read-only. The visuals array is present "
+            "but remains empty until Visual lookup wiring ships."
+        ),
+        annotations={"readOnlyHint": True},
+    )
+    async def get_learning(
+        learning_id: UUID,
+        agent_identity: AgentIdentity = None,
+    ) -> GetLearningResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            _authenticated_actor_id()
+            async with SessionLocal() as session:
+                return await get_learning_service(session, learning_id)
+
+    @server.tool(
+        description=(
+            "Edit a Learning's title, statement, or context. Creator-only; "
+            "cross-actor edits return learning_edit_forbidden."
+        ),
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": False,
+        },
+    )
+    async def edit_learning(
+        learning_id: UUID,
+        title: LearningTitle | None = None,
+        statement: LearningStatement | None = None,
+        context: LearningContext = None,
+        agent_identity: AgentIdentity = None,
+    ) -> EditLearningResponse:
+        from aq_api._db import SessionLocal
+
+        with _claimed_agent_identity(agent_identity):
+            actor_id = _authenticated_actor_id()
+            request = EditLearningRequest(
+                title=title,
+                statement=statement,
+                context=context,
+            )
+            async with SessionLocal() as session:
+                return await edit_learning_service(
+                    session,
+                    learning_id,
+                    request,
                     actor_id=actor_id,
                 )
 

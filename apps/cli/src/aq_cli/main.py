@@ -2,6 +2,7 @@ import json
 import os
 import re
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Annotated, NoReturn
 
@@ -44,6 +45,8 @@ project_app = typer.Typer(add_completion=False, help="Project commands.")
 label_app = typer.Typer(add_completion=False, help="Label commands.")
 pipeline_app = typer.Typer(add_completion=False, help="Pipeline commands.")
 job_app = typer.Typer(add_completion=False, help="Job commands.")
+decision_app = typer.Typer(add_completion=False, help="Decision commands.")
+learning_app = typer.Typer(add_completion=False, help="Learning commands.")
 SLUG_CHARS_RE = re.compile(r"[^a-z0-9]+")
 
 
@@ -51,7 +54,8 @@ def _api_url(path: str) -> str:
     return f"{os.getenv(API_URL_ENV, DEFAULT_API_URL).rstrip('/')}{path}"
 
 
-QueryParams = dict[str, str | int | float | bool | None | list[str]]
+QueryParamValue = str | int | float | bool | None | list[str]
+QueryParams = dict[str, QueryParamValue]
 
 
 def _load_config(config_path: Path | None) -> StoredConfig:
@@ -111,7 +115,7 @@ def _get_auth(
     timeout: float,
     config_path: Path | None,
     *,
-    params: QueryParams | None = None,
+    params: Mapping[str, QueryParamValue] | None = None,
 ) -> str:
     url = _authenticated_api_url(path, config_path)
     try:
@@ -788,6 +792,164 @@ def job_review_complete(
 
 
 app.add_typer(job_app, name="job")
+
+
+@decision_app.command("create")
+def decision_create(
+    attached_to_kind: Annotated[str, typer.Option("--attached-to-kind")],
+    attached_to_id: Annotated[str, typer.Option("--attached-to-id")],
+    title: Annotated[str, typer.Option("--title")],
+    statement: Annotated[str, typer.Option("--statement")],
+    rationale: Annotated[str | None, typer.Option("--rationale")] = None,
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    body: dict[str, object] = {
+        "attached_to_kind": attached_to_kind,
+        "attached_to_id": attached_to_id,
+        "title": title,
+        "statement": statement,
+    }
+    if rationale is not None:
+        body["rationale"] = rationale
+    typer.echo(_post_auth("/decisions", body, timeout, config))
+
+
+@decision_app.command("list")
+def decision_list(
+    attached_to_kind: Annotated[str | None, typer.Option("--attached-to-kind")] = None,
+    attached_to_id: Annotated[str | None, typer.Option("--attached-to-id")] = None,
+    actor_id: Annotated[str | None, typer.Option("--actor-id")] = None,
+    since: Annotated[str | None, typer.Option("--since")] = None,
+    limit: Annotated[int, typer.Option("--limit", min=1)] = 50,
+    cursor: Annotated[str | None, typer.Option("--cursor")] = None,
+    include_deactivated: Annotated[
+        bool,
+        typer.Option("--include-deactivated"),
+    ] = False,
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    raw_params: QueryParams = {
+        "attached_to_kind": attached_to_kind,
+        "attached_to_id": attached_to_id,
+        "actor_id": actor_id,
+        "since": since,
+        "limit": limit,
+        "cursor": cursor,
+        "include_deactivated": include_deactivated,
+    }
+    params = {key: value for key, value in raw_params.items() if value is not None}
+    typer.echo(_get_auth("/decisions", timeout, config, params=params))
+
+
+@decision_app.command("get")
+def decision_get(
+    decision_id: Annotated[str, typer.Argument(help="Decision UUID.")],
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    typer.echo(_get_auth(f"/decisions/{decision_id}", timeout, config))
+
+
+@decision_app.command("supersede")
+def decision_supersede(
+    decision_id: Annotated[str, typer.Argument(help="Old Decision UUID.")],
+    replacement_id: Annotated[str, typer.Option("--replacement-id")],
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    typer.echo(
+        _post_auth(
+            f"/decisions/{decision_id}/supersede",
+            {"replacement_id": replacement_id},
+            timeout,
+            config,
+        )
+    )
+
+
+app.add_typer(decision_app, name="decision")
+
+
+@learning_app.command("submit")
+def learning_submit(
+    attached_to_kind: Annotated[str, typer.Option("--attached-to-kind")],
+    attached_to_id: Annotated[str, typer.Option("--attached-to-id")],
+    title: Annotated[str, typer.Option("--title")],
+    statement: Annotated[str, typer.Option("--statement")],
+    context: Annotated[str | None, typer.Option("--context")] = None,
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    body: dict[str, object] = {
+        "attached_to_kind": attached_to_kind,
+        "attached_to_id": attached_to_id,
+        "title": title,
+        "statement": statement,
+    }
+    if context is not None:
+        body["context"] = context
+    typer.echo(_post_auth("/learnings", body, timeout, config))
+
+
+@learning_app.command("list")
+def learning_list(
+    attached_to_kind: Annotated[str | None, typer.Option("--attached-to-kind")] = None,
+    attached_to_id: Annotated[str | None, typer.Option("--attached-to-id")] = None,
+    actor_id: Annotated[str | None, typer.Option("--actor-id")] = None,
+    since: Annotated[str | None, typer.Option("--since")] = None,
+    limit: Annotated[int, typer.Option("--limit", min=1)] = 50,
+    cursor: Annotated[str | None, typer.Option("--cursor")] = None,
+    include_deactivated: Annotated[
+        bool,
+        typer.Option("--include-deactivated"),
+    ] = False,
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    raw_params: QueryParams = {
+        "attached_to_kind": attached_to_kind,
+        "attached_to_id": attached_to_id,
+        "actor_id": actor_id,
+        "since": since,
+        "limit": limit,
+        "cursor": cursor,
+        "include_deactivated": include_deactivated,
+    }
+    params = {key: value for key, value in raw_params.items() if value is not None}
+    typer.echo(_get_auth("/learnings", timeout, config, params=params))
+
+
+@learning_app.command("get")
+def learning_get(
+    learning_id: Annotated[str, typer.Argument(help="Learning UUID.")],
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    typer.echo(_get_auth(f"/learnings/{learning_id}", timeout, config))
+
+
+@learning_app.command("edit")
+def learning_edit(
+    learning_id: Annotated[str, typer.Argument(help="Learning UUID.")],
+    title: Annotated[str | None, typer.Option("--title")] = None,
+    statement: Annotated[str | None, typer.Option("--statement")] = None,
+    context: Annotated[str | None, typer.Option("--context")] = None,
+    timeout: TimeoutOption = DEFAULT_TIMEOUT_SECONDS,
+    config: ConfigPathOption = None,
+) -> None:
+    body: dict[str, object] = {}
+    if title is not None:
+        body["title"] = title
+    if statement is not None:
+        body["statement"] = statement
+    if context is not None:
+        body["context"] = context
+    typer.echo(_patch_auth(f"/learnings/{learning_id}", body, timeout, config))
+
+
+app.add_typer(learning_app, name="learning")
 
 
 @label_app.command("register")
