@@ -1,0 +1,4 @@
+# Create a disposable AQ API key in the live dev DB, then call the HTTP MCP tools/list surface.
+# jq is unavailable on this host, so the JSON count is parsed with Python after curl captures the raw response.
+raw_http_response_prefix={"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"health_check","description":"Return current health status with a per-call UTC timestamp. Read-only; safe to call repeatedly.","inputSchema":{"properties":{"agent_identity":{"anyOf":[{"maxL
+tool_count=43

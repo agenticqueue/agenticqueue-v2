@@ -1,0 +1,122 @@
+{
+  "ticket": "AQ2-85",
+  "story": "Story 83.2 - Cap-9 D&L standalone ops",
+  "base": "origin/main d4d970b1c9af485fcb5f23fa8371f829f394350b",
+  "branch": "aq2-85",
+  "outcome": "done",
+  "dod_results": [
+    {
+      "dod_id": "DOD-83.2-01",
+      "status": "passed",
+      "evidence": [
+        "plans/v2-rebuild/artifacts/cap-09/story-83.2-evidence/parity-pytest.txt",
+        "plans/v2-rebuild/artifacts/cap-09/story-83.2-evidence/mcp-tool-count.txt",
+        "plans/v2-rebuild/artifacts/cap-09/story-83.2-evidence/mcp-http-tools-list.txt"
+      ],
+      "summary": "All 8 D&L standalone ops are present on REST, CLI, and MCP; MCP tool count is 43."
+    },
+    {
+      "dod_id": "DOD-83.2-02",
+      "status": "passed",
+      "evidence": [
+        "apps/api/tests/test_decisions_standalone.py",
+        "apps/api/tests/test_learnings_standalone.py",
+        "plans/v2-rebuild/artifacts/cap-09/story-83.2-evidence/attachment-counts-psql.txt"
+      ],
+      "summary": "Standalone Decisions and Learnings attach to project, pipeline, and job targets."
+    },
+    {
+      "dod_id": "DOD-83.2-03",
+      "status": "passed",
+      "evidence": [
+        "apps/api/tests/test_supersede_decision.py"
+      ],
+      "summary": "Supersede happy path plus self, scope mismatch, old deactivated, and replacement deactivated denials are separate tests."
+    },
+    {
+      "dod_id": "DOD-83.2-04",
+      "status": "passed",
+      "evidence": [
+        "apps/api/tests/test_creator_only_auth.py"
+      ],
+      "summary": "Cross-actor edit_learning returns 403 learning_edit_forbidden with actor details and an audit row."
+    },
+    {
+      "dod_id": "DOD-83.2-05",
+      "status": "passed",
+      "evidence": [
+        "apps/api/tests/test_list_op_pagination.py"
+      ],
+      "summary": "List pagination covers cursor order, limit clamp, default deactivated filtering, and include_deactivated=true."
+    },
+    {
+      "dod_id": "DOD-83.2-06",
+      "status": "passed",
+      "evidence": [
+        "tests/parity/test_four_surface_parity.py",
+        "plans/v2-rebuild/artifacts/cap-09/story-83.2-evidence/parity-pytest.txt"
+      ],
+      "summary": "REST, CLI, and MCP payloads are byte-equal for all 8 new ops."
+    },
+    {
+      "dod_id": "DOD-83.2-07",
+      "status": "passed",
+      "evidence": [
+        "apps/api/tests/test_decisions_standalone.py",
+        "apps/api/tests/test_learnings_standalone.py",
+        "apps/api/tests/test_supersede_decision.py",
+        "apps/api/tests/test_creator_only_auth.py"
+      ],
+      "summary": "Mutation successes and denials write same-transaction audit rows with expected error_code/details."
+    },
+    {
+      "dod_id": "DOD-83.2-08",
+      "status": "passed",
+      "evidence": [
+        "tests/parity/openapi.snapshot.json",
+        "tests/parity/mcp_schema.snapshot.json",
+        "plans/v2-rebuild/artifacts/cap-09/story-83.2-evidence/parity-pytest.txt"
+      ],
+      "summary": "OpenAPI and MCP snapshots are regenerated and committed."
+    },
+    {
+      "dod_id": "DOD-83.2-09",
+      "status": "passed",
+      "evidence": [
+        "plans/v2-rebuild/artifacts/cap-09/story-83.2-evidence/mcp-tool-count.txt",
+        "plans/v2-rebuild/artifacts/cap-09/story-83.2-evidence/mcp-http-tools-list.txt"
+      ],
+      "summary": "MCP tool count is exactly 43."
+    },
+    {
+      "dod_id": "DOD-83.2-10",
+      "status": "passed",
+      "evidence": [
+        "plans/v2-rebuild/artifacts/cap-09/story-83.2-evidence/full-pytest.txt"
+      ],
+      "summary": "Full regression passed: 297 passed, 7 skipped, 1 known FastMCP authlib deprecation warning."
+    },
+    {
+      "dod_id": "DOD-83.2-11",
+      "status": "passed",
+      "evidence": [
+        "plans/v2-rebuild/artifacts/cap-09/story-83.2-evidence/mypy-strict.txt",
+        "plans/v2-rebuild/artifacts/cap-09/story-83.2-evidence/ruff-check.txt"
+      ],
+      "summary": "mypy --strict and ruff are clean."
+    }
+  ],
+  "verification": {
+    "focused": "27 passed, 1 warning",
+    "parity": "23 passed, 1 skipped",
+    "full_pytest": "297 passed, 7 skipped, 1 warning",
+    "mypy": "clean across 65 source files using CI scope: apps/api/src/aq_api/ apps/cli/src/aq_cli/",
+    "ruff": "all checks passed",
+    "mcp_tool_count": 43
+  },
+  "risks_or_deviations": [
+    "Read-only list/get D&L ops follow the existing cap-3 read pattern and do not write audit rows; mutation audit coverage is complete per the DOD acceptance threshold.",
+    "jq is not installed on the host, so the HTTP tools/list evidence uses curl plus Python JSON parsing while also keeping an in-process MCP inventory."
+  ],
+  "handoff": "AQ2-86 - submit_job inline-D&L attachment extension + D&L inheritance lookups"
+}

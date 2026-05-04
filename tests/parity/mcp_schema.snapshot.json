@@ -3629,6 +3629,1520 @@
         }
       },
       {
+        "name": "create_decision",
+        "description": "Create a standalone Decision attached to a Job, Pipeline, or Project. Validates the attachment target and writes an audit row.",
+        "inputSchema": {
+          "properties": {
+            "attached_to_kind": {
+              "enum": [
+                "job",
+                "pipeline",
+                "project"
+              ],
+              "type": "string"
+            },
+            "attached_to_id": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": {
+              "maxLength": 512,
+              "minLength": 1,
+              "type": "string"
+            },
+            "statement": {
+              "maxLength": 16384,
+              "minLength": 1,
+              "type": "string"
+            },
+            "rationale": {
+              "anyOf": [
+                {
+                  "maxLength": 16384,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "agent_identity": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+            }
+          },
+          "required": [
+            "attached_to_kind",
+            "attached_to_id",
+            "title",
+            "statement"
+          ],
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "decision": {
+              "properties": {
+                "id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "attached_to_kind": {
+                  "enum": [
+                    "job",
+                    "pipeline",
+                    "project"
+                  ],
+                  "type": "string"
+                },
+                "attached_to_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "title": {
+                  "maxLength": 512,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "statement": {
+                  "maxLength": 16384,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "rationale": {
+                  "anyOf": [
+                    {
+                      "maxLength": 16384,
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "supersedes_decision_id": {
+                  "anyOf": [
+                    {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "created_by_actor_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "created_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "deactivated_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "id",
+                "attached_to_kind",
+                "attached_to_id",
+                "title",
+                "statement",
+                "created_by_actor_id",
+                "created_at"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "decision"
+          ],
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        }
+      },
+      {
+        "name": "list_decisions",
+        "description": "List Decisions with optional attachment, actor, since, cursor, limit, and include_deactivated filters. Read-only.",
+        "inputSchema": {
+          "properties": {
+            "attached_to_kind": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "job",
+                    "pipeline",
+                    "project"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "attached_to_id": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "actor_id": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "since": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "cursor": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "limit": {
+              "default": 50,
+              "type": "integer"
+            },
+            "include_deactivated": {
+              "default": false,
+              "type": "boolean"
+            },
+            "agent_identity": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+            }
+          },
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "items": {
+              "items": {
+                "properties": {
+                  "id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "attached_to_kind": {
+                    "enum": [
+                      "job",
+                      "pipeline",
+                      "project"
+                    ],
+                    "type": "string"
+                  },
+                  "attached_to_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "title": {
+                    "maxLength": 512,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "statement": {
+                    "maxLength": 16384,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "rationale": {
+                    "anyOf": [
+                      {
+                        "maxLength": 16384,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null
+                  },
+                  "supersedes_decision_id": {
+                    "anyOf": [
+                      {
+                        "format": "uuid",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null
+                  },
+                  "created_by_actor_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "created_at": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "deactivated_at": {
+                    "anyOf": [
+                      {
+                        "format": "date-time",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null
+                  }
+                },
+                "required": [
+                  "id",
+                  "attached_to_kind",
+                  "attached_to_id",
+                  "title",
+                  "statement",
+                  "created_by_actor_id",
+                  "created_at"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "next_cursor": {
+              "anyOf": [
+                {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "items"
+          ],
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": true
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        }
+      },
+      {
+        "name": "get_decision",
+        "description": "Get one Decision by id. Read-only. The visuals array is present but remains empty until Visual lookup wiring ships.",
+        "inputSchema": {
+          "properties": {
+            "decision_id": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "agent_identity": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+            }
+          },
+          "required": [
+            "decision_id"
+          ],
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "decision": {
+              "properties": {
+                "id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "attached_to_kind": {
+                  "enum": [
+                    "job",
+                    "pipeline",
+                    "project"
+                  ],
+                  "type": "string"
+                },
+                "attached_to_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "title": {
+                  "maxLength": 512,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "statement": {
+                  "maxLength": 16384,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "rationale": {
+                  "anyOf": [
+                    {
+                      "maxLength": 16384,
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "supersedes_decision_id": {
+                  "anyOf": [
+                    {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "created_by_actor_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "created_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "deactivated_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "id",
+                "attached_to_kind",
+                "attached_to_id",
+                "title",
+                "statement",
+                "created_by_actor_id",
+                "created_at"
+              ],
+              "type": "object"
+            },
+            "visuals": {
+              "items": {
+                "properties": {
+                  "id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "attached_to_kind": {
+                    "enum": [
+                      "project",
+                      "pipeline",
+                      "job",
+                      "decision",
+                      "learning"
+                    ],
+                    "type": "string"
+                  },
+                  "attached_to_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "type": {
+                    "enum": [
+                      "mermaid",
+                      "graphviz",
+                      "plantuml",
+                      "vega-lite",
+                      "ascii"
+                    ],
+                    "type": "string"
+                  },
+                  "spec": {
+                    "maxLength": 65536,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "caption": {
+                    "anyOf": [
+                      {
+                        "maxLength": 512,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null
+                  },
+                  "created_by_actor_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "created_at": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "deactivated_at": {
+                    "anyOf": [
+                      {
+                        "format": "date-time",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null
+                  }
+                },
+                "required": [
+                  "id",
+                  "attached_to_kind",
+                  "attached_to_id",
+                  "type",
+                  "spec",
+                  "created_by_actor_id",
+                  "created_at"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "decision"
+          ],
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": true
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        }
+      },
+      {
+        "name": "supersede_decision",
+        "description": "Supersede an active Decision with an active replacement Decision in the same attachment scope. Any valid Actor may call this.",
+        "inputSchema": {
+          "properties": {
+            "decision_id": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "replacement_id": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "agent_identity": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+            }
+          },
+          "required": [
+            "decision_id",
+            "replacement_id"
+          ],
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "old_decision": {
+              "properties": {
+                "id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "attached_to_kind": {
+                  "enum": [
+                    "job",
+                    "pipeline",
+                    "project"
+                  ],
+                  "type": "string"
+                },
+                "attached_to_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "title": {
+                  "maxLength": 512,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "statement": {
+                  "maxLength": 16384,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "rationale": {
+                  "anyOf": [
+                    {
+                      "maxLength": 16384,
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "supersedes_decision_id": {
+                  "anyOf": [
+                    {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "created_by_actor_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "created_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "deactivated_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "id",
+                "attached_to_kind",
+                "attached_to_id",
+                "title",
+                "statement",
+                "created_by_actor_id",
+                "created_at"
+              ],
+              "type": "object"
+            },
+            "replacement_decision": {
+              "properties": {
+                "id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "attached_to_kind": {
+                  "enum": [
+                    "job",
+                    "pipeline",
+                    "project"
+                  ],
+                  "type": "string"
+                },
+                "attached_to_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "title": {
+                  "maxLength": 512,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "statement": {
+                  "maxLength": 16384,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "rationale": {
+                  "anyOf": [
+                    {
+                      "maxLength": 16384,
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "supersedes_decision_id": {
+                  "anyOf": [
+                    {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "created_by_actor_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "created_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "deactivated_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "id",
+                "attached_to_kind",
+                "attached_to_id",
+                "title",
+                "statement",
+                "created_by_actor_id",
+                "created_at"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "old_decision",
+            "replacement_decision"
+          ],
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "idempotentHint": false
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        }
+      },
+      {
+        "name": "submit_learning",
+        "description": "Submit a standalone Learning attached to a Job, Pipeline, or Project. Validates the attachment target and writes an audit row.",
+        "inputSchema": {
+          "properties": {
+            "attached_to_kind": {
+              "enum": [
+                "job",
+                "pipeline",
+                "project"
+              ],
+              "type": "string"
+            },
+            "attached_to_id": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": {
+              "maxLength": 512,
+              "minLength": 1,
+              "type": "string"
+            },
+            "statement": {
+              "maxLength": 16384,
+              "minLength": 1,
+              "type": "string"
+            },
+            "context": {
+              "anyOf": [
+                {
+                  "maxLength": 16384,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "agent_identity": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+            }
+          },
+          "required": [
+            "attached_to_kind",
+            "attached_to_id",
+            "title",
+            "statement"
+          ],
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "learning": {
+              "properties": {
+                "id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "attached_to_kind": {
+                  "enum": [
+                    "job",
+                    "pipeline",
+                    "project"
+                  ],
+                  "type": "string"
+                },
+                "attached_to_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "title": {
+                  "maxLength": 512,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "statement": {
+                  "maxLength": 16384,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "context": {
+                  "anyOf": [
+                    {
+                      "maxLength": 16384,
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "created_by_actor_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "created_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "deactivated_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "id",
+                "attached_to_kind",
+                "attached_to_id",
+                "title",
+                "statement",
+                "created_by_actor_id",
+                "created_at"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "learning"
+          ],
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        }
+      },
+      {
+        "name": "list_learnings",
+        "description": "List Learnings with optional attachment, actor, since, cursor, limit, and include_deactivated filters. Read-only.",
+        "inputSchema": {
+          "properties": {
+            "attached_to_kind": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "job",
+                    "pipeline",
+                    "project"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "attached_to_id": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "actor_id": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "since": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "cursor": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "limit": {
+              "default": 50,
+              "type": "integer"
+            },
+            "include_deactivated": {
+              "default": false,
+              "type": "boolean"
+            },
+            "agent_identity": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+            }
+          },
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "items": {
+              "items": {
+                "properties": {
+                  "id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "attached_to_kind": {
+                    "enum": [
+                      "job",
+                      "pipeline",
+                      "project"
+                    ],
+                    "type": "string"
+                  },
+                  "attached_to_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "title": {
+                    "maxLength": 512,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "statement": {
+                    "maxLength": 16384,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "context": {
+                    "anyOf": [
+                      {
+                        "maxLength": 16384,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null
+                  },
+                  "created_by_actor_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "created_at": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "deactivated_at": {
+                    "anyOf": [
+                      {
+                        "format": "date-time",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null
+                  }
+                },
+                "required": [
+                  "id",
+                  "attached_to_kind",
+                  "attached_to_id",
+                  "title",
+                  "statement",
+                  "created_by_actor_id",
+                  "created_at"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "next_cursor": {
+              "anyOf": [
+                {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "items"
+          ],
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": true
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        }
+      },
+      {
+        "name": "get_learning",
+        "description": "Get one Learning by id. Read-only. The visuals array is present but remains empty until Visual lookup wiring ships.",
+        "inputSchema": {
+          "properties": {
+            "learning_id": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "agent_identity": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+            }
+          },
+          "required": [
+            "learning_id"
+          ],
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "learning": {
+              "properties": {
+                "id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "attached_to_kind": {
+                  "enum": [
+                    "job",
+                    "pipeline",
+                    "project"
+                  ],
+                  "type": "string"
+                },
+                "attached_to_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "title": {
+                  "maxLength": 512,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "statement": {
+                  "maxLength": 16384,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "context": {
+                  "anyOf": [
+                    {
+                      "maxLength": 16384,
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "created_by_actor_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "created_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "deactivated_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "id",
+                "attached_to_kind",
+                "attached_to_id",
+                "title",
+                "statement",
+                "created_by_actor_id",
+                "created_at"
+              ],
+              "type": "object"
+            },
+            "visuals": {
+              "items": {
+                "properties": {
+                  "id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "attached_to_kind": {
+                    "enum": [
+                      "project",
+                      "pipeline",
+                      "job",
+                      "decision",
+                      "learning"
+                    ],
+                    "type": "string"
+                  },
+                  "attached_to_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "type": {
+                    "enum": [
+                      "mermaid",
+                      "graphviz",
+                      "plantuml",
+                      "vega-lite",
+                      "ascii"
+                    ],
+                    "type": "string"
+                  },
+                  "spec": {
+                    "maxLength": 65536,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "caption": {
+                    "anyOf": [
+                      {
+                        "maxLength": 512,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null
+                  },
+                  "created_by_actor_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "created_at": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "deactivated_at": {
+                    "anyOf": [
+                      {
+                        "format": "date-time",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null
+                  }
+                },
+                "required": [
+                  "id",
+                  "attached_to_kind",
+                  "attached_to_id",
+                  "type",
+                  "spec",
+                  "created_by_actor_id",
+                  "created_at"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "learning"
+          ],
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": true
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        }
+      },
+      {
+        "name": "edit_learning",
+        "description": "Edit a Learning's title, statement, or context. Creator-only; cross-actor edits return learning_edit_forbidden.",
+        "inputSchema": {
+          "properties": {
+            "learning_id": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": {
+              "anyOf": [
+                {
+                  "maxLength": 512,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "statement": {
+              "anyOf": [
+                {
+                  "maxLength": 16384,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "context": {
+              "anyOf": [
+                {
+                  "maxLength": 16384,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "agent_identity": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "pattern": "^$|^[A-Za-z0-9_./:-]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Informational caller identity recorded in audit rows; authentication remains the Bearer token."
+            }
+          },
+          "required": [
+            "learning_id"
+          ],
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "learning": {
+              "properties": {
+                "id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "attached_to_kind": {
+                  "enum": [
+                    "job",
+                    "pipeline",
+                    "project"
+                  ],
+                  "type": "string"
+                },
+                "attached_to_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "title": {
+                  "maxLength": 512,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "statement": {
+                  "maxLength": 16384,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "context": {
+                  "anyOf": [
+                    {
+                      "maxLength": 16384,
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "created_by_actor_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "created_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "deactivated_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "id",
+                "attached_to_kind",
+                "attached_to_id",
+                "title",
+                "statement",
+                "created_by_actor_id",
+                "created_at"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "learning"
+          ],
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false
+        },
+        "_meta": {
+          "_fastmcp": {
+            "tags": []
+          }
+        }
+      },
+      {
         "name": "comment_on_job",
         "description": "Add a durable Job comment. Audit rows record body_length only; the body is stored in job_comments.",
         "inputSchema": {

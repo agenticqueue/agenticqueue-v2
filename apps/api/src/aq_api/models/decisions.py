@@ -9,11 +9,13 @@ from aq_api.models.auth import (
     coerce_optional_utc_datetime,
     coerce_utc_datetime,
 )
+from aq_api.models.visuals import Visual
 
 AttachedToKind = Literal["job", "pipeline", "project"]
 DecisionTitle = Annotated[str, Field(min_length=1, max_length=512)]
 DecisionStatement = Annotated[str, Field(min_length=1, max_length=16384)]
 DecisionRationale = Annotated[str | None, Field(default=None, max_length=16384)]
+Cursor = Annotated[str | None, Field(default=None, min_length=1)]
 
 
 class SubmitDecisionInline(AQModel):
@@ -47,3 +49,34 @@ class Decision(AQModel):
     @classmethod
     def deactivated_at_must_be_utc(cls, value: object) -> datetime | None:
         return coerce_optional_utc_datetime(value)
+
+
+class CreateDecisionRequest(AQModel):
+    attached_to_kind: AttachedToKind
+    attached_to_id: UUID
+    title: DecisionTitle
+    statement: DecisionStatement
+    rationale: DecisionRationale = None
+
+
+class CreateDecisionResponse(AQModel):
+    decision: Decision
+
+
+class ListDecisionsResponse(AQModel):
+    items: list[Decision]
+    next_cursor: Cursor = None
+
+
+class GetDecisionResponse(AQModel):
+    decision: Decision
+    visuals: list[Visual] = Field(default_factory=list)
+
+
+class SupersedeDecisionRequest(AQModel):
+    replacement_id: UUID
+
+
+class SupersedeDecisionResponse(AQModel):
+    old_decision: Decision
+    replacement_decision: Decision

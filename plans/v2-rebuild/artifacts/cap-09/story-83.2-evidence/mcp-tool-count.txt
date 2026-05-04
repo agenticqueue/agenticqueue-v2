@@ -1,0 +1,49 @@
+docker compose --env-file D:\mmmmm\mmmmm-aq2.0\.env -p mmmmm-aq20 exec -T api uv run python -
+Bytecode compiled 4121 files in 141ms
+/app/.venv/lib/python3.12/site-packages/fastmcp/server/auth/providers/jwt.py:10: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+It will be compatible before version 2.0.0.
+  from authlib.jose import JsonWebKey, JsonWebToken
+tool_count=43
+archive_pipeline
+archive_project
+attach_label
+cancel_job
+claim_next_job
+clone_pipeline
+comment_on_job
+create_actor
+create_decision
+create_job
+create_pipeline
+create_project
+detach_label
+edit_learning
+get_decision
+get_job
+get_learning
+get_pipeline
+get_project
+get_self
+get_version
+health_check
+heartbeat_job
+list_actors
+list_decisions
+list_job_comments
+list_jobs
+list_learnings
+list_pipelines
+list_projects
+list_ready_jobs
+query_audit_log
+register_label
+release_job
+reset_claim
+review_complete
+revoke_api_key
+submit_job
+submit_learning
+supersede_decision
+update_job
+update_pipeline
+update_project

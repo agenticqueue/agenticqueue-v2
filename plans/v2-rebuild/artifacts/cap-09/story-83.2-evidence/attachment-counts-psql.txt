@@ -1,0 +1,22 @@
+actor_name=job-test-aq2-85-attachment-counts-b2e09637
+Bytecode compiled 4121 files in 112ms
+/app/.venv/lib/python3.12/site-packages/fastmcp/server/auth/providers/jwt.py:10: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+It will be compatible before version 2.0.0.
+  from authlib.jose import JsonWebKey, JsonWebToken
+SELECT d.attached_to_kind, count(*) FROM decisions d JOIN actors a ON a.id = d.created_by_actor_id WHERE a.name = 'job-test-aq2-85-attachment-counts-b2e09637' GROUP BY 1 ORDER BY 1;
+ attached_to_kind | count 
+------------------+-------
+ job              |     1
+ pipeline         |     1
+ project          |     1
+(3 rows)
+
+SELECT l.attached_to_kind, count(*) FROM learnings l JOIN actors a ON a.id = l.created_by_actor_id WHERE a.name = 'job-test-aq2-85-attachment-counts-b2e09637' GROUP BY 1 ORDER BY 1;
+ attached_to_kind | count 
+------------------+-------
+ job              |     1
+ pipeline         |     1
+ project          |     1
+(3 rows)
+
+Bytecode compiled 4121 files in 152ms

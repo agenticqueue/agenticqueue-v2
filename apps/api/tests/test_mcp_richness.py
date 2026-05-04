@@ -44,6 +44,20 @@ READ_ONLY_TOOLS = {
     "get_job",
     "list_ready_jobs",
     "list_job_comments",
+    "list_decisions",
+    "get_decision",
+    "list_learnings",
+    "get_learning",
+}
+
+CAP83_2_NON_DESTRUCTIVE_MUTATION_TOOLS = {
+    "create_decision",
+    "submit_learning",
+    "edit_learning",
+}
+
+CAP83_2_DESTRUCTIVE_MUTATION_TOOLS = {
+    "supersede_decision",
 }
 
 
@@ -122,7 +136,24 @@ async def test_mcp_initialize_instructions_and_tool_annotations() -> None:
     assert "submit_job ships in cap #5" not in initialize.instructions
 
     tool_by_name = {tool.name: tool for tool in tools}
+    assert len(tool_by_name) == 43
+
     for tool_name in CAP4_MUTATION_TOOLS:
+        annotations = tool_by_name[tool_name].annotations
+        assert annotations is not None
+        assert annotations.destructiveHint is True
+        assert annotations.readOnlyHint is False
+        assert annotations.idempotentHint is False
+
+    for tool_name in CAP83_2_NON_DESTRUCTIVE_MUTATION_TOOLS:
+        annotations = tool_by_name[tool_name].annotations
+        assert annotations is not None
+        assert annotations.destructiveHint is False
+        assert annotations.readOnlyHint is False
+        if tool_name == "edit_learning":
+            assert annotations.idempotentHint is False
+
+    for tool_name in CAP83_2_DESTRUCTIVE_MUTATION_TOOLS:
         annotations = tool_by_name[tool_name].annotations
         assert annotations is not None
         assert annotations.destructiveHint is True

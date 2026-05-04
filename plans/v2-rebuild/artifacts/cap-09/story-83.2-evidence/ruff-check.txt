@@ -1,0 +1,2 @@
+uv run ruff check apps/api/src apps/api/tests tests/parity apps/cli/src
+All checks passed!

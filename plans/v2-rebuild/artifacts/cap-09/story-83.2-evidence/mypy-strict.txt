@@ -1,0 +1,2 @@
+uv run mypy --strict apps/api/src/aq_api/ apps/cli/src/aq_cli/
+Success: no issues found in 65 source files

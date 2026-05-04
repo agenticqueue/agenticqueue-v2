@@ -20,8 +20,10 @@ from aq_api.models import HealthStatus, VersionInfo
 from aq_api.routes.actors import router as actors_router
 from aq_api.routes.api_keys import router as api_keys_router
 from aq_api.routes.audit import router as audit_router
+from aq_api.routes.decisions import router as decisions_router
 from aq_api.routes.jobs import router as jobs_router
 from aq_api.routes.labels import router as labels_router
+from aq_api.routes.learnings import router as learnings_router
 from aq_api.routes.pipelines import router as pipelines_router
 from aq_api.routes.projects import router as projects_router
 from aq_api.routes.setup import router as setup_router
@@ -120,6 +122,8 @@ app.include_router(projects_router)
 app.include_router(labels_router)
 app.include_router(pipelines_router)
 app.include_router(jobs_router)
+app.include_router(decisions_router)
+app.include_router(learnings_router)
 
 
 # app.mount("/mcp", mcp.http_app(path="/")) redirects POST /mcp to /mcp/.
