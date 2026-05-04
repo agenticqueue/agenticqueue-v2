@@ -1,0 +1,22 @@
+                                  Table "public.visuals"
+       Column        |           Type           | Collation | Nullable |      Default
+---------------------+--------------------------+-----------+----------+-------------------
+ id                  | uuid                     |           | not null | gen_random_uuid()
+ attached_to_kind    | text                     |           | not null |
+ attached_to_id      | uuid                     |           | not null |
+ type                | text                     |           | not null |
+ spec                | text                     |           | not null |
+ caption             | text                     |           |          |
+ created_by_actor_id | uuid                     |           | not null |
+ created_at          | timestamp with time zone |           | not null | now()
+ deactivated_at      | timestamp with time zone |           |          |
+Indexes:
+    "visuals_pkey" PRIMARY KEY, btree (id)
+    "idx_visuals_actor" btree (created_by_actor_id, created_at)
+    "idx_visuals_attached" btree (attached_to_kind, attached_to_id, created_at)
+    "idx_visuals_type" btree (type)
+Check constraints:
+    "visuals_attached_to_kind_check" CHECK (attached_to_kind = ANY (ARRAY['project'::text, 'pipeline'::text, 'job'::text, 'decision'::text, 'learning'::text]))
+    "visuals_type_check" CHECK (type = ANY (ARRAY['mermaid'::text, 'graphviz'::text, 'plantuml'::text, 'vega-lite'::text, 'ascii'::text]))
+Foreign-key constraints:
+    "visuals_created_by_actor_id_fkey" FOREIGN KEY (created_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT

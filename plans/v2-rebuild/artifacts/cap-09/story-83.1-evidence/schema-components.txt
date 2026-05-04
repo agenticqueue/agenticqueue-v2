@@ -1,0 +1,20 @@
+                                 Table "public.components"
+       Column        |           Type           | Collation | Nullable |      Default
+---------------------+--------------------------+-----------+----------+-------------------
+ id                  | uuid                     |           | not null | gen_random_uuid()
+ attached_to_kind    | text                     |           | not null |
+ attached_to_id      | uuid                     |           | not null |
+ name                | text                     |           | not null |
+ purpose             | text                     |           |          |
+ access_path         | text                     |           | not null |
+ created_by_actor_id | uuid                     |           | not null |
+ created_at          | timestamp with time zone |           | not null | now()
+ deactivated_at      | timestamp with time zone |           |          |
+Indexes:
+    "components_pkey" PRIMARY KEY, btree (id)
+    "idx_components_actor" btree (created_by_actor_id, created_at)
+    "idx_components_attached" btree (attached_to_kind, attached_to_id, created_at)
+Check constraints:
+    "components_attached_to_kind_check" CHECK (attached_to_kind = ANY (ARRAY['project'::text, 'pipeline'::text]))
+Foreign-key constraints:
+    "components_created_by_actor_id_fkey" FOREIGN KEY (created_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT

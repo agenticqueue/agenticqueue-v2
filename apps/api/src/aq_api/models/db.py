@@ -440,3 +440,135 @@ class Learning(Base):
         server_default=text("now()"),
     )
     deactivated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Objective(Base):
+    __tablename__ = "objectives"
+    __table_args__ = (
+        CheckConstraint(
+            "attached_to_kind IN ('project','pipeline')",
+            name="objectives_attached_to_kind_check",
+        ),
+        Index(
+            "idx_objectives_attached",
+            "attached_to_kind",
+            "attached_to_id",
+            "created_at",
+        ),
+        Index("idx_objectives_actor", "created_by_actor_id", "created_at"),
+    )
+
+    id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        primary_key=True,
+        server_default=text("gen_random_uuid()"),
+    )
+    attached_to_kind: Mapped[str] = mapped_column(Text, nullable=False)
+    attached_to_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        nullable=False,
+    )
+    statement: Mapped[str] = mapped_column(Text, nullable=False)
+    metric: Mapped[str | None] = mapped_column(Text)
+    target_value: Mapped[str | None] = mapped_column(Text)
+    due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_by_actor_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("actors.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=text("now()"),
+    )
+    deactivated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Visual(Base):
+    __tablename__ = "visuals"
+    __table_args__ = (
+        CheckConstraint(
+            "attached_to_kind IN ('project','pipeline','job','decision','learning')",
+            name="visuals_attached_to_kind_check",
+        ),
+        CheckConstraint(
+            "type IN ('mermaid','graphviz','plantuml','vega-lite','ascii')",
+            name="visuals_type_check",
+        ),
+        Index(
+            "idx_visuals_attached",
+            "attached_to_kind",
+            "attached_to_id",
+            "created_at",
+        ),
+        Index("idx_visuals_actor", "created_by_actor_id", "created_at"),
+        Index("idx_visuals_type", "type"),
+    )
+
+    id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        primary_key=True,
+        server_default=text("gen_random_uuid()"),
+    )
+    attached_to_kind: Mapped[str] = mapped_column(Text, nullable=False)
+    attached_to_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        nullable=False,
+    )
+    type: Mapped[str] = mapped_column(Text, nullable=False)
+    spec: Mapped[str] = mapped_column(Text, nullable=False)
+    caption: Mapped[str | None] = mapped_column(Text)
+    created_by_actor_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("actors.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=text("now()"),
+    )
+    deactivated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Component(Base):
+    __tablename__ = "components"
+    __table_args__ = (
+        CheckConstraint(
+            "attached_to_kind IN ('project','pipeline')",
+            name="components_attached_to_kind_check",
+        ),
+        Index(
+            "idx_components_attached",
+            "attached_to_kind",
+            "attached_to_id",
+            "created_at",
+        ),
+        Index("idx_components_actor", "created_by_actor_id", "created_at"),
+    )
+
+    id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        primary_key=True,
+        server_default=text("gen_random_uuid()"),
+    )
+    attached_to_kind: Mapped[str] = mapped_column(Text, nullable=False)
+    attached_to_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        nullable=False,
+    )
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    purpose: Mapped[str | None] = mapped_column(Text)
+    access_path: Mapped[str] = mapped_column(Text, nullable=False)
+    created_by_actor_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("actors.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=text("now()"),
+    )
+    deactivated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

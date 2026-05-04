@@ -3953,6 +3953,16 @@
               }
             ],
             "title": "Rationale"
+          },
+          "attached_to_kind": {
+            "type": "string",
+            "enum": [
+              "job",
+              "pipeline",
+              "project"
+            ],
+            "title": "Attached To Kind",
+            "default": "job"
           }
         },
         "additionalProperties": false,
@@ -4378,6 +4388,16 @@
               }
             ],
             "title": "Context"
+          },
+          "attached_to_kind": {
+            "type": "string",
+            "enum": [
+              "job",
+              "pipeline",
+              "project"
+            ],
+            "title": "Attached To Kind",
+            "default": "job"
           }
         },
         "additionalProperties": false,

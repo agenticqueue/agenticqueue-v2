@@ -20,6 +20,10 @@ class SubmitLearningInline(AQModel):
     title: LearningTitle
     statement: LearningStatement
     context: LearningContext = None
+    attached_to_kind: AttachedToKind = Field(
+        default="job",
+        exclude_if=lambda value: value == "job",
+    )
 
 
 class Learning(AQModel):
