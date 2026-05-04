@@ -129,6 +129,48 @@ def test_cap05_models_forbid_extra_fields_and_are_frozen() -> None:
         decision.title = "changed"  # type: ignore[misc]
 
 
+def test_inline_dl_attachment_kind_defaults_and_forbids_ids() -> None:
+    default_decision = SubmitDecisionInline(
+        title="Decision",
+        statement="Default attachment remains job-local.",
+    )
+    project_decision = SubmitDecisionInline(
+        title="Project decision",
+        statement="Attach this decision at project scope.",
+        attached_to_kind="project",
+    )
+    pipeline_learning = SubmitLearningInline(
+        title="Pipeline learning",
+        statement="Attach this learning at pipeline scope.",
+        attached_to_kind="pipeline",
+    )
+
+    assert default_decision.attached_to_kind == "job"
+    assert project_decision.attached_to_kind == "project"
+    assert pipeline_learning.attached_to_kind == "pipeline"
+    assert "attached_to_kind" not in default_decision.model_dump()
+    assert project_decision.model_dump()["attached_to_kind"] == "project"
+    assert pipeline_learning.model_dump()["attached_to_kind"] == "pipeline"
+
+    with pytest.raises(ValidationError):
+        SubmitDecisionInline.model_validate(
+            {
+                "title": "Bad decision",
+                "statement": "Client cannot choose target id.",
+                "attached_to_kind": "project",
+                "attached_to_id": str(PROJECT_ID),
+            }
+        )
+    with pytest.raises(ValidationError):
+        SubmitLearningInline.model_validate(
+            {
+                "title": "Bad learning",
+                "statement": "Unsupported scope.",
+                "attached_to_kind": "component",
+            }
+        )
+
+
 def test_decision_and_learning_models_round_trip_and_normalize_utc() -> None:
     decision = Decision(
         id=DECISION_ID,

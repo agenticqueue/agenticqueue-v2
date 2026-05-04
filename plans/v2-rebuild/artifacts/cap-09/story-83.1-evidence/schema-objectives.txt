@@ -1,0 +1,21 @@
+                                 Table "public.objectives"
+       Column        |           Type           | Collation | Nullable |      Default
+---------------------+--------------------------+-----------+----------+-------------------
+ id                  | uuid                     |           | not null | gen_random_uuid()
+ attached_to_kind    | text                     |           | not null |
+ attached_to_id      | uuid                     |           | not null |
+ statement           | text                     |           | not null |
+ metric              | text                     |           |          |
+ target_value        | text                     |           |          |
+ due_at              | timestamp with time zone |           |          |
+ created_by_actor_id | uuid                     |           | not null |
+ created_at          | timestamp with time zone |           | not null | now()
+ deactivated_at      | timestamp with time zone |           |          |
+Indexes:
+    "objectives_pkey" PRIMARY KEY, btree (id)
+    "idx_objectives_actor" btree (created_by_actor_id, created_at)
+    "idx_objectives_attached" btree (attached_to_kind, attached_to_id, created_at)
+Check constraints:
+    "objectives_attached_to_kind_check" CHECK (attached_to_kind = ANY (ARRAY['project'::text, 'pipeline'::text]))
+Foreign-key constraints:
+    "objectives_created_by_actor_id_fkey" FOREIGN KEY (created_by_actor_id) REFERENCES actors(id) ON DELETE RESTRICT

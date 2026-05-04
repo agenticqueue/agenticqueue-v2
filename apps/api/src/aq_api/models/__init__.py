@@ -13,6 +13,11 @@ from aq_api.models.auth import (
     SetupResponse,
     WhoamiResponse,
 )
+from aq_api.models.components import (
+    Component,
+    CreateComponentRequest,
+    UpdateComponentRequest,
+)
 from aq_api.models.decisions import Decision, SubmitDecisionInline
 from aq_api.models.health import HealthStatus, VersionInfo
 from aq_api.models.inheritance import InheritanceReferenceLists
@@ -65,6 +70,11 @@ from aq_api.models.labels import (
     RegisterLabelResponse,
 )
 from aq_api.models.learnings import Learning, SubmitLearningInline
+from aq_api.models.objectives import (
+    CreateObjectiveRequest,
+    Objective,
+    UpdateObjectiveRequest,
+)
 from aq_api.models.pipelines import (
     ArchivePipelineResponse,
     ClonePipelineRequest,
@@ -87,6 +97,7 @@ from aq_api.models.projects import (
     UpdateProjectRequest,
     UpdateProjectResponse,
 )
+from aq_api.models.visuals import CreateVisualRequest, UpdateVisualRequest, Visual
 
 __all__ = [
     "Actor",
@@ -109,12 +120,16 @@ __all__ = [
     "ClonePipelineResponse",
     "CreateActorRequest",
     "CreateActorResponse",
+    "Component",
     "CreateJobRequest",
     "CreateJobResponse",
+    "CreateComponentRequest",
+    "CreateObjectiveRequest",
     "CreatePipelineRequest",
     "CreatePipelineResponse",
     "CreateProjectRequest",
     "CreateProjectResponse",
+    "CreateVisualRequest",
     "Decision",
     "DetachLabelRequest",
     "DetachLabelResponse",
@@ -140,6 +155,7 @@ __all__ = [
     "ListProjectsResponse",
     "ListReadyJobsRequest",
     "ListReadyJobsResponse",
+    "Objective",
     "Pipeline",
     "Project",
     "ReleaseJobResponse",
@@ -161,12 +177,16 @@ __all__ = [
     "SubmitJobRequest",
     "SubmitJobResponse",
     "SubmitLearningInline",
+    "UpdateComponentRequest",
     "UpdateJobRequest",
     "UpdateJobResponse",
+    "UpdateObjectiveRequest",
     "UpdatePipelineRequest",
     "UpdatePipelineResponse",
     "UpdateProjectRequest",
     "UpdateProjectResponse",
+    "UpdateVisualRequest",
     "VersionInfo",
+    "Visual",
     "WhoamiResponse",
 ]
